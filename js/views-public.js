@@ -471,6 +471,10 @@ function destinoLabel(dest) {
   if (n) return `a notícia “${n.titulo}”, com a análise da sua carteira aberta`;
   const m = p.match(/^\/noticias\/(\w+)/);
   if (m && NOTICIAS.find((x) => x.id === m[1])) return `a notícia “${NOTICIAS.find((x) => x.id === m[1]).titulo}”`;
+  const sm = p === '/carteira/resumo' && SEMANAS.find((x) => x.id === q.get('semana'));
+  if (p === '/carteira/resumo') return `o Resumo semanal (${(sm || SEMANAS[0]).titulo.toLowerCase()})`;
+  if (p.startsWith('/proventos/pagamento/')) return 'o detalhe do pagamento de provento';
+  if (p === '/perfil') return 'Perfil e preferências';
   const map = { '/carteira': 'Visão geral da carteira', '/carteira/investimentos': 'Investimentos', '/noticias': 'Notícias', '/extratos': 'Extratos', '/proventos': 'Proventos', '/portabilidade': 'Portabilidade', '/servicos': 'Serviços', '/mercado/favoritos': 'Favoritos', '/feedback': 'Feedback' };
   const key = Object.keys(map).sort((a, b) => b.length - a.length).find((k) => p.startsWith(k));
   if (key) return map[key];

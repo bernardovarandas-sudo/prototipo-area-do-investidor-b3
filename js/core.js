@@ -11,12 +11,24 @@ const store = {
   },
 };
 
+/* Guardado neste navegador (sobrevive a novas abas): preferências e compras da demo. O link do .ics abre em outra aba. */
+const storeLocal = {
+  get(key, fallback) {
+    try { const v = localStorage.getItem('b3demo.' + key); return v == null ? fallback : JSON.parse(v); }
+    catch (e) { return fallback; }
+  },
+  set(key, value) {
+    try { localStorage.setItem('b3demo.' + key, JSON.stringify(value)); } catch (e) { /* sem armazenamento: segue em memória */ }
+  },
+};
+
 const state = {
   session: store.get('session', null),        // { conta: 'principal' | 'vazia' }
   hide: store.get('hide', false),             // ocultar valores pessoais
   favoritos: store.get('favoritos', ['DEMO1', 'DEMO5']),
   lidas: store.get('lidas', []),
-  compras: store.get('compras', {}),         // compras feitas na demo, por conta: { principal: [...], vazia: [...] }
+  compras: storeLocal.get('compras', {}),     // compras feitas na demo, por conta: { principal: [...], vazia: [...] }
+  prefs: storeLocal.get('prefs', {}),         // preferências por conta: { principal: { resumoSemanal: false } }
   navOpen: {},                                // grupos abertos pelo usuário
   focusAfter: null,
   lastPath: null,
@@ -27,7 +39,8 @@ function save() {
   store.set('hide', state.hide);
   store.set('favoritos', state.favoritos);
   store.set('lidas', state.lidas);
-  store.set('compras', state.compras);
+  storeLocal.set('compras', state.compras);
+  storeLocal.set('prefs', state.prefs);
 }
 
 const conta = () => (state.session ? CONTAS[state.session.conta] : null);
@@ -40,6 +53,7 @@ function posicoes() {
   if (!c) return [];
   return [...c.posicoes, ...comprasDemo().map((x) => ({ code: x.code, inst: x.inst, qtd: x.qtd, demo: true }))];
 }
+const prefResumo = () => !!(state.session && (state.prefs[state.session.conta] || {}).resumoSemanal);
 const temAtivo = (code) => posicoes().some((p) => p.code === code);
 function registrarCompra(code, qtd, inst) {
   const a = ativo(code);

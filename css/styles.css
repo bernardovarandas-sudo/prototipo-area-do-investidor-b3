@@ -416,6 +416,30 @@ th.num, td.num { text-align: right; }
 .logo-profundo .logo-text { color: var(--brand-deep); }
 
 /* ---------- Tablet: barra compacta ---------- */
+/* ---------- Preferências, resumo semanal e calendário ---------- */
+.pref-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-top: 12px; }
+.pref-title { font-weight: 600; color: var(--ink); }
+.switch { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 4px; border: 0; background: none; cursor: pointer; font: inherit; color: var(--ink); flex: none; }
+.switch-track { position: relative; width: 48px; height: 28px; border-radius: 999px; background: var(--neutral-text); transition: background .15s; }
+.switch-thumb { position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; border-radius: 50%; background: #fff; transition: transform .15s; box-shadow: 0 1px 2px rgba(0,0,0,.2); }
+.switch[aria-checked="true"] .switch-track { background: var(--brand-vivid); }
+.switch[aria-checked="true"] .switch-thumb { transform: translateX(20px); }
+.switch-text { font-size: 14px; font-weight: 600; min-width: 78px; text-align: left; }
+.switch:focus-visible { outline: 3px solid var(--brand-vivid); outline-offset: 2px; border-radius: 8px; }
+.destaques { display: flex; flex-direction: column; }
+.destaques li { display: flex; gap: 12px; padding: 14px 0; border-bottom: 1px solid var(--line); }
+.destaques li:last-child { border-bottom: 0; }
+.destaque-ic { flex: none; display: inline-flex; width: 36px; height: 36px; border-radius: 50%; align-items: center; justify-content: center; background: var(--brand-sky-soft); color: var(--brand-deep); }
+.destaque-t { font-weight: 600; color: var(--ink); }
+.destaque-news { flex-basis: 100%; }
+.cal-btn { padding-left: 0; white-space: nowrap; display: inline-flex; align-items: center; gap: 4px; }
+.cal-list li { align-items: center; }
+.cal-list a { display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: center; min-height: 32px; color: var(--brand-vivid); font-weight: 600; }
+.ev-status { font-size: 12px; font-weight: 700; padding: 1px 8px; border-radius: 999px; }
+.ev-status.rec { background: var(--positive-bg); color: var(--positive-text); }
+.ev-status.prev { background: var(--warning-bg); color: var(--warning-text); }
+@media (max-width: 767px) { .pref-row { flex-direction: column; } }
+
 /* ---------- Recursos só da demo (compra simulada etc.) ---------- */
 .demo-badge { display: inline-flex; align-items: center; font-size: 12px; line-height: 18px; font-weight: 700; letter-spacing: .02em; padding: 1px 8px; border-radius: 999px;
   background: var(--warning-bg); color: var(--warning-text); border: 1px dashed var(--warning-text); }

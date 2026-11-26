@@ -52,6 +52,7 @@ function viewCarteira(route) {
               : `<div class="value big" style="color:var(--neutral-text)">Indisponível</div><div class="sub meta">Sem referência para o recorte</div>`}
           </div>
         </div>
+        <p class="note resumo-note" style="margin-top:16px">${icon('calendar', 18)}<span>O resumo da ${SEMANAS[0].titulo.toLowerCase()} está pronto. <a href="#/carteira/resumo?semana=${SEMANAS[0].id}">Ver resumo semanal</a> · Por e-mail: ${prefResumo() ? 'ativado' : '<a href="#/perfil">ativar em Preferências</a>'}</span></p>
         ${comparavel ? (comprasDemo().length
           ? `<p class="note demo-note" style="margin-top:16px">${icon('cart', 18)}<span>Inclui ${comprasDemo().length} ${comprasDemo().length === 1 ? 'compra feita' : 'compras feitas'} na demo. Para mostrar o efeito das notícias, a demo considera que essas ações já estavam na carteira no fechamento de ${REF.anteriorCurta}. <button type="button" class="btn btn-link btn-sm" data-action="desfazer-compras">Desfazer compras da demo</button></span></p>`
           : `<p class="note" style="margin-top:16px">${icon('info', 18)}<span>Não houve aportes, resgates ou eventos no período. Toda a mudança veio da variação de preço dos ativos.</span></p>`) : ''}

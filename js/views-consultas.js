@@ -26,7 +26,7 @@ function provAReceber() {
     const pr = PROV_POR_ACAO[x.code];
     if (!pr) return;
     const k = x.code + '|' + x.inst;
-    const g = grupos[k] || (grupos[k] = { data: fmtDia(pr.dia), dia: pr.dia, code: x.code, tipo: pr.tipo, inst: x.inst, valor: 0, demo: true });
+    const g = grupos[k] || (grupos[k] = { id: `demo-${x.code.toLowerCase()}-${x.inst.slice(-1).toLowerCase()}`, data: fmtDia(pr.dia), dia: pr.dia, code: x.code, tipo: pr.tipo, inst: x.inst, valor: 0, demo: true });
     g.valor += x.qtd * pr.vps;
   });
   return [...base, ...Object.values(grupos)].sort((a, b) => (a.dia || '9999').localeCompare(b.dia || '9999'));
@@ -155,7 +155,7 @@ function viewProventos(route) {
       <section class="card" style="margin-top:24px" aria-labelledby="prox"><h2 class="h2" id="prox">Próximos pagamentos</h2>
         <div class="table-wrap" style="margin-top:8px"><table><caption class="sr-only">Próximos pagamentos</caption>
           <thead><tr><th scope="col">Data prevista</th><th scope="col">Ativo</th><th scope="col" class="col-sec">Tipo</th><th scope="col" class="num">Valor previsto</th></tr></thead>
-          <tbody>${prox.map((p) => `<tr><td>${p.data || '<span class="tv tv-flat">Data a confirmar</span>'}</td><td>${ativoCell(p.code, p.demo)}</td><td class="col-sec">${p.tipo}</td><td class="num">${p.valor != null ? pBrl(p.valor) : '<span class="meta">A confirmar</span>'}</td></tr>`).join('')}</tbody></table></div>
+          <tbody>${prox.map((p) => `<tr><td>${p.data ? `<a href="#/proventos/pagamento/${p.id}">${p.data}</a>` : `<a href="#/proventos/pagamento/${p.id}" class="tv tv-flat">Data a confirmar</a>`}</td><td>${ativoCell(p.code, p.demo)}</td><td class="col-sec">${p.tipo}</td><td class="num">${p.valor != null ? pBrl(p.valor) : '<span class="meta">A confirmar</span>'}</td></tr>`).join('')}</tbody></table></div>
         <div class="card-foot"><a href="#/proventos/recebidos">Ver histórico de recebidos</a><a href="#/proventos/calendario">Ver calendário</a></div>
       </section>`;
   } else if (aba === 'recebidos') {
@@ -168,14 +168,16 @@ function viewProventos(route) {
       </div>
       ${linhas.length ? `<div class="card"><div class="table-wrap"><table><caption class="sr-only">Proventos recebidos</caption>
         <thead><tr><th scope="col">Data de pagamento</th><th scope="col">Ativo</th><th scope="col">Tipo</th><th scope="col" class="col-sec">Instituição</th><th scope="col" class="num">Valor recebido</th></tr></thead>
-        <tbody>${linhas.map((p) => `<tr><td>${p.data}</td><td>${ativoCell(p.code)}</td><td>${p.tipo}</td><td class="col-sec">${p.inst}</td><td class="num">${pBrl(p.valor)}</td></tr>`).join('')}
+        <tbody>${linhas.map((p) => `<tr><td><a href="#/proventos/pagamento/${p.id}">${p.data}</a></td><td>${ativoCell(p.code)}</td><td>${p.tipo}</td><td class="col-sec">${p.inst}</td><td class="num">${pBrl(p.valor)}</td></tr>`).join('')}
         <tr class="total-row"><td colspan="3">Total no recorte · ${per[s.periodo][0]}</td><td class="col-sec"></td><td class="num">${pBrl(linhas.reduce((a, p) => a + p.valor, 0))}</td></tr></tbody></table></div></div>`
       : emptyState({ title: 'Nenhum resultado para esse período', actions: '<button type="button" class="btn btn-outline btn-sm" data-action="focus" data-target="#pr-per">Alterar filtros</button>' })}`;
   } else if (aba === 'a-receber') {
     body = `<p class="muted" style="margin-bottom:12px">Valores previstos não entram no total recebido. A elegibilidade depende de ter o ativo na data de corte.</p>
       <div class="card"><div class="table-wrap"><table><caption class="sr-only">Proventos a receber</caption>
-        <thead><tr><th scope="col">Data prevista</th><th scope="col">Ativo</th><th scope="col">Tipo</th><th scope="col" class="col-sec">Instituição</th><th scope="col" class="num">Valor previsto</th></tr></thead>
-        <tbody>${A_RECEBER.length ? '' : '<tr><td colspan="5" class="muted">Nenhum provento previsto. Compre na demo uma ação que paga proventos, como ITUB4 ou PETR4.</td></tr>'}${A_RECEBER.map((p) => `<tr><td>${p.data || '<span class="tv tv-flat">Data a confirmar</span>'}</td><td>${ativoCell(p.code, p.demo)}</td><td>${p.tipo}</td><td class="col-sec">${p.inst}</td><td class="num">${p.valor != null ? pBrl(p.valor) : '<span class="meta">A confirmar</span>'}</td></tr>`).join('')}</tbody></table></div></div>
+        <thead><tr><th scope="col">Data prevista</th><th scope="col">Ativo</th><th scope="col" class="col-sec">Tipo</th><th scope="col" class="col-sec">Instituição</th><th scope="col" class="num">Valor previsto</th><th scope="col">Meu calendário</th></tr></thead>
+        <tbody>${A_RECEBER.length ? '' : '<tr><td colspan="6" class="muted">Nenhum provento previsto. Compre na demo uma ação que paga proventos, como ITUB4 ou PETR4.</td></tr>'}${A_RECEBER.map((p) => `<tr><td><a href="#/proventos/pagamento/${p.id}">${p.data || 'Data a confirmar'}</a></td><td>${ativoCell(p.code, p.demo)}</td><td class="col-sec">${p.tipo}</td><td class="col-sec">${p.inst}</td><td class="num">${p.valor != null ? pBrl(p.valor) : '<span class="meta">A confirmar</span>'}</td>
+          <td>${p.dia ? `<button type="button" class="btn btn-link btn-sm cal-btn" data-action="ics" data-id="${p.id}">${icon('calendar', 16)}Adicionar ao meu calendário<span class="sr-only">: ${esc(ativo(p.code).name)}, ${p.data}</span></button>` : '<span class="tv tv-flat">Data a confirmar</span>'}</td></tr>`).join('')}</tbody></table></div></div>
+      <p class="meta" style="margin-top:8px">“Adicionar ao meu calendário” baixa um arquivo .ics com o lembrete “Conferir provento na B3” no dia do pagamento, sem valores nem quantidades. Funciona no Google Agenda, no Outlook e no Calendário da Apple.</p>
       ${A_RECEBER.some((p) => p.demo) ? '<p class="meta" style="margin-top:8px">Linhas marcadas como Demo vêm das compras simuladas, com valor por ação e data fictícios.</p>' : ''}`;
   } else if (aba === 'radar') {
     body = `<p class="note warn" style="margin-bottom:16px">${icon('info', 18)}<span>A fonte e a cobertura desta aba serão confirmadas antes do uso real.</span></p>
@@ -225,9 +227,11 @@ function calendario() {
     <div class="cal" aria-hidden="true">${['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].map((d) => `<div class="dow">${d}</div>`).join('')}${cells.join('')}</div>
     <ul class="legend" aria-hidden="true"><li><span class="swatch" style="background:var(--positive-bg);border:1px solid var(--positive-text)"></span>Recebido</li><li><span class="swatch" style="background:var(--warning-bg);border:1px solid var(--warning-text)"></span>Previsto</li><li><span class="swatch" style="border:2px solid var(--brand-vivid)"></span>Hoje na demo (24 nov)</li></ul>
     <h3 class="h3" style="margin-top:20px">Pagamentos em ${MESES[m]} de ${y}</h3>
-    ${doMes.length ? `<ul class="calc-list" style="margin-top:8px">${doMes.map((e) => `<li><span>${String(e.d).padStart(2, '0')}/${String(m + 1).padStart(2, '0')} · ${esc(ativo(e.p.code).name)} · ${e.p.tipo} · <strong>${e.tipo === 'rec' ? 'Recebido' : 'Previsto'}</strong></span><span>${pBrl(e.p.valor)}</span></li>`).join('')}</ul>`
+    ${doMes.length ? `<ul class="calc-list cal-list" style="margin-top:8px">${doMes.map((e) => `<li><a href="#/proventos/pagamento/${e.p.id}?de=calendario"><span>${String(e.d).padStart(2, '0')}/${String(m + 1).padStart(2, '0')} · ${esc(ativo(e.p.code).name)} · ${e.p.tipo}</span>
+        <span class="ev-status ${e.tipo}">${e.tipo === 'rec' ? 'Recebido' : 'Previsto'}</span></a><span class="num">${pBrl(e.p.valor)}</span></li>`).join('')}</ul>
+      <p class="meta" style="margin-top:6px">Abra um pagamento para ver o detalhe${filtro !== 'recebidos' ? ' e adicionar os previstos ao seu calendário' : ''}.</p>`
       : '<p class="muted" style="margin-top:8px">Nenhum pagamento neste mês.</p>'}
-    ${filtro !== 'recebidos' ? provAReceber().filter((p) => !p.dia).map((p) => `<p class="meta" style="margin-top:8px">${esc(ativo(p.code).name)} · ${p.tipo}: data a confirmar, fora do calendário.</p>`).join('') : ''}
+    ${filtro !== 'recebidos' ? provAReceber().filter((p) => !p.dia).map((p) => `<p class="meta" style="margin-top:8px"><a href="#/proventos/pagamento/${p.id}?de=calendario">${esc(ativo(p.code).name)} · ${p.tipo}</a>: Data a confirmar, fora do calendário.</p>`).join('') : ''}
   </section>`;
 }
 ACTIONS['cal-nav'] = (el) => { let m = ui.cal.m + +el.dataset.d, y = ui.cal.y; if (m < 0) { m = 11; y--; } if (m > 11) { m = 0; y++; } ui.cal.m = m; ui.cal.y = y; rerender(`[data-action="cal-nav"][data-d="${el.dataset.d}"]`); };

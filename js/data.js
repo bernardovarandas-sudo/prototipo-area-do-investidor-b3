@@ -156,14 +156,14 @@ const TIPOS_NOTICIA = {
 
 /* Proventos — recorte separado do cálculo de variação. */
 const PROVENTOS_RECEBIDOS = [
-  { data: '05/11/2026', mes: '2026-11', code: 'DEMO2', tipo: 'Juros sobre capital próprio', inst: 'Corretora B', valor: 80.00 },
-  { data: '14/10/2026', mes: '2026-10', code: 'DEMO1', tipo: 'Dividendos', inst: 'Corretora A', valor: 63.00 },
-  { data: '14/10/2026', mes: '2026-10', code: 'DEMO1', tipo: 'Dividendos', inst: 'Corretora B', valor: 27.00 },
-  { data: '22/09/2026', mes: '2026-09', code: 'DEMO3', tipo: 'Dividendos', inst: 'Corretora A', valor: 36.00 },
+  { id: 'rec-demo2-20261105', data: '05/11/2026', mes: '2026-11', code: 'DEMO2', tipo: 'Juros sobre capital próprio', inst: 'Corretora B', valor: 80.00 },
+  { id: 'rec-demo1a-20261014', data: '14/10/2026', mes: '2026-10', code: 'DEMO1', tipo: 'Dividendos', inst: 'Corretora A', valor: 63.00 },
+  { id: 'rec-demo1b-20261014', data: '14/10/2026', mes: '2026-10', code: 'DEMO1', tipo: 'Dividendos', inst: 'Corretora B', valor: 27.00 },
+  { id: 'rec-demo3-20260922', data: '22/09/2026', mes: '2026-09', code: 'DEMO3', tipo: 'Dividendos', inst: 'Corretora A', valor: 36.00 },
 ];
 const PROVENTOS_A_RECEBER = [
-  { data: '15/12/2026', dia: '2026-12-15', code: 'DEMO1', tipo: 'Dividendos', inst: 'Corretoras A e B', valor: 40.00 },
-  { data: null, dia: null, code: 'DEMO3', tipo: 'Juros sobre capital próprio', inst: 'Corretora A', valor: null },
+  { id: 'prev-demo1-20261215', data: '15/12/2026', dia: '2026-12-15', code: 'DEMO1', tipo: 'Dividendos', inst: 'Corretoras A e B', valor: 40.00 },
+  { id: 'prev-demo3-jcp', data: null, dia: null, code: 'DEMO3', tipo: 'Juros sobre capital próprio', inst: 'Corretora A', valor: null },
 ];
 const RADAR = [
   { code: 'DEMO1', tipo: 'Dividendos', anuncio: '20 nov', pagamento: '15 dez', paraVoce: true },
@@ -196,7 +196,8 @@ const EXTRATOS = {
 const NOTIFICACOES = [
   { id: 'a1', titulo: 'Aurora divulgou resultado do trimestre', data: '24 nov, 08h', destino: '/noticias?aba=carteira&painel=n1', acao: 'Entender o que mudou' },
   { id: 'a2', titulo: 'Assembleia da Nova Azul em 2 dez', data: '22 nov, 09h', destino: '/servicos/voto', acao: 'Ver assembleia' },
-  { id: 'a3', titulo: 'Provento previsto para 15 dez', data: '20 nov, 14h', destino: '/proventos/a-receber', acao: 'Ver proventos' },
+  { id: 'a3', titulo: 'Provento previsto para 15 dez', data: '20 nov, 14h', destino: '/proventos/pagamento/prev-demo1-20261215', acao: 'Ver pagamento' },
+  { id: 'a4', titulo: 'Seu resumo da semana está pronto', data: '24 nov, 19h', destino: '/carteira/resumo?semana=2026-11-24', acao: 'Ver resumo semanal' },
 ];
 
 const ASSEMBLEIAS = [
@@ -415,3 +416,28 @@ const CORRETORAS = [
   ['XP Investimentos', 'https://www.xpi.com.br/'],
 ];
 const INSTITUICOES_DEMO = ['Corretora A', 'Corretora B'];
+
+/* Resumo semanal da conta principal. Preços de início de semana coerentes com o fechamento de 24 nov (ATIVOS.preco).
+   As quantidades são as do fim de cada semana; entradas (liquidações) aparecem à parte e não contam como variação de preço. */
+const SEMANAS = [
+  {
+    id: '2026-11-24', titulo: 'Semana de 18 a 24 nov 2026', curto: '18 a 24 nov', de: 20261118, ate: 20261124,
+    ini: '17 nov, 18h', fim: '24 nov, 18h', fimData: '24 nov',
+    precoIni: { DEMO1: 23.10, DEMO2: 29.40, DEMO3: 45.90 },
+    precoFim: null, // usa o preço atual de cada ativo (24 nov)
+    qtd: { DEMO1: 1000, DEMO2: 400, DEMO3: 200 },
+    entradas: [{ data: '18 nov', code: 'DEMO1', qtd: 200, inst: 'Corretora A', origem: 'compra de 14 nov, liquidada em 18 nov' }],
+    eventos: [{ data: '20 nov', code: 'DEMO1', texto: 'Aurora anunciou dividendos com pagamento previsto para 15 dez.', provId: 'prev-demo1-20261215' }],
+    compras: true, // compras feitas na demo entram nesta semana (consideradas desde 23 nov)
+  },
+  {
+    id: '2026-11-17', titulo: 'Semana de 11 a 17 nov 2026', curto: '11 a 17 nov', de: 20261111, ate: 20261117,
+    ini: '10 nov, 18h', fim: '17 nov, 18h', fimData: '17 nov',
+    precoIni: { DEMO1: 22.60, DEMO2: 29.20, DEMO3: 44.80 },
+    precoFim: { DEMO1: 23.10, DEMO2: 29.40, DEMO3: 45.90 },
+    qtd: { DEMO1: 800, DEMO2: 400, DEMO3: 200 },
+    entradas: [],
+    eventos: [],
+    compras: false,
+  },
+];

@@ -18,6 +18,10 @@ const ROUTES = [
   { re: /^\/carteira$/, view: viewCarteira, private: true },
   { re: /^\/carteira\/investimentos(?:\/(posicao|garantias))?$/, view: viewInvestimentos, private: true },
   { re: /^\/carteira\/ia$/, view: viewIA, private: true },
+  { re: /^\/carteira\/resumo$/, view: viewResumo, private: true },
+  { re: /^\/perfil$/, view: viewPerfil, private: true },
+  { re: /^\/demo\/resumo-email$/, view: viewResumoEmail },
+  { re: /^\/proventos\/pagamento\/([a-z0-9-]+)$/, view: viewProvento, private: true },
   { re: /^\/extratos(?:\/(movimentacao|negociacao|eventos|ofertas))?$/, view: viewExtratos, private: true },
   { re: /^\/proventos(?:\/(visao|recebidos|a-receber|radar|calendario))?$/, view: viewProventos, private: true },
   { re: /^\/portabilidade(?:\/(transferir|solicitacoes))?$/, view: viewPortabilidade, private: true },
@@ -171,6 +175,8 @@ function renderTopbar(v, route) {
           <div class="popover" id="pop-user" hidden style="width:280px">
             <h2>${esc(c.nome)}</h2>
             <p class="meta" style="padding:0 8px 8px">CPF ${c.cpf} · ${esc(c.email)}<br>Conta fictícia, somente leitura.</p>
+            <a class="menu-item" href="#/perfil">${icon('user', 18)}Perfil e preferências</a>
+            <a class="menu-item" href="#/demo/resumo-email">${icon('mail', 18)}Prévia do resumo semanal</a>
             <a class="menu-item" href="#/demo/aviso">${icon('mail', 18)}Prévia de aviso por e-mail</a>
             <button type="button" class="menu-item" data-action="logout">${icon('logout', 18)}Sair</button>
           </div>
@@ -186,6 +192,7 @@ function renderFooter() {
     <li><a href="https://borainvestir.b3.com.br/" target="_blank" rel="noopener">Educação ${icon('external', 12)}<span class="sr-only">(abre site da B3 em nova aba)</span></a></li>
     <li><a href="#/info/acessibilidade">Acessibilidade</a></li>
     <li><a href="#/demo/aviso">Prévia de aviso por e-mail (demo)</a></li>
+    <li><a href="#/demo/resumo-email">Prévia do resumo semanal (demo)</a></li>
     <li>Protótipo acadêmico · Squad Capital · Dados simulados, sem relação com contas reais</li>
   </ul>`;
 }

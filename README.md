@@ -15,6 +15,8 @@ Protótipo acadêmico do Squad Capital, feito no ciclo prático com a B3. **Todo
 - **Portabilidade:** simulação em 4 etapas, com a solicitação em "Minhas solicitações".
 - **Voto a distância:** votação simulada na assembleia da Nova Azul.
 - **Serviços, Feedback e páginas institucionais:** consulta e exemplos.
+- **Resumo semanal:** em Minha carteira › Visão geral › "Ver resumo semanal", com a variação da semana, até três destaques e atalho para o impacto das notícias. Em Perfil › Preferências dá para ligar "Receber resumo semanal da carteira" (salvo no navegador). A prévia do e-mail fica no menu do perfil e no rodapé.
+- **Proventos no calendário:** em Proventos › A receber e no detalhe de cada pagamento, "Adicionar ao meu calendário" baixa um arquivo .ics (dia inteiro, "Conferir provento na B3", sem valores) com link de volta para o pagamento.
 
 ## Roteiro para testar o impacto das notícias
 
