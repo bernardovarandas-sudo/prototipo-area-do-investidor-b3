@@ -41,6 +41,13 @@ const POSICOES_PRINCIPAL = [
   { code: 'DEMO1', inst: 'Corretora B', qtd: 300 },
   { code: 'DEMO2', inst: 'Corretora B', qtd: 400 },
   { code: 'DEMO3', inst: 'Corretora A', qtd: 200 },
+  { code: 'GLPD11', inst: 'Corretora A', qtd: 50 },
+  { code: 'IBOD11', inst: 'Corretora B', qtd: 40 },
+  { code: 'TSELIC29', inst: 'Corretora A', qtd: 0.5 },
+  { code: 'TIPCA35', inst: 'Corretora A', qtd: 2.1 },
+  { code: 'CDBDEMO', inst: 'Corretora B', qtd: 1 },
+  { code: 'LCIDEMO', inst: 'Corretora B', qtd: 1 },
+  { code: 'FMULTI', inst: 'Corretora B', qtd: 2500 },
 ];
 
 const CONTAS = {
@@ -552,3 +559,104 @@ const MOTIVOS = {
     mes: ['Em 21 out, a WEG mostrou lucro um pouco abaixo do esperado, com margem menor.', 'O dólar mais baixo reduz o valor das vendas no exterior, que são 62,5% da receita, e isso pesou na ação.'],
   },
 };
+
+/* ---------- Outros tipos de investimento (todos fictícios) ----------
+   Mesmo modelo das ações: quantidade × preço unitário. Renda fixa e fundos usam o preço unitário (PU) ou a cota do dia. */
+ATIVOS.forEach((a) => { a.classe = a.classe || 'Ações'; a.produto = a.produto || 'Ações'; a.unidade = a.unidade || 'ações'; });
+ATIVOS.push(
+  { code: 'GLPD11', name: 'Galpões Logísticos Demo FII', classe: 'Fundos imobiliários', produto: 'FII', setor: 'Logística', tipo: 'Cotas de fundo imobiliário', unidade: 'cotas', preco: 98.50, anterior: 98.10, p30: 96.80, negociavel: true },
+  { code: 'IBOD11', name: 'ETF Ibovespa Demo', classe: 'ETFs', produto: 'ETF', setor: 'Índice', tipo: 'Cotas de ETF', unidade: 'cotas', preco: 132.00, anterior: 131.00, p30: 128.30, negociavel: true },
+  { code: 'TSELIC29', name: 'Tesouro Selic 2029', classe: 'Renda fixa', produto: 'Tesouro Direto', setor: 'Títulos públicos', tipo: 'Título público pós-fixado', unidade: 'títulos', preco: 16420.35, anterior: 16413.10, p30: 16240.00, vencimento: '01/03/2029', indexador: 'Selic', emissor: 'Tesouro Nacional' },
+  { code: 'TIPCA35', name: 'Tesouro IPCA+ 2035', classe: 'Renda fixa', produto: 'Tesouro Direto', setor: 'Títulos públicos', tipo: 'Título público atrelado à inflação', unidade: 'títulos', preco: 2380.40, anterior: 2385.10, p30: 2352.00, vencimento: '15/05/2035', indexador: 'IPCA + 6,8% ao ano', emissor: 'Tesouro Nacional' },
+  { code: 'CDBDEMO', name: 'CDB Banco Demo 110% CDI', classe: 'Renda fixa', produto: 'CDB', setor: 'Títulos bancários', tipo: 'Certificado de depósito bancário', unidade: 'aplicação', preco: 6105.22, anterior: 6102.10, p30: 6020.00, vencimento: '15/06/2028', indexador: '110% do CDI', emissor: 'Banco Demo S.A.' },
+  { code: 'LCIDEMO', name: 'LCI Banco Demo 95% CDI', classe: 'Renda fixa', produto: 'LCI', setor: 'Títulos bancários', tipo: 'Letra de crédito imobiliário', unidade: 'aplicação', preco: 3040.10, anterior: 3038.95, p30: 3004.00, vencimento: '10/01/2027', indexador: '95% do CDI', emissor: 'Banco Demo S.A.' },
+  { code: 'FMULTI', name: 'Fundo Multimercado Demo FIM', classe: 'Fundos', produto: 'Fundo multimercado', setor: 'Multimercado', tipo: 'Cotas de fundo de investimento', unidade: 'cotas', preco: 1.8423, anterior: 1.8410, p30: 1.8250, gestora: 'Gestora Demo' },
+);
+ATIVOS.forEach((a) => { if (a.classe === 'Ações') a.negociavel = true; });
+const CLASSES = ['Ações', 'Fundos imobiliários', 'ETFs', 'Renda fixa', 'Fundos'];
+const CLASSE_CURTA = { 'Ações': 'Ações', 'Fundos imobiliários': 'FIIs', 'ETFs': 'ETFs', 'Renda fixa': 'Renda fixa', 'Fundos': 'Fundos' };
+
+/* Quantidades em 24 out e entradas do período (30 dias). */
+Object.assign(QTD_30D_PRINCIPAL, { GLPD11: 50, IBOD11: 30, TSELIC29: 0.4, TIPCA35: 2.1, CDBDEMO: 1, LCIDEMO: 1, FMULTI: 2500 });
+ENTRADAS_30D.push({ data: '5 nov', code: 'TSELIC29', qtd: 0.1 }, { data: '12 nov', code: 'IBOD11', qtd: 10 });
+ENTRADAS_30D.sort((a, b) => parseInt(a.data) - parseInt(b.data));
+
+/* Resumo semanal: preços de início/fim de semana dos outros investimentos. */
+Object.assign(SEMANAS[0].precoIni, { GLPD11: 97.90, IBOD11: 129.40, TSELIC29: 16380.00, TIPCA35: 2371.00, CDBDEMO: 6084.00, LCIDEMO: 3032.00, FMULTI: 1.8380 });
+Object.assign(SEMANAS[0].qtd, { GLPD11: 50, IBOD11: 40, TSELIC29: 0.5, TIPCA35: 2.1, CDBDEMO: 1, LCIDEMO: 1, FMULTI: 2500 });
+Object.assign(SEMANAS[1].precoIni, { GLPD11: 97.20, IBOD11: 127.80, TSELIC29: 16340.00, TIPCA35: 2390.00, CDBDEMO: 6063.00, LCIDEMO: 3024.00, FMULTI: 1.8330 });
+Object.assign(SEMANAS[1].precoFim, { GLPD11: 97.90, IBOD11: 129.40, TSELIC29: 16380.00, TIPCA35: 2371.00, CDBDEMO: 6084.00, LCIDEMO: 3032.00, FMULTI: 1.8380 });
+Object.assign(SEMANAS[1].qtd, { GLPD11: 50, IBOD11: 40, TSELIC29: 0.5, TIPCA35: 2.1, CDBDEMO: 1, LCIDEMO: 1, FMULTI: 2500 });
+SEMANAS[1].entradas.push({ data: '12 nov', code: 'IBOD11', qtd: 10, inst: 'Corretora B', origem: 'compra de 10 nov, liquidada em 12 nov' });
+
+/* Possíveis motivos para os outros investimentos. */
+Object.assign(MOTIVOS, {
+  GLPD11: { dia: ['O fundo manteve o rendimento mensal de R$ 0,80 por cota e os galpões seguem alugados.', 'Fundos imobiliários subiram junto com a bolsa no dia.'],
+    mes: ['O fundo pagou R$ 0,80 por cota em 14 nov e não teve saída de inquilinos no período.', 'Com a Selic parada em 13,75%, parte dos investidores voltou a comprar fundos de renda mensal.'] },
+  IBOD11: { dia: ['O ETF copia o Ibovespa: ele sobe e cai junto com as maiores ações da bolsa.', 'O Ibovespa subiu 0,8% no dia, e o ETF acompanhou.'],
+    mes: ['O ETF segue o Ibovespa, sem decisões próprias de compra e venda.', 'O Ibovespa subiu cerca de 2,8% em 30 dias, puxado por bancos e empresas de consumo.'] },
+  TSELIC29: { dia: ['O título rende a taxa Selic, então o valor sobe um pouco a cada dia útil.', 'A Selic está em 13,75% ao ano, o que dá cerca de 0,05% por dia útil.'],
+    mes: ['O título acumulou a Selic do período, sem sustos.', 'Com a Selic mantida em 13,75%, o rendimento seguiu igual.'] },
+  TIPCA35: { dia: ['O preço do título muda todos os dias conforme os juros do mercado (marcação a mercado).', 'Os juros futuros subiram um pouco no dia, e quando eles sobem o preço do título cai. Se você ficar até o vencimento, recebe a taxa combinada.'],
+    mes: ['O título acumulou a inflação mais a taxa combinada no período.', 'Os juros futuros caíram no começo de novembro, o que valorizou títulos longos.'] },
+  CDBDEMO: { dia: ['O CDB rende 110% do CDI, então o valor sobe a cada dia útil.', 'O CDI acompanha a Selic, hoje em 13,75% ao ano.'],
+    mes: ['O CDB acumulou 110% do CDI do período.', 'Com a Selic estável, o rendimento seguiu igual.'] },
+  LCIDEMO: { dia: ['A LCI rende 95% do CDI e é isenta de imposto de renda para pessoa física.', 'O CDI acompanha a Selic, hoje em 13,75% ao ano.'],
+    mes: ['A LCI acumulou 95% do CDI do período, sem imposto.', 'Com a Selic estável, o rendimento seguiu igual.'] },
+  FMULTI: { dia: ['A cota do fundo subiu com ganhos em juros e em ações.', 'O dia foi positivo para a bolsa e para títulos públicos.'],
+    mes: ['O gestor ganhou com a queda dos juros longos no começo do mês.', 'A alta da bolsa no período também ajudou a cota.'] },
+});
+
+/* Rendimentos mensais do FII (R$ 0,80 por cota × 50 cotas). */
+for (let m = 1; m <= 11; m++) {
+  const mm = String(m).padStart(2, '0');
+  PROVENTOS_RECEBIDOS.push({ id: `rec-glpd11-2026${mm}14`, data: `14/${mm}/2026`, mes: `2026-${mm}`, code: 'GLPD11', tipo: 'Rendimento', inst: 'Corretora A', valor: 40.00 });
+}
+PROVENTOS_RECEBIDOS.sort((a, b) => b.data.split('/').reverse().join('').localeCompare(a.data.split('/').reverse().join('')));
+PROVENTOS_A_RECEBER.push({ id: 'prev-glpd11-20261214', data: '14/12/2026', dia: '2026-12-14', code: 'GLPD11', tipo: 'Rendimento', inst: 'Corretora A', valor: 40.00 });
+PROVENTOS_A_RECEBER.sort((a, b) => (a.dia || '9999').localeCompare(b.dia || '9999'));
+RADAR.push({ code: 'GLPD11', tipo: 'Rendimento', anuncio: '30 out', pagamento: '14 nov' });
+
+/* Garantias (ativos bloqueados para cobrir operações). */
+const GARANTIAS = [
+  { code: 'TSELIC29', inst: 'Corretora A', qtd: 0.2, finalidade: 'Margem para operações com opções', desde: '03/11/2026' },
+  { code: 'DEMO2', inst: 'Corretora B', qtd: 100, finalidade: 'Garantia de empréstimo de ações (aluguel)', desde: '12/11/2026' },
+];
+
+/* Ativos mais negociados: volume financeiro (R$ milhões) e número de negócios no dia. Simulado. */
+const NEGOCIACAO_DIA = {
+  PETR4: [2150, 98400], VALE3: [1890, 87100], ITUB4: [980, 45200], BBAS3: [760, 41000], MGLU3: [410, 52300], WEGE3: [350, 18900],
+  DEMO1: [120, 9800], DEMO2: [85, 6100], DEMO3: [70, 5200], DEMO4: [64, 7400], DEMO5: [48, 3900], DEMO6: [210, 12500], DEMO7: [39, 4100], DEMO8: [160, 10200],
+};
+
+/* Evolução do patrimônio (fim de cada mês). Inclui aportes; não é rentabilidade. Out e nov são calculados da posição. */
+const EVOLUCAO = [
+  ['dez/25', 58400], ['jan/26', 59300], ['fev/26', 60100], ['mar/26', 62900], ['abr/26', 63500], ['mai/26', 65800],
+  ['jun/26', 66200], ['jul/26', 68300], ['ago/26', 68900], ['set/26', 71200],
+];
+
+/* Extratos dos outros investimentos e ofertas públicas. */
+const _dn = (d) => { const [dd, mm, yy] = d.split('/'); return +(yy + mm + dd); };
+EXTRATOS.movimentacao.push(
+  { data: '14/11/2026', mov: 'Crédito de rendimento', code: 'GLPD11', inst: 'Corretora A', qtd: 50, valor: 40.00, entrada: true, detalhe: 'Rendimento mensal do fundo imobiliário, R$ 0,80 por cota. Veja também em Proventos.' },
+  { data: '12/11/2026', mov: 'Transferência – liquidação', code: 'IBOD11', inst: 'Corretora B', qtd: 10, valor: null, entrada: true, detalhe: 'Entrada das cotas compradas em 10/11, após a liquidação.' },
+  { data: '12/11/2026', mov: 'Bloqueio em garantia', code: 'DEMO2', inst: 'Corretora B', qtd: 100, valor: null, entrada: false, detalhe: 'Ações bloqueadas como garantia de empréstimo de ações. Elas continuam suas, mas não podem ser vendidas enquanto estiverem bloqueadas.' },
+  { data: '05/11/2026', mov: 'Aplicação – Tesouro Direto', code: 'TSELIC29', inst: 'Corretora A', qtd: 0.1, valor: 1630.40, entrada: true, detalhe: 'Compra de título público pelo Tesouro Direto, por meio da corretora.' },
+  { data: '03/11/2026', mov: 'Bloqueio em garantia', code: 'TSELIC29', inst: 'Corretora A', qtd: 0.2, valor: null, entrada: false, detalhe: 'Títulos bloqueados como margem para operações com opções.' },
+);
+EXTRATOS.movimentacao.sort((a, b) => _dn(b.data) - _dn(a.data));
+EXTRATOS.negociacao.push({ data: '10/11/2026', lado: 'Compra', code: 'IBOD11', inst: 'Corretora B', qtd: 10, preco: 129.10, liquidacao: '12/11/2026' });
+EXTRATOS.negociacao.sort((a, b) => _dn(b.data) - _dn(a.data));
+EXTRATOS.eventos.push({ data: '14/11/2026', evento: 'Rendimento de FII', code: 'GLPD11', situacao: 'Pago', valor: 40.00 });
+EXTRATOS.eventos.sort((a, b) => _dn(b.data) - _dn(a.data));
+EXTRATOS.ofertas = [
+  { data: '18/11/2026', oferta: 'Oferta subsequente de ações (follow-on)', code: 'DEMO5', inst: 'Corretora A', qtdPedida: 300, qtdAlocada: 0, preco: 18.20, situacao: 'Reserva cancelada pela investidora' },
+  { data: '07/11/2026', oferta: 'Oferta de cotas · 2ª emissão', code: 'GLPD11', inst: 'Corretora A', qtdPedida: 20, qtdAlocada: 0, preco: 97.00, situacao: 'Não atendida no rateio' },
+];
+
+/* Radar: data com e valor por ação dos anúncios (fictícios). DY = valor por ação ÷ preço atual. */
+const RADAR_EXTRA = {
+  DEMO1: ['25 nov', 0.04], DEMO3: ['28 nov', 0.18], DEMO6: ['26 nov', 0.50], DEMO8: ['27 nov', 0.70],
+  ITUB4: ['14 nov', 0.02], PETR4: ['22 dez', 0.45], WEGE3: ['30 nov', 0.13], GLPD11: ['31 out', 0.80],
+};
+RADAR.forEach((r) => { const x = RADAR_EXTRA[r.code]; if (x) { r.dataCom = x[0]; r.vps = x[1]; } });

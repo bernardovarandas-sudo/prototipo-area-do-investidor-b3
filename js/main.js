@@ -175,7 +175,7 @@ function renderTopbar(v, route) {
           <div class="popover" id="pop-user" hidden style="width:280px">
             <h2>${esc(c.nome)}</h2>
             <p class="meta" style="padding:0 8px 8px">CPF ${c.cpf} · ${esc(c.email)}<br>Conta fictícia, somente leitura.</p>
-            <a class="menu-item" href="#/perfil">${icon('user', 18)}Perfil e preferências</a>
+            <a class="menu-item" href="#/perfil">${icon('user', 18)}Gerenciar meu acesso</a>
             <a class="menu-item" href="#/demo/resumo-email">${icon('mail', 18)}Prévia do resumo semanal</a>
             <a class="menu-item" href="#/demo/aviso">${icon('mail', 18)}Prévia de aviso por e-mail</a>
             <button type="button" class="menu-item" data-action="logout">${icon('logout', 18)}Sair</button>
@@ -300,7 +300,7 @@ Object.assign(ACTIONS, {
   logout: () => {
     if (state.session) state.compras[state.session.conta] = [];
     state.session = null; state.hide = false; save();
-    Object.assign(ui, { solicitacoes: [], votos: {}, compraOk: null }); ui.porta = { passo: 1, origem: '', destino: '', itens: {} };
+    Object.assign(ui, { solicitacoes: [], votos: {}, compraOk: null, appsRevogados: [], revar: { vinculado: false, tela: 'inicio' } }); ui.porta = { passo: 1, origem: '', destino: '', itens: {} };
     Object.assign(ui, { periodo: 'visita', feedbackEnviado: false }); ui.expand = {};
     announce('Você saiu. Dados pessoais removidos da tela.');
     go('/');

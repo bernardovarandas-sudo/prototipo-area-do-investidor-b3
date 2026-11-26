@@ -5,7 +5,18 @@ const PERIODOS_EXTRATO = {
   '30d': { label: 'Últimos 30 dias', faixa: '25 out a 24 nov 2026', de: 20261025, ate: 20261124 },
   '7d': { label: 'Últimos 7 dias', faixa: '18 a 24 nov 2026', de: 20261118, ate: 20261124 },
   '2025': { label: 'Novembro de 2025', faixa: '1 a 30 nov 2025', de: 20251101, ate: 20251130 },
+  personalizado: { label: 'Período personalizado' },
 };
+/* Período do extrato, inclusive o personalizado (datas escolhidas no filtro). Texto “Exibindo: dd/mm/aaaa - dd/mm/aaaa” como no portal. */
+const isoParaNum = (iso) => +iso.replace(/-/g, '');
+const isoParaBr = (iso) => iso.split('-').reverse().join('/');
+const numParaBr = (n) => { const t = String(n); return `${t.slice(6, 8)}/${t.slice(4, 6)}/${t.slice(0, 4)}`; };
+function periodoExtrato() {
+  const s = ui.extrato;
+  if (s.periodo === 'personalizado') return { label: 'Período personalizado', de: isoParaNum(s.de || '2026-10-01'), ate: isoParaNum(s.ate || '2026-11-24') };
+  return PERIODOS_EXTRATO[s.periodo];
+}
+const exibindo = (p) => `${numParaBr(p.de)} - ${numParaBr(p.ate)}`;
 
 /* ---------- Dados por conta: base da conta principal + compras feitas na demo ---------- */
 const ehPrincipal = () => state.session && state.session.conta === 'principal';
@@ -34,10 +45,11 @@ function provAReceber() {
 
 /* ---------- Extratos ---------- */
 function extratoLinhas(aba) {
-  const s = ui.extrato, p = PERIODOS_EXTRATO[s.periodo];
+  const s = ui.extrato, p = periodoExtrato();
   return extratoBase(aba).filter((r) => {
     const d = dataNum(r.data);
-    return d >= p.de && d <= p.ate && (!s.aplicado.inst || r.inst === s.aplicado.inst) && (!s.aplicado.ativo || r.code === s.aplicado.ativo);
+    return d >= p.de && d <= p.ate && (!s.aplicado.inst || r.inst === s.aplicado.inst) && (!s.aplicado.ativo || r.code === s.aplicado.ativo)
+      && (!s.aplicado.classe || ativo(r.code).classe === s.aplicado.classe);
   });
 }
 
@@ -55,23 +67,28 @@ function extratoTabela(aba, linhas) {
       ${linhas.map((r, i) => { const k = 'neg-' + i; return `<tr><td class="nowrap">${r.data}</td><td>${r.lado}</td><td>${ativoCell(r.code, r.demo)}</td><td class="col-sec">${r.inst}</td><td class="num">${pQtd(r.qtd)}</td><td class="num">${btn(k, r.lado + ' ' + r.data)}</td></tr>
         ${det(k, 6, `<dl class="dl"><div><dt>Preço</dt><dd>${fmt.brl(r.preco)}</dd></div><div><dt>Valor</dt><dd>${pBrl(r.preco * r.qtd)}</dd></div><div><dt>Data de liquidação</dt><dd>${r.liquidacao}</dd></div></dl><p style="margin-top:8px">${termHelp('liquidacao', 'liquidação')}</p>`)}`; }).join('')}</tbody></table>`;
   }
+  if (aba === 'ofertas') {
+    return `<table><caption class="sr-only">Ofertas públicas</caption><thead><tr><th scope="col">Data</th><th scope="col">Oferta</th><th scope="col">Ativo</th><th scope="col" class="col-sec">Instituição</th><th scope="col" class="num">Pedida / alocada</th><th scope="col">Situação</th></tr></thead><tbody>
+      ${linhas.map((r) => `<tr><td class="nowrap">${r.data}</td><td>${esc(r.oferta)}<br><span class="meta">Preço por ${unid(ativo(r.code), 1).replace(/s$/, '')}: ${fmt.brl(r.preco)}</span></td><td>${ativoCell(r.code)}</td><td class="col-sec">${r.inst}</td><td class="num">${pQtd(r.qtdPedida)} / ${pQtd(r.qtdAlocada)}</td><td>${esc(r.situacao)}</td></tr>`).join('')}</tbody></table>
+      <p class="meta" style="margin-top:8px">Reservas em ofertas públicas são feitas pela corretora. Quando há alocação, as cotas ou ações aparecem na posição depois da liquidação.</p>`;
+  }
   return `<table><caption class="sr-only">Eventos</caption><thead><tr><th scope="col">Data</th><th scope="col">Evento</th><th scope="col">Ativo</th><th scope="col" class="col-sec">Situação</th><th scope="col" class="num">Valor</th></tr></thead><tbody>
     ${linhas.map((r) => `<tr><td class="nowrap">${r.data}</td><td>${esc(r.evento)}<br><a class="meta" href="#/proventos">Ver em Proventos</a></td><td>${ativoCell(r.code)}</td><td class="col-sec">${esc(r.situacao)}</td><td class="num">${pBrl(r.valor)}</td></tr>`).join('')}</tbody></table>`;
 }
 
 function viewExtratos(route) {
   const aba = route.m[1] || 'movimentacao';
-  const s = ui.extrato, p = PERIODOS_EXTRATO[s.periodo];
+  const s = ui.extrato, p = periodoExtrato();
   const linhas = extratoLinhas(aba);
   const nomes = { movimentacao: 'Movimentação', negociacao: 'Negociação', eventos: 'Eventos', ofertas: 'Ofertas públicas' };
-  const chips = [s.aplicado.inst && ['inst', 'Instituição: ' + s.aplicado.inst], s.aplicado.ativo && ['ativo', 'Ativo: ' + ativo(s.aplicado.ativo).name]].filter(Boolean);
+  const chips = [s.aplicado.inst && ['inst', 'Instituição: ' + s.aplicado.inst], s.aplicado.classe && ['classe', 'Classe: ' + s.aplicado.classe], s.aplicado.ativo && ['ativo', 'Ativo: ' + ativo(s.aplicado.ativo).name]].filter(Boolean);
   const temInst = aba !== 'eventos' && aba !== 'ofertas';
 
   let corpo;
   if (!linhas.length) {
     corpo = emptyState({
       title: 'Nenhum resultado para esse período',
-      text: aba === 'ofertas' ? 'Na demonstração, esta conta não tem registros de ofertas públicas.' : `Não há registros de ${nomes[aba].toLowerCase()} de ${p.faixa}${chips.length ? ' com os filtros aplicados' : ''}.`,
+      text: `Você não tem resultado de ${nomes[aba].toLowerCase()} entre ${exibindo(p)}${chips.length ? ' com os filtros aplicados' : ''}. Tente filtrar por um período maior.`,
       actions: '<button type="button" class="btn btn-outline btn-sm" data-action="ext-alterar">Alterar filtros</button>' + (chips.length ? '<button type="button" class="btn btn-link btn-sm" data-action="ext-limpar">Limpar filtros</button>' : ''),
       iconName: 'file',
     });
@@ -95,20 +112,24 @@ function viewExtratos(route) {
         <h2 class="h3" style="margin-bottom:12px">Filtrar extrato</h2>
         <div class="filter-grid">
           ${temInst ? `<div class="field"><label for="f-inst">Instituição</label><select id="f-inst" name="inst" class="select"><option value="">Todas</option>${INSTITUICOES_DEMO.map((i) => `<option ${s.aplicado.inst === i ? 'selected' : ''}>${i}</option>`).join('')}</select></div>` : ''}
-          <div class="field"><label for="f-ativo">Ativo</label><select id="f-ativo" name="ativo" class="select"><option value="">Todos</option>${[...new Set(['movimentacao', 'negociacao', 'eventos'].flatMap((k) => extratoBase(k).map((r) => r.code)))].map((c) => `<option value="${c}" ${s.aplicado.ativo === c ? 'selected' : ''}>${ativo(c).name} · ${c}</option>`).join('')}</select></div>
+          <div class="field"><label for="f-classe">Classe de produto</label><select id="f-classe" name="classe" class="select"><option value="">Todas</option>${CLASSES.map((c) => `<option ${s.aplicado.classe === c ? 'selected' : ''}>${c}</option>`).join('')}</select></div>
+          <div class="field"><label for="f-ativo">Ativo</label><select id="f-ativo" name="ativo" class="select"><option value="">Todos</option>${[...new Set(['movimentacao', 'negociacao', 'eventos', 'ofertas'].flatMap((k) => extratoBase(k).map((r) => r.code)))].map((c) => `<option value="${c}" ${s.aplicado.ativo === c ? 'selected' : ''}>${ativo(c).name} · ${c}</option>`).join('')}</select></div>
+          <div class="field"><label for="f-de">Data inicial</label><input id="f-de" name="de" type="date" class="input" min="2025-01-01" max="2026-11-24" value="${s.de || '2026-10-25'}"></div>
+          <div class="field"><label for="f-ate">Data final</label><input id="f-ate" name="ate" type="date" class="input" min="2025-01-01" max="2026-11-24" value="${s.ate || '2026-11-24'}"></div>
         </div>
+        <p class="meta" style="margin-top:8px">Ao mudar as datas, o período passa a ser personalizado.</p>
         <div class="btn-row"><button class="btn btn-primary" type="submit">Aplicar filtros</button><button class="btn btn-link" type="button" data-action="ext-limpar">Limpar</button></div>
       </form>
       <div class="card filter-panel" id="ext-baixar" ${s.baixarAberto && linhas.length ? '' : 'hidden'}>
         <h2 class="h3">Baixar extrato</h2>
-        <p class="meta" style="margin:4px 0 12px">${nomes[aba]} · ${p.faixa}${chips.length ? ' · com filtros' : ''}</p>
+        <p class="meta" style="margin:4px 0 12px">${nomes[aba]} · ${exibindo(p)}${chips.length ? ' · com filtros' : ''}</p>
         <fieldset style="border:0;padding:0;margin:0"><legend class="label" style="font-weight:600;color:var(--ink);font-size:14px">Formato</legend>
           <div class="btn-row" style="margin-top:4px">${['PDF', 'Excel'].map((f) => `<label style="display:inline-flex;gap:6px;align-items:center;min-height:44px"><input type="radio" name="fmt" value="${f}" data-change="ext-fmt" ${s.formato === f ? 'checked' : ''}> ${f}</label>`).join('')}</div></fieldset>
-        <div class="btn-row"><button type="button" class="btn btn-primary" data-action="ext-download" data-aba="${aba}">Baixar arquivo de exemplo</button></div>
-        <p class="meta" style="margin-top:8px">Na demonstração, o arquivo é um .csv fictício, identificado como tal.</p>
+        <div class="btn-row"><button type="button" class="btn btn-primary" data-action="ext-download" data-aba="${aba}">Baixar arquivo</button></div>
+        <p class="meta" style="margin-top:8px">O arquivo segue o modelo padrão da Área do Investidor e é marcado como demonstração, com dados simulados.</p>
       </div>
       ${chips.length ? `<div class="chips">${chips.map(([k, t]) => `<span class="chip">${esc(t)}<button type="button" data-action="ext-chip" data-k="${k}" aria-label="Remover filtro ${esc(t)}">${icon('x', 16)}</button></span>`).join('')}<button type="button" class="btn btn-link btn-sm" data-action="ext-limpar">Limpar filtros</button></div>` : ''}
-      <p class="meta" style="margin-bottom:12px">Exibindo de ${p.faixa} · ${linhas.length} ${linhas.length === 1 ? 'registro' : 'registros'}</p>
+      <p class="exibindo">Exibindo: <strong>${exibindo(p)}</strong> · ${linhas.length} ${linhas.length === 1 ? 'registro' : 'registros'}</p>
       ${corpo}`,
   };
 }
@@ -118,15 +139,36 @@ ACTIONS['ext-filtro'] = () => { ui.extrato.filtroAberto = !ui.extrato.filtroAber
 ACTIONS['ext-alterar'] = () => { ui.extrato.filtroAberto = true; rerender('#ext-periodo'); };
 ACTIONS['ext-baixar'] = () => { ui.extrato.baixarAberto = !ui.extrato.baixarAberto; ui.extrato.filtroAberto = false; rerender('[data-action="ext-baixar"]'); };
 SUBMITS['ext-filtro'] = (form) => {
-  ui.extrato.aplicado = { inst: form.inst ? form.inst.value : '', ativo: form.ativo.value };
+  const s = ui.extrato;
+  if (form.de.value && form.ate.value && (form.de.value !== (s.de || '2026-10-25') || form.ate.value !== (s.ate || '2026-11-24') || s.periodo === 'personalizado')) {
+    if (form.de.value > form.ate.value) { toast('A data inicial precisa ser antes da data final.'); form.de.focus(); return; }
+    s.de = form.de.value; s.ate = form.ate.value; s.periodo = 'personalizado';
+  }
+  ui.extrato.aplicado = { inst: form.inst ? form.inst.value : '', classe: form.classe.value, ativo: form.ativo.value };
   ui.extrato.filtroAberto = false; rerender('[data-action="ext-filtro"]'); announce('Filtros aplicados');
 };
-ACTIONS['ext-limpar'] = () => { ui.extrato.aplicado = { inst: '', ativo: '' }; rerender('[data-action="ext-filtro"]'); announce('Filtros removidos'); };
+ACTIONS['ext-limpar'] = () => { ui.extrato.aplicado = { inst: '', classe: '', ativo: '' }; rerender('[data-action="ext-filtro"]'); announce('Filtros removidos'); };
 ACTIONS['ext-chip'] = (el) => { ui.extrato.aplicado[el.dataset.k] = ''; rerender('[data-action="ext-filtro"]'); announce('Filtro removido'); };
+const NOMES_EXTRATO = { movimentacao: 'Movimentação', negociacao: 'Negociação', eventos: 'Eventos', ofertas: 'Ofertas públicas' };
 ACTIONS['ext-download'] = (el) => {
-  const aba = el.dataset.aba, linhas = extratoLinhas(aba), s = ui.extrato;
-  downloadDemo(`extrato-${aba}-demo.csv`, [`Formato escolhido: ${s.formato} · Período: ${PERIODOS_EXTRATO[s.periodo].faixa}`, 'Data;Descrição;Ativo;Instituição;Quantidade;Valor',
-    ...linhas.map((r) => [r.data, r.mov || r.lado || r.evento, r.code, r.inst || '', r.qtd || '', r.valor != null ? nf2.format(r.valor) : ''].join(';'))]);
+  const aba = el.dataset.aba, ls = extratoLinhas(aba), s = ui.extrato, p = periodoExtrato();
+  const cols = {
+    movimentacao: [[['Data', 'txt'], ['Movimentação', 'txt'], ['Ativo', 'txt'], ['Código', 'txt'], ['Instituição', 'txt'], ['Quantidade', 'qtd'], ['Valor', 'brl']],
+      (r) => [r.data, r.mov, ativo(r.code).name, r.code, r.inst, r.qtd, r.valor]],
+    negociacao: [[['Data', 'txt'], ['Compra/venda', 'txt'], ['Ativo', 'txt'], ['Código', 'txt'], ['Instituição', 'txt'], ['Quantidade', 'qtd'], ['Preço', 'brl'], ['Valor', 'brl'], ['Liquidação', 'txt']],
+      (r) => [r.data, r.lado, ativo(r.code).name, r.code, r.inst, r.qtd, r.preco, r.preco * r.qtd, r.liquidacao]],
+    eventos: [[['Data', 'txt'], ['Evento', 'txt'], ['Ativo', 'txt'], ['Código', 'txt'], ['Situação', 'txt'], ['Valor', 'brl']],
+      (r) => [r.data, r.evento, ativo(r.code).name, r.code, r.situacao, r.valor]],
+    ofertas: [[['Data', 'txt'], ['Oferta', 'txt'], ['Código', 'txt'], ['Instituição', 'txt'], ['Pedida', 'qtd'], ['Alocada', 'qtd'], ['Preço', 'brl'], ['Situação', 'txt']],
+      (r) => [r.data, r.oferta, r.code, r.inst, r.qtdPedida, r.qtdAlocada, r.preco, r.situacao]],
+  }[aba];
+  const f = s.aplicado;
+  baixarDocumento({
+    titulo: `Extrato de ${NOMES_EXTRATO[aba].toLowerCase()}`, arquivo: `extrato-${aba}-${String(p.de)}-${String(p.ate)}`, periodo: `Período: ${exibindo(p)}`,
+    filtros: [f.inst && 'Instituição: ' + f.inst, f.classe && 'Classe: ' + f.classe, f.ativo && 'Ativo: ' + f.ativo].filter(Boolean).join(' · '),
+    colunas: cols[0], linhas: ls.map(cols[1]),
+    notas: aba === 'negociacao' ? ['A data da negociação é diferente da data de liquidação. Em ações à vista, a liquidação costuma ocorrer em D+2.'] : [],
+  }, s.formato === 'Excel' ? 'xlsx' : 'pdf');
 };
 
 /* ---------- Proventos ---------- */
@@ -165,6 +207,8 @@ function viewProventos(route) {
     body = `<div class="query-bar">
         <div class="field"><label for="pr-per">Período</label><select id="pr-per" class="select" data-change="prov-per">${Object.entries(per).map(([k, v]) => `<option value="${k}" ${k === s.periodo ? 'selected' : ''}>${v[0]}</option>`).join('')}</select></div>
         <div class="field"><label for="pr-inst">Instituição</label><select id="pr-inst" class="select" data-change="prov-inst"><option value="">Todas</option>${INSTITUICOES_DEMO.map((i) => `<option ${s.inst === i ? 'selected' : ''}>${i}</option>`).join('')}</select></div>
+        <button type="button" class="btn btn-outline" data-action="prov-baixar" data-aba="recebidos" data-fmt="pdf" ${linhas.length ? '' : 'disabled'}>${icon('download', 18)}Baixar PDF</button>
+        <button type="button" class="btn btn-outline" data-action="prov-baixar" data-aba="recebidos" data-fmt="xlsx" ${linhas.length ? '' : 'disabled'}>${icon('download', 18)}Baixar Excel</button>
       </div>
       ${linhas.length ? `<div class="card"><div class="table-wrap"><table><caption class="sr-only">Proventos recebidos</caption>
         <thead><tr><th scope="col">Data de pagamento</th><th scope="col">Ativo</th><th scope="col">Tipo</th><th scope="col" class="col-sec">Instituição</th><th scope="col" class="num">Valor recebido</th></tr></thead>
@@ -172,7 +216,9 @@ function viewProventos(route) {
         <tr class="total-row"><td colspan="3">Total no recorte · ${per[s.periodo][0]}</td><td class="col-sec"></td><td class="num">${pBrl(linhas.reduce((a, p) => a + p.valor, 0))}</td></tr></tbody></table></div></div>`
       : emptyState({ title: 'Nenhum resultado para esse período', actions: '<button type="button" class="btn btn-outline btn-sm" data-action="focus" data-target="#pr-per">Alterar filtros</button>' })}`;
   } else if (aba === 'a-receber') {
-    body = `<p class="muted" style="margin-bottom:12px">Valores previstos não entram no total recebido. A elegibilidade depende de ter o ativo na data de corte.</p>
+    body = `<div class="query-bar" style="justify-content:space-between"><p class="muted" style="margin:0;max-width:560px">Valores previstos não entram no total recebido. A elegibilidade depende de ter o ativo na data de corte.</p>
+      <div class="btn-row" style="margin:0"><button type="button" class="btn btn-outline" data-action="prov-baixar" data-aba="a-receber" data-fmt="pdf" ${A_RECEBER.length ? '' : 'disabled'}>${icon('download', 18)}Baixar PDF</button>
+      <button type="button" class="btn btn-outline" data-action="prov-baixar" data-aba="a-receber" data-fmt="xlsx" ${A_RECEBER.length ? '' : 'disabled'}>${icon('download', 18)}Baixar Excel</button></div></div>
       <div class="card"><div class="table-wrap"><table><caption class="sr-only">Proventos a receber</caption>
         <thead><tr><th scope="col">Data prevista</th><th scope="col">Ativo</th><th scope="col" class="col-sec">Tipo</th><th scope="col" class="col-sec">Instituição</th><th scope="col" class="num">Valor previsto</th><th scope="col">Meu calendário</th></tr></thead>
         <tbody>${A_RECEBER.length ? '' : '<tr><td colspan="6" class="muted">Nenhum provento previsto. Compre na demo uma ação que paga proventos, como ITUB4 ou PETR4.</td></tr>'}${A_RECEBER.map((p) => `<tr><td><a href="#/proventos/pagamento/${p.id}">${p.data || 'Data a confirmar'}</a></td><td>${ativoCell(p.code, p.demo)}</td><td class="col-sec">${p.tipo}</td><td class="col-sec">${p.inst}</td><td class="num">${p.valor != null ? pBrl(p.valor) : '<span class="meta">A confirmar</span>'}</td>
@@ -180,11 +226,22 @@ function viewProventos(route) {
       <p class="meta" style="margin-top:8px">“Adicionar ao meu calendário” baixa um arquivo .ics com o lembrete “Conferir provento na B3” no dia do pagamento, sem valores nem quantidades. Funciona no Google Agenda, no Outlook e no Calendário da Apple.</p>
       ${A_RECEBER.some((p) => p.demo) ? '<p class="meta" style="margin-top:8px">Linhas marcadas como Demo vêm das compras simuladas, com valor por ação e data fictícios.</p>' : ''}`;
   } else if (aba === 'radar') {
-    body = `<p class="note warn" style="margin-bottom:16px">${icon('info', 18)}<span>A fonte e a cobertura desta aba serão confirmadas antes do uso real.</span></p>
-      <div class="card"><div class="table-wrap"><table><caption class="sr-only">Radar de anúncios</caption>
-        <thead><tr><th scope="col">Ativo</th><th scope="col">Tipo</th><th scope="col" class="col-sec">Anunciado em</th><th scope="col">Pagamento</th><th scope="col">Para você</th></tr></thead>
-        <tbody>${RADAR.map((r) => { const meu = temAtivo(r.code); return `<tr><td>${ativoCell(r.code)}</td><td>${r.tipo}</td><td class="col-sec">${r.anuncio}</td><td>${r.pagamento || 'Data a confirmar'}</td>
-          <td>${meu ? `<span class="rel-tag rel-direta">${icon('check', 16)}Provento previsto para você</span>` : `<span class="rel-tag rel-sem">${icon('minus', 16)}Anúncio · você não tem este ativo</span>`}</td></tr>`; }).join('')}</tbody></table></div></div>`;
+    const r0 = ui.radar;
+    const lista = RADAR.filter((r) => (r0.tipo === 'todos' || r.tipo === r0.tipo) && (!r0.minha || temAtivo(r.code)));
+    const tipos = [...new Set(RADAR.map((r) => r.tipo))];
+    body = `<div class="query-bar">
+        <div class="field"><label for="rd-tipo">Tipo de provento</label><select id="rd-tipo" class="select" data-change="radar-tipo"><option value="todos">Todos</option>${tipos.map((t) => `<option ${r0.tipo === t ? 'selected' : ''}>${t}</option>`).join('')}</select></div>
+        <label class="toggle-line"><input type="checkbox" data-change="radar-minha" ${r0.minha ? 'checked' : ''}> Só ativos da minha carteira</label>
+        <button type="button" class="btn btn-outline" data-action="radar-baixar" data-fmt="pdf" ${lista.length ? '' : 'disabled'}>${icon('download', 18)}Baixar PDF</button>
+        <button type="button" class="btn btn-outline" data-action="radar-baixar" data-fmt="xlsx" ${lista.length ? '' : 'disabled'}>${icon('download', 18)}Baixar Excel</button>
+      </div>
+      ${lista.length ? `<div class="card"><div class="table-wrap"><table><caption class="sr-only">Radar de anúncios de proventos</caption>
+        <thead><tr><th scope="col">Ativo</th><th scope="col">Tipo</th><th scope="col" class="col-sec">Anunciado</th><th scope="col">Data com</th><th scope="col">Pagamento</th><th scope="col" class="num">Por ação</th><th scope="col" class="num col-sec">DY</th><th scope="col">Para você</th></tr></thead>
+        <tbody>${lista.map((r) => { const meu = temAtivo(r.code), a = ativo(r.code); return `<tr><td>${ativoCell(r.code)}</td><td>${r.tipo}</td><td class="col-sec">${r.anuncio}</td><td>${r.dataCom || '—'}</td><td>${r.pagamento || 'Data a confirmar'}</td>
+          <td class="num">${r.vps != null ? fmt.brl(r.vps) : '—'}</td><td class="num col-sec">${r.vps != null ? nf2.format((r.vps / a.preco) * 100) + '%' : '—'}</td>
+          <td>${meu ? `<span class="rel-tag rel-direta">${icon('check', 16)}Previsto para você</span>` : `<span class="rel-tag rel-sem">${icon('minus', 16)}Você não tem</span>`}</td></tr>`; }).join('')}</tbody></table></div>
+        <p class="meta" style="margin-top:8px"><strong>Data com</strong>: quem tiver o ativo no fim desse dia tem direito ao provento. <strong>DY</strong>: valor por ação ÷ preço atual. Dados simulados.</p></div>`
+      : emptyState({ title: 'Nenhum anúncio para esses filtros', iconName: 'filter', actions: '<button type="button" class="btn btn-outline btn-sm" data-action="radar-limpar">Limpar filtros</button>' })}`;
   } else {
     body = calendario();
   }
@@ -195,6 +252,43 @@ function viewProventos(route) {
       ${body}`,
   };
 }
+CHANGES['radar-tipo'] = (el) => { ui.radar.tipo = el.value; rerender('#rd-tipo'); };
+CHANGES['radar-minha'] = (el) => { ui.radar.minha = el.checked; rerender('[data-change="radar-minha"]'); };
+ACTIONS['radar-limpar'] = () => { ui.radar = { tipo: 'todos', minha: false }; rerender('#rd-tipo'); };
+ACTIONS['radar-baixar'] = (el) => {
+  const r0 = ui.radar, lista = RADAR.filter((r) => (r0.tipo === 'todos' || r.tipo === r0.tipo) && (!r0.minha || temAtivo(r.code)));
+  baixarDocumento({
+    titulo: 'Radar de proventos', arquivo: 'radar-proventos', periodo: `Anúncios até ${REF.atual}`,
+    filtros: [r0.tipo !== 'todos' && 'Tipo: ' + r0.tipo, r0.minha && 'Só minha carteira'].filter(Boolean).join(' · '),
+    colunas: [['Ativo', 'txt'], ['Código', 'txt'], ['Tipo', 'txt'], ['Anunciado', 'txt'], ['Data com', 'txt'], ['Pagamento', 'txt'], ['Por ação', 'brl'], ['DY', 'pct'], ['Para você', 'txt']],
+    linhas: lista.map((r) => { const a = ativo(r.code); return [a.name, r.code, r.tipo, r.anuncio, r.dataCom || '-', r.pagamento || 'Data a confirmar', r.vps, r.vps != null ? (r.vps / a.preco) * 100 : null, temAtivo(r.code) ? 'Sim' : 'Não']; }),
+    notas: ['Data com: quem tiver o ativo no fim desse dia tem direito ao provento. DY: valor por ação dividido pelo preço atual.'],
+  }, el.dataset.fmt);
+};
+ACTIONS['prov-baixar'] = (el) => {
+  const aba = el.dataset.aba;
+  if (aba === 'recebidos') {
+    const s = ui.prov;
+    const per = { '3m': ['Últimos 3 meses', ['2026-09', '2026-10', '2026-11']], nov: ['Novembro de 2026', ['2026-11']], '2026': ['Ano de 2026', Array.from({ length: 11 }, (_, i) => `2026-${String(i + 1).padStart(2, '0')}`)], '2025': ['Ano de 2025', []] }[s.periodo];
+    const ls = provRecebidos().filter((p) => per[1].includes(p.mes) && (!s.inst || p.inst === s.inst));
+    baixarDocumento({
+      titulo: 'Proventos recebidos', arquivo: `proventos-recebidos-${s.periodo}`, periodo: `Período: ${per[0]}`, filtros: s.inst ? 'Instituição: ' + s.inst : '',
+      colunas: [['Data de pagamento', 'txt'], ['Ativo', 'txt'], ['Código', 'txt'], ['Tipo', 'txt'], ['Instituição', 'txt'], ['Valor recebido', 'brl']],
+      linhas: ls.map((p) => [p.data, ativo(p.code).name, p.code, p.tipo, p.inst, p.valor]),
+      total: ['Total recebido', '', '', '', '', ls.reduce((t, p) => t + p.valor, 0)],
+      notas: ['Valores já creditados na conta da instituição.'],
+    }, el.dataset.fmt);
+  } else {
+    const ls = provAReceber();
+    baixarDocumento({
+      titulo: 'Proventos a receber', arquivo: 'proventos-a-receber', periodo: `Previstos a partir de ${REF.atual}`,
+      colunas: [['Data prevista', 'txt'], ['Ativo', 'txt'], ['Código', 'txt'], ['Tipo', 'txt'], ['Instituição', 'txt'], ['Valor previsto', 'brl']],
+      linhas: ls.map((p) => [p.data || 'Data a confirmar', ativo(p.code).name, p.code, p.tipo, p.inst, p.valor]),
+      total: ['Total previsto (com data)', '', '', '', '', ls.filter((p) => p.valor != null).reduce((t, p) => t + p.valor, 0)],
+      notas: ['Valores previstos não entram no total recebido e podem mudar até o pagamento. A elegibilidade depende de ter o ativo na data de corte.'],
+    }, el.dataset.fmt);
+  }
+};
 CHANGES['prov-per'] = (el) => { ui.prov.periodo = el.value; rerender('#pr-per'); };
 CHANGES['prov-inst'] = (el) => { ui.prov.inst = el.value; rerender('#pr-inst'); };
 ACTIONS.focus = (el) => { const t = document.querySelector(el.dataset.target); t && t.focus(); };
@@ -245,7 +339,48 @@ function graficoProventos(recebidos, aReceber) {
 }
 
 const MESES = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
+/* Calendário: mês com os seus pagamentos ou visão anual por empresa (como no portal). */
 function calendario() {
+  const seletor = `<div class="seg cal-modo" role="group" aria-label="Tipo de calendário">${[['mes', 'Meus pagamentos (mês)'], ['anual', 'Anual por empresa']].map(([k, t]) => `<button type="button" data-action="cal-modo" data-k="${k}" aria-pressed="${ui.cal.modo === k}">${t}</button>`).join('')}</div>`;
+  return seletor + (ui.cal.modo === 'anual' ? calendarioAnual() : calendarioMes());
+}
+ACTIONS['cal-modo'] = (el) => { ui.cal.modo = el.dataset.k; rerender(`[data-action="cal-modo"][data-k="${el.dataset.k}"]`); };
+function calendarioAnual() {
+  const A = ui.calAnual;
+  const ev = {};
+  const add = (code, mes, tipo, status) => { (ev[code] = ev[code] || {})[mes] = (ev[code][mes] || []).concat({ tipo, status }); };
+  provRecebidos().forEach((p) => { const [, mm, yy] = p.data.split('/'); if (+yy === A.ano) add(p.code, +mm - 1, p.tipo, 'rec'); });
+  provAReceber().forEach((p) => { if (p.dia && +p.dia.slice(0, 4) === A.ano) add(p.code, +p.dia.slice(5, 7) - 1, p.tipo, 'prev'); });
+  // anúncios do Radar de ativos que você não tem (aparecem só com “Só minha carteira” desligado)
+  const MESN = { jan: 0, fev: 1, mar: 2, abr: 3, mai: 4, jun: 5, jul: 6, ago: 7, set: 8, out: 9, nov: 10, dez: 11 };
+  RADAR.forEach((r) => { if (!r.pagamento || temAtivo(r.code)) return; const [d, m, y] = r.pagamento.split(' '); if ((+y || 2026) === A.ano && MESN[m] != null) add(r.code, MESN[m], r.tipo, 'anuncio'); });
+  let codes = Object.keys(ev);
+  if (A.minha) codes = codes.filter(temAtivo);
+  if (A.busca) codes = codes.filter((c) => norm(ativo(c).name + ' ' + c).includes(norm(A.busca)));
+  if (A.classe) codes = codes.filter((c) => ativo(c).classe === A.classe);
+  codes.sort((a, b) => ativo(a).name.localeCompare(ativo(b).name));
+  const sigla = (t) => (t.startsWith('Juros') ? 'J' : t.startsWith('Rend') ? 'R' : 'D');
+  return `<section class="card" aria-labelledby="ca-t" style="margin-top:16px">
+    <div class="card-head"><h2 class="h2" id="ca-t">Calendário anual por empresa · ${A.ano}</h2>
+      <div class="seg" role="group" aria-label="Ano">${[2025, 2026, 2027].map((y) => `<button type="button" data-action="cal-ano" data-y="${y}" aria-pressed="${A.ano === y}">${y}</button>`).join('')}</div></div>
+    <div class="query-bar">
+      <div class="field"><label for="ca-busca">Buscar empresa ou código</label><input id="ca-busca" class="input" type="search" value="${esc(A.busca)}" data-input="cal-busca" placeholder="Ex.: Aurora, GLPD11"></div>
+      <div class="field"><label for="ca-classe">Produto</label><select id="ca-classe" class="select" data-change="cal-classe"><option value="">Todos</option>${['Ações', 'Fundos imobiliários'].map((c) => `<option ${A.classe === c ? 'selected' : ''}>${c}</option>`).join('')}</select></div>
+      <label class="toggle-line"><input type="checkbox" data-change="cal-minha" ${A.minha ? 'checked' : ''}> Só minha carteira</label>
+    </div>
+    ${codes.length ? `<div class="table-wrap"><table class="cal-anual"><caption class="sr-only">Pagamentos de proventos por empresa e mês em ${A.ano}</caption>
+      <thead><tr><th scope="col">Empresa</th>${MES_CURTO.map((m) => `<th scope="col" class="num">${m}</th>`).join('')}</tr></thead>
+      <tbody>${codes.map((c) => `<tr><th scope="row"><a href="#/ativos/${c}">${esc(ativo(c).name)}</a><span class="asset-code">${c}</span></th>${MES_CURTO.map((_, i) => { const es = (ev[c] || {})[i] || []; return `<td class="num">${es.map((e) => `<span class="ca-ev ${e.status}" title="${esc(e.tipo)} · ${e.status === 'rec' ? 'recebido' : e.status === 'prev' ? 'previsto para você' : 'anúncio'}">${sigla(e.tipo)}<span class="sr-only"> ${esc(e.tipo)}, ${e.status === 'rec' ? 'recebido' : e.status === 'prev' ? 'previsto' : 'anúncio'}</span></span>`).join('')}</td>`; }).join('')}</tr>`).join('')}</tbody></table></div>`
+      : emptyState({ title: 'Nenhum pagamento para esses filtros', iconName: 'calendar' })}
+    <ul class="legend" style="margin-top:12px"><li><span class="ca-ev rec">D</span>Recebido</li><li><span class="ca-ev prev">D</span>Previsto para você</li><li><span class="ca-ev anuncio">D</span>Anúncio (você não tem)</li><li><strong>D</strong> dividendos · <strong>J</strong> juros sobre capital próprio · <strong>R</strong> rendimento</li></ul>
+  </section>`;
+}
+ACTIONS['cal-ano'] = (el) => { ui.calAnual.ano = +el.dataset.y; rerender(`[data-action="cal-ano"][data-y="${el.dataset.y}"]`); };
+INPUTS['cal-busca'] = (el) => { ui.calAnual.busca = el.value; clearTimeout(INPUTS.tc); INPUTS.tc = setTimeout(() => rerender('#ca-busca'), 250); };
+CHANGES['cal-classe'] = (el) => { ui.calAnual.classe = el.value; rerender('#ca-classe'); };
+CHANGES['cal-minha'] = (el) => { ui.calAnual.minha = el.checked; rerender('[data-change="cal-minha"]'); };
+
+function calendarioMes() {
   const { y, m, filtro } = ui.cal;
   const ev = [];
   if (filtro !== 'previstos') provRecebidos().forEach((p) => { const [dd, mm, yy] = p.data.split('/'); ev.push({ y: +yy, m: +mm - 1, d: +dd, tipo: 'rec', p }); });
@@ -376,31 +511,10 @@ function viewServicos(route) {
   const aba = route.m[1] || 'ir';
   const nomes = { ir: 'Calculadoras de IR', voto: 'Voto a distância', calc: 'CALC de Renda Fixa', relatorios: 'Relatórios' };
   let body;
-  if (aba === 'ir') {
-    body = `<p class="muted" style="margin-bottom:16px">Ferramentas parceiras para calcular imposto de renda. Algumas exigem contratação e autorização para compartilhar dados. A demonstração não compartilha dados.</p>
-      <div class="grid-12">${[['Parceiro de IR A (exemplo)', 'Ações, FIIs e day trade'], ['Parceiro de IR B (exemplo)', 'Ações e renda fixa'], ['Parceiro de IR C (exemplo)', 'Ações e criptoativos']].map(([n, e]) => `
-        <section class="card span-4"><h2 class="h3">${n}</h2><p class="meta" style="margin-top:4px">Escopo: ${e}</p>
-          <div class="btn-row"><a class="btn btn-outline btn-sm" href="#/saida?para=${encodeURIComponent(n)}&volta=${encodeURIComponent('/servicos/ir')}">Ir para o site ${icon('external', 16)}</a></div></section>`).join('')}</div>
-      <p class="note" style="margin-top:16px">${icon('file', 18)}<span>Procura um documento? <a href="#/servicos/relatorios">Ver Relatórios</a></span></p>`;
-  } else if (aba === 'voto') {
-    body = `<p class="note warn" style="margin-bottom:16px">${icon('info', 18)}<span>Simulação: o voto fica registrado só nesta demonstração.</span></p>
-      <div class="stack-sm">${ASSEMBLEIAS.map((a, i) => { const k = 'ass-' + i; const code = a.empresa.split('· ')[1]; const voto = ui.votos[i]; return `<section class="card">
-        <div class="card-head" style="margin:0"><div><h2 class="h3">${esc(a.empresa)}</h2><p class="meta">Assembleia em ${a.data} · Prazo para voto a distância: ${a.prazo}</p></div><span class="rel-tag ${voto ? 'rel-direta' : i ? 'rel-sem' : 'rel-direta'}">${voto ? 'Voto registrado (demo)' : a.estado}</span></div>
-        ${i === 0 ? (voto
-          ? `<ul class="calc-list" style="margin-top:8px">${a.pauta.map((p, j) => `<li><span>${esc(p)}</span><strong>${voto[j]}</strong></li>`).join('')}</ul><div class="btn-row"><button type="button" class="btn btn-link btn-sm" data-action="voto-refazer" data-i="${i}">Alterar voto</button></div>`
-          : temAtivo(code)
-            ? `<form class="stack-sm" style="margin-top:12px" data-form="voto" data-i="${i}">${a.pauta.map((p, j) => `<fieldset class="vote-q"><legend>${esc(p)}</legend><div class="btn-row" style="margin-top:4px">${['Aprovar', 'Rejeitar', 'Abster-se'].map((o) => `<label class="radio"><input type="radio" name="q${j}" value="${o}" required> ${o}</label>`).join('')}</div></fieldset>`).join('')}
-               <div><button class="btn btn-primary" type="submit">Enviar voto</button></div></form>`
-            : `<p class="muted" style="margin-top:8px">Você não tem ações da ${esc(a.empresa.split(' ·')[0])}, então não pode votar nesta assembleia.</p>`) : ''}
-        <button type="button" class="expand-btn" data-action="disclose" aria-expanded="false" aria-controls="${k}">Ver pauta e documentos ${icon('chevronDown', 14)}</button>
-        <div id="${k}" hidden style="margin-top:8px"><h3 class="h3">Pauta</h3><ul style="list-style:disc;padding-left:20px">${a.pauta.map((p) => `<li>${p}</li>`).join('')}</ul>
-          <h3 class="h3" style="margin-top:8px">Documentos</h3><ul style="list-style:disc;padding-left:20px">${a.docs.map((d) => `<li>${d}</li>`).join('')}</ul>
-          <p class="meta" style="margin-top:8px">Pode votar quem tinha o ativo na data de corte definida no edital.</p></div></section>`; }).join('')}</div>`;
-  } else if (aba === 'calc') {
-    body = `<section class="card" style="max-width:720px"><p>A CALC calcula o fator DI entre datas e outros valores de referência de instrumentos de renda fixa.</p>
-      <p class="meta" style="margin-top:8px">Ela não projeta o valor da sua carteira.</p>
-      <div class="btn-row"><a class="btn btn-primary" href="https://apicalculadorarendafixa.b3.com.br/" target="_blank" rel="noopener">Abrir CALC da B3 ${icon('external', 16)}<span class="sr-only">(abre site da B3 em nova aba)</span></a></div></section>`;
-  } else {
+  if (aba === 'ir') body = servicoIR(route);
+  else if (aba === 'voto') body = servicoVoto(route);
+  else if (aba === 'calc') body = servicoCalc();
+  else {
     const r = ui.rel;
     const periodos = r.tipo === 'Mensal' ? ['Outubro de 2026', 'Setembro de 2026', 'Agosto de 2026'] : ['2025', '2024'];
     body = `${btnTabs([['consolidado', 'Relatório Consolidado'], ['informes', 'Informes de Empréstimos']], r.aba, { label: 'Tipo de relatório', action: 'rel-aba', id: 'rel' })}
@@ -433,8 +547,23 @@ ACTIONS['rel-aba'] = (el) => { ui.rel.aba = el.dataset.key; rerender(`[data-tabl
 ACTIONS['rel-tipo'] = (el) => { ui.rel.tipo = el.dataset.t; ui.rel.periodo = el.dataset.t === 'Mensal' ? 'Outubro de 2026' : '2025'; rerender(`[data-action="rel-tipo"][data-t="${el.dataset.t}"]`); };
 CHANGES['rel-per'] = (el) => { ui.rel.periodo = el.value; };
 CHANGES['rel-fmt'] = (el) => { ui.rel.formato = el.value; };
-ACTIONS['rel-baixar'] = () => downloadDemo(`relatorio-consolidado-${ui.rel.tipo.toLowerCase()}-demo.csv`, [`Relatório Consolidado ${ui.rel.tipo} · ${ui.rel.periodo} · formato escolhido: ${ui.rel.formato}`, 'Conteúdo fictício para demonstração.']);
-ACTIONS['inf-baixar'] = (el) => downloadDemo(`informe-emprestimos-${el.dataset.y}-demo.csv`, [`Informe de Empréstimos ${el.dataset.y}`, 'Sem operações de empréstimo no ano (exemplo).']);
+ACTIONS['rel-baixar'] = () => {
+  const w = carteira();
+  const porClasse = CLASSES.map((c) => [c, w.itens.filter((g) => g.a.classe === c)]).filter(([, its]) => its.length);
+  baixarDocumento({
+    titulo: `Relatório consolidado ${ui.rel.tipo.toLowerCase()}`, arquivo: `relatorio-consolidado-${ui.rel.tipo.toLowerCase()}-${ui.rel.periodo.toLowerCase().replace(/\s+/g, '-')}`, periodo: `Referência: ${ui.rel.periodo}`,
+    colunas: [['Classe', 'txt'], ['Produto', 'txt'], ['Código', 'txt'], ['Quantidade', 'qtd'], ['Valor', 'brl'], ['% da carteira', 'pct']],
+    linhas: porClasse.flatMap(([c, its]) => its.map((g) => [c, g.a.name, g.a.code, g.qtd, g.atual, w.atual ? (g.atual / w.atual) * 100 : 0])),
+    total: ['Total', '', '', '', w.atual, 100],
+    notas: ['O relatório consolidado é consultivo. Para declarar imposto de renda, use o informe de rendimentos fornecido pela sua instituição.', 'Na demonstração, os valores são os da posição de 24 nov 2026 para qualquer período escolhido.'],
+  }, ui.rel.formato === 'Excel' ? 'xlsx' : 'pdf');
+};
+ACTIONS['inf-baixar'] = (el) => baixarDocumento({
+  titulo: `Informe de empréstimos de ativos ${el.dataset.y}`, arquivo: `informe-emprestimos-${el.dataset.y}`, periodo: `Ano-calendário ${el.dataset.y}`,
+  colunas: [['Ativo', 'txt'], ['Código', 'txt'], ['Papel', 'txt'], ['Quantidade', 'qtd'], ['Remuneração', 'brl']],
+  linhas: el.dataset.y === '2025' ? [] : [],
+  notas: ['Não houve operações de empréstimo de ativos no ano nesta conta de demonstração.'],
+}, 'pdf');
 
 /* ---------- Feedback ---------- */
 function viewFeedback() {

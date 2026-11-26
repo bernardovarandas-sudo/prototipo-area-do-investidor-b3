@@ -11,7 +11,9 @@ const ui = {
   posicao: { data: '24', filtroAberto: false, inst: '', aplicado: '' },
   extrato: { periodo: '30d', filtroAberto: false, baixarAberto: false, inst: '', ativo: '', aplicado: { inst: '', ativo: '' }, formato: 'PDF' },
   prov: { periodo: '3m', inst: '' },
-  cal: { y: 2026, m: 10, filtro: 'todos' },
+  cal: { y: 2026, m: 10, filtro: 'todos', modo: 'mes' },
+  calAnual: { ano: 2026, busca: '', classe: '', minha: false },
+  radar: { tipo: 'todos', minha: false },
   rel: { aba: 'consolidado', tipo: 'Mensal', periodo: 'Outubro de 2026', formato: 'PDF' },
   feedbackEnviado: false,
   compraOk: null,
@@ -19,6 +21,12 @@ const ui = {
   porta: { passo: 1, origem: '', destino: '', itens: {} },
   solicitacoes: [],
   votos: {},
+  login: { modo: 'entrar', passo: 1, metodo: 'app', enviado: false },
+  revar: { vinculado: false, tela: 'inicio' },
+  voto: { tipo: 'todos', filtro: 'naovotadas' },
+  calc: { aba: 'di', di: { ini: '2026-01-02', fim: '2026-11-24', pct: 100, valor: 1000 }, tit: { code: 'TSELIC29', data: '2026-11-24' }, cred: { cod: '', data: '2026-11-24' } },
+  appsRevogados: [],
+  carteiraClasse: 'todos',
 };
 
 /* Registro de ações delegadas (preenchido por cada arquivo de telas) */
@@ -67,7 +75,8 @@ ACTIONS['ibov-per'] = (el) => {
 
 function marketList(key) {
   const s = ui.market[key];
-  let list = ATIVOS.slice();
+  let list = acoesMercado();
+  if (s.lista === 'negociados') list = list.filter((a) => NEGOCIACAO_DIA[a.code]).sort((a, b) => NEGOCIACAO_DIA[b.code][0] - NEGOCIACAO_DIA[a.code][0]);
   if (s.lista === 'altas') list = list.filter((a) => varPct(a) > 0).sort((a, b) => varPct(b) - varPct(a));
   if (s.lista === 'baixas') list = list.filter((a) => varPct(a) < 0).sort((a, b) => varPct(a) - varPct(b));
   const q = norm(s.busca);
@@ -87,20 +96,25 @@ function marketBody(key) {
     });
   }
   return `<div class="table-wrap"><table>
-    <caption class="sr-only">Ações — ${{ destaques: 'Destaques', altas: 'Maiores altas', baixas: 'Maiores baixas' }[s.lista]}, cotação de ${REF.atual}</caption>
-    <thead><tr><th scope="col">Ativo</th><th scope="col" class="num">Preço</th><th scope="col" class="num">Variação no dia</th></tr></thead>
+    <caption class="sr-only">Ações — ${{ destaques: 'Destaques', negociados: 'Mais negociados', altas: 'Maiores altas', baixas: 'Maiores baixas' }[s.lista]}, cotação de ${REF.atual}</caption>
+    <thead><tr><th scope="col">Ativo</th><th scope="col" class="num">Preço</th>${s.lista === 'negociados'
+      ? '<th scope="col" class="num">Volume no dia</th><th scope="col" class="num col-sec">Negócios</th>'
+      : '<th scope="col" class="num">Variação no dia</th>'}</tr></thead>
     <tbody>${list.map((a) => `<tr class="row-click" data-href="/ativos/${a.code}">
       <td><div class="asset-cell"><a href="#/ativos/${a.code}">${esc(a.name)}<span class="sr-only">, ${a.code}, abrir ficha</span></a><span class="asset-code" aria-hidden="true">${a.code}</span></div></td>
       <td class="num">${fmt.brl(a.preco)}</td>
-      <td class="num">${trend(varPct(a))}</td></tr>`).join('')}</tbody>
-  </table></div>`;
+      ${s.lista === 'negociados'
+        ? `<td class="num">R$ ${fmt.int(NEGOCIACAO_DIA[a.code][0])} mi</td><td class="num col-sec">${fmt.int(NEGOCIACAO_DIA[a.code][1])}</td>`
+        : `<td class="num">${trend(varPct(a))}</td>`}</tr>`).join('')}</tbody>
+  </table></div>
+  ${s.lista === 'negociados' ? '<p class="meta" style="margin-top:8px">Volume financeiro e número de negócios no pregão de 24 nov. Dados simulados.</p>' : ''}`;
 }
 
 function marketCard(key, { title = 'Principais ações', headingId } = {}) {
   const s = ui.market[key];
   return `<section class="card" aria-labelledby="${headingId || 'mk-' + key}">
     <div class="card-head"><h2 class="h2" id="${headingId || 'mk-' + key}">${title}</h2><span class="meta">${REF.atualCurta}</span></div>
-    ${btnTabs([['destaques', 'Destaques'], ['altas', 'Altas'], ['baixas', 'Baixas']], s.lista, { label: 'Lista de ações', action: 'market-tab', id: 'mt-' + key })}
+    ${btnTabs([['destaques', 'Destaques'], ['negociados', 'Mais negociados'], ['altas', 'Altas'], ['baixas', 'Baixas']], s.lista, { label: 'Lista de ações', action: 'market-tab', id: 'mt-' + key })}
     <div id="mt-${key}-panel" role="tabpanel" data-market-body="${key}">${marketBody(key)}</div>
   </section>`;
 }
@@ -234,7 +248,7 @@ function viewMercado(route) {
         actions: `<a class="btn btn-yellow" href="#/acesso?destino=${encodeURIComponent('/mercado/favoritos')}">Entrar para ver minha carteira</a>`, iconName: 'star' });
     } else {
       const favs = state.favoritos.map(ativo).filter(Boolean);
-      const outros = ATIVOS.filter((a) => !state.favoritos.includes(a.code));
+      const outros = ATIVOS.filter((a) => a.negociavel && !state.favoritos.includes(a.code));
       body = `<p class="muted" style="margin-bottom:16px">Acompanhe cotações que você escolheu. Favorito não significa que você tem o ativo.</p>
       <form class="query-bar" data-form="add-fav">
         <div class="field"><label for="add-fav">Adicionar ativo</label>
@@ -251,7 +265,7 @@ function viewMercado(route) {
     }
   } else {
     body = `<section class="card" aria-labelledby="heat"><div class="card-head"><h2 class="h2" id="heat">Mapa de calor</h2><span class="meta">Variação no dia · ${REF.atualCurta}</span></div>
-      <div class="heat">${ATIVOS.slice().sort((a, b) => varPct(b) - varPct(a)).map((a) => `<a href="#/ativos/${a.code}" class="${varPct(a) >= 0 ? 'h-up' : 'h-down'}"><strong>${a.code}</strong><br><span class="meta" style="color:var(--text)">${esc(a.name)}</span><br>${trend(varPct(a))}</a>`).join('')}</div></section>
+      <div class="heat">${acoesMercado().sort((a, b) => varPct(b) - varPct(a)).map((a) => `<a href="#/ativos/${a.code}" class="${varPct(a) >= 0 ? 'h-up' : 'h-down'}"><strong>${a.code}</strong><br><span class="meta" style="color:var(--text)">${esc(a.name)}</span><br>${trend(varPct(a))}</a>`).join('')}</div></section>
       <p class="note neutral" style="margin-top:16px">${icon('info', 18)}<span>Gráfico avançado e indicadores técnicos entram na próxima rodada do protótipo.</span></p>`;
   }
   return {
@@ -312,7 +326,7 @@ function viewFicha(route) {
     <div class="page-head">
       <div>
         <h1 class="h1">${esc(a.name)} <span class="asset-code" style="font-size:18px">${a.code}</span></h1>
-        <p class="meta lead">${esc(a.setor)} · ${esc(a.tipo)} · ${a.real ? 'Empresa real · preço simulado' : 'Empresa fictícia'}</p>
+        <p class="meta lead">${a.classe === 'Ações' ? `${esc(a.setor)} · ${esc(a.tipo)} · ${a.real ? 'Empresa real · preço simulado' : 'Empresa fictícia'}` : `${esc(a.classe)} · ${esc(a.produto)} · ${esc(a.tipo)} · Produto fictício`}</p>
       </div>
       <div class="btn-row" style="margin:0">
         <button type="button" class="btn btn-yellow" data-action="open-panel" data-kind="corretora" data-id="${a.code}">${icon('cart', 18)}Comprar</button>
@@ -329,8 +343,8 @@ function viewFicha(route) {
       <div class="span-8 stack">
         <section class="card" aria-labelledby="cot">
           <h2 class="sr-only" id="cot">Cotação</h2>
-          <div class="quote-top"><span class="big">${fmt.brl(a.preco)}</span>${trend(varPct(a), { size: 'lg' })}</div>
-          <p class="meta">Cotação de ${REF.atual} · ${REF.pregao} · Fechamento anterior ${fmt.brl(a.anterior)}</p>
+          <div class="quote-top"><span class="big">${precoFmt(a, a.preco)}</span>${trend(varPct(a), { size: 'lg' })}</div>
+          <p class="meta">${a.negociavel ? `Cotação de ${REF.atual} · ${REF.pregao}` : `${a.classe === 'Fundos' ? 'Valor da cota' : 'Preço unitário'} de ${REF.atual}`} · Anterior ${precoFmt(a, a.anterior)}</p>
           <div id="ficha-chart">${fichaChart(a)}</div>
           <div class="seg" role="group" aria-label="Período do gráfico">
             ${['1D', '1M', '1A'].map((p) => `<button type="button" data-action="ficha-per" data-per="${p}" data-code="${a.code}" aria-pressed="${ui.fichaPer === p}"><span aria-hidden="true">${p}</span><span class="sr-only">${{ '1D': '1 dia', '1M': '1 mês', '1A': '1 ano' }[p]}</span></button>`).join('')}
@@ -339,7 +353,12 @@ function viewFicha(route) {
         ${g ? naMinhaCarteira(g) : ''}
       </div>
       <div class="span-4 stack">
-        <section class="card" aria-labelledby="info"><h2 class="h3" id="info">Informações do dia</h2>
+        ${a.negociavel ? '' : `<section class="card" aria-labelledby="carac"><h2 class="h3" id="carac">Características</h2>
+          <dl class="dl" style="margin-top:12px;grid-template-columns:1fr 1fr">
+            ${a.vencimento ? `<div><dt>Vencimento</dt><dd>${a.vencimento}</dd></div>` : ''}${a.indexador ? `<div><dt>Rentabilidade</dt><dd>${esc(a.indexador)}</dd></div>` : ''}
+            ${a.emissor ? `<div><dt>Emissor</dt><dd>${esc(a.emissor)}</dd></div>` : ''}${a.gestora ? `<div><dt>Gestora</dt><dd>${esc(a.gestora)}</dd></div>` : ''}
+            <div><dt>Negociação</dt><dd>${a.produto === 'Tesouro Direto' ? 'Pelo Tesouro Direto, via corretora' : 'Pela instituição emissora ou distribuidora'}</dd></div></dl></section>`}
+        <section class="card" aria-labelledby="info" ${a.negociavel ? '' : 'hidden'}><h2 class="h3" id="info">Informações do dia</h2>
           <dl class="dl" style="margin-top:12px;grid-template-columns:1fr 1fr">
             <div><dt>Abertura</dt><dd>${fmt.brl(d1[0])}</dd></div>
             <div><dt>Fechamento anterior</dt><dd>${fmt.brl(a.anterior)}</dd></div>
@@ -361,7 +380,7 @@ function naMinhaCarteira(g) {
   return `<section class="card" aria-labelledby="nmc">
     <div class="card-head"><h2 class="h2" id="nmc">Na minha carteira</h2><span class="meta">Posição de ${REF.atual}</span></div>
     <div class="kpis">
-      <div class="kpi"><div class="label">Quantidade</div><div class="value h2">${pQtd(g.qtd)} ações</div><div class="sub meta">${g.insts.length} ${g.insts.length > 1 ? 'instituições' : 'instituição'}</div></div>
+      <div class="kpi"><div class="label">Quantidade</div><div class="value h2">${pQtd(g.qtd)} ${unid(g.a, g.qtd)}</div><div class="sub meta">${g.insts.length} ${g.insts.length > 1 ? 'instituições' : 'instituição'}</div></div>
       <div class="kpi"><div class="label">Valor atual</div><div class="value h2">${pBrl(g.atual)}</div></div>
       <div class="kpi"><div class="label">Mudança de 23 a 24 nov</div><div class="value h2">${trendValue(g.delta, pSbrl(g.delta))}</div><div class="sub">${trend(g.pct)}</div></div>
     </div>
@@ -474,7 +493,7 @@ function destinoLabel(dest) {
   const sm = p === '/carteira/resumo' && SEMANAS.find((x) => x.id === q.get('semana'));
   if (p === '/carteira/resumo') return `o Resumo semanal (${(sm || SEMANAS[0]).titulo.toLowerCase()})`;
   if (p.startsWith('/proventos/pagamento/')) return 'o detalhe do pagamento de provento';
-  if (p === '/perfil') return 'Perfil e preferências';
+  if (p === '/perfil') return 'Meu acesso';
   const map = { '/carteira': 'Visão geral da carteira', '/carteira/investimentos': 'Investimentos', '/noticias': 'Notícias', '/extratos': 'Extratos', '/proventos': 'Proventos', '/portabilidade': 'Portabilidade', '/servicos': 'Serviços', '/mercado/favoritos': 'Favoritos', '/feedback': 'Feedback' };
   const key = Object.keys(map).sort((a, b) => b.length - a.length).find((k) => p.startsWith(k));
   if (key) return map[key];
@@ -483,34 +502,105 @@ function destinoLabel(dest) {
   return null;
 }
 
+/* Acesso: mesmo fluxo do portal (CPF → senha → verificação em duas etapas; primeiro acesso em etapas).
+   Os campos vêm preenchidos com dados fictícios e travados: o protótipo publicado nunca recebe CPF ou senha de verdade. */
+const LOGIN_DEMO = { cpf: '***.456.789-**', senha: 'senhademo', codigo: '246810', nascimento: '01/01/1990' };
+function campoDemo(id, rotulo, valor, { tipo = 'text', dica = '' } = {}) {
+  return `<div class="field"><label for="${id}">${rotulo}</label>
+    <input id="${id}" class="input input-demo" type="${tipo}" value="${esc(valor)}" readonly aria-readonly="true" aria-describedby="${id}-d" autocomplete="off" tabindex="-1">
+    <span id="${id}-d" class="meta">${dica || 'Preenchido com dado fictício da demonstração.'}</span></div>`;
+}
+function passosLogin(lista, atual) {
+  return `<ol class="login-steps" aria-label="Etapas">${lista.map((t, i) => `<li class="${i + 1 === atual ? 'is-current' : i + 1 < atual ? 'is-done' : ''}" ${i + 1 === atual ? 'aria-current="step"' : ''}><span>${i + 1 < atual ? '✓' : i + 1}</span>${t}</li>`).join('')}</ol>`;
+}
 function viewAcesso(route) {
   const destino = safeDest(route.q.get('destino'));
   const label = destinoLabel(destino);
   const c = conta();
+  const L = ui.login;
+  const dest = esc(destino || '');
+  const aviso = `<p class="note demo-note login-aviso">${icon('info', 18)}<span><strong>Protótipo:</strong> os campos já vêm com dados fictícios e não aceitam digitação. Nunca digite seu CPF ou senha reais aqui.</span></p>`;
+  const voltaPara = label ? `<p class="note" style="margin-top:12px">${icon('arrowRight', 18)}<span>Depois de entrar, você volta para ${esc(label)}.</span></p>` : '';
+  let corpo;
+  if (c) {
+    corpo = `<h1 class="h1" id="acc">Você já entrou</h1><p style="margin-top:8px">Você está com a conta ${esc(c.nome)}.</p>
+      <div class="btn-row"><a class="btn btn-primary" href="#${destino || '/carteira'}">Continuar</a></div>`;
+  } else if (L.modo === 'primeiro') {
+    const etapas = ['Identificação', 'E-mail', 'Senha', 'Duas etapas', 'Pronto'];
+    const p = L.passo;
+    let conteudo;
+    if (p === 1) conteudo = `<h2 class="h2">Vamos criar seu acesso</h2><p class="muted">Use o CPF que está cadastrado na sua corretora.</p>
+      ${campoDemo('pa-cpf', 'CPF', LOGIN_DEMO.cpf)}${campoDemo('pa-nasc', 'Data de nascimento', LOGIN_DEMO.nascimento)}`;
+    else if (p === 2) conteudo = `<h2 class="h2">Confirme seu e-mail</h2><p class="muted">Enviamos um código para o e-mail cadastrado na sua corretora: <strong>i*****@exemplo.test</strong>.</p>
+      ${campoDemo('pa-cod', 'Código recebido por e-mail', LOGIN_DEMO.codigo, { dica: 'Código de demonstração. Nenhum e-mail foi enviado.' })}
+      <p class="meta">O e-mail está errado? Ele vem do cadastro na corretora. Atualize lá e tente de novo depois.</p>`;
+    else if (p === 3) conteudo = `<h2 class="h2">Crie sua senha</h2>
+      ${campoDemo('pa-s1', 'Nova senha', LOGIN_DEMO.senha, { tipo: 'password', dica: 'Senha de demonstração.' })}${campoDemo('pa-s2', 'Repita a senha', LOGIN_DEMO.senha, { tipo: 'password', dica: 'Senha de demonstração.' })}
+      <ul class="req-list">${['Pelo menos 8 caracteres', 'Uma letra maiúscula e uma minúscula', 'Um número', 'Um caractere especial'].map((r) => `<li>${icon('check', 16)}${r}</li>`).join('')}</ul>
+      <label class="check"><input type="checkbox" checked disabled> Li e aceito os Termos de Uso e a Política de Privacidade (demonstração)</label>`;
+    else if (p === 4) conteudo = `<h2 class="h2">Ative a verificação em duas etapas</h2><p class="muted">Além da senha, você vai confirmar cada acesso com um código. Escolha como receber:</p>
+      <fieldset class="metodos"><legend class="sr-only">Como receber o código</legend>${[['app', 'Aplicativo autenticador', 'Recomendado: funciona sem internet no celular'], ['sms', 'SMS', 'Para o celular cadastrado na corretora'], ['email', 'E-mail', 'Para i*****@exemplo.test']].map(([k, t, d]) => `<label class="metodo ${L.metodo === k ? 'is-on' : ''}"><input type="radio" name="metodo" value="${k}" data-change="login-metodo" ${L.metodo === k ? 'checked' : ''}><span><strong>${t}</strong><br><span class="meta">${d}</span></span></label>`).join('')}</fieldset>
+      ${L.metodo === 'app' ? `<div class="qr-demo" aria-hidden="true">${Array.from({ length: 49 }, (_, i) => `<span class="${(i * 7 + i % 5) % 3 ? '' : 'on'}"></span>`).join('')}</div><p class="meta">QR code ilustrativo: no portal real, você o lê com o aplicativo autenticador.</p>` : ''}
+      ${campoDemo('pa-2fa', 'Código de confirmação', LOGIN_DEMO.codigo, { dica: 'Código de demonstração.' })}`;
+    else conteudo = `<div class="ok-box"><p class="imp-level-text">${icon('check', 22)} Acesso criado</p><p class="meta">Senha criada e verificação em duas etapas ativada (simulação).</p></div>
+      <p style="margin-top:12px">Pronto! A partir de agora, entre com CPF, senha e o código da verificação em duas etapas.</p>`;
+    corpo = `<h1 class="h1" id="acc">Primeiro acesso</h1>${passosLogin(etapas, p)}${aviso}
+      <div class="stack-sm" style="margin-top:12px">${conteudo}</div>
+      <div class="btn-row" style="margin-top:20px">
+        ${p < 5 ? `<button type="button" class="btn btn-yellow" data-action="login-next">${['Continuar', 'Confirmar código', 'Criar senha', 'Ativar e continuar'][p - 1]}</button>`
+          : `<button type="button" class="btn btn-yellow" data-action="demo-login" data-conta="principal" data-destino="${dest}">Entrar na Área do Investidor</button>`}
+        ${p > 1 && p < 5 ? '<button type="button" class="btn btn-outline" data-action="login-back">Voltar</button>' : ''}
+        ${p === 1 ? '<button type="button" class="btn btn-outline" data-action="login-modo" data-modo="entrar">Já tenho acesso</button>' : ''}
+      </div>`;
+  } else if (L.modo === 'esqueci') {
+    corpo = `<h1 class="h1" id="acc">Esqueci minha senha</h1>${aviso}
+      <div class="stack-sm" style="margin-top:12px">${campoDemo('es-cpf', 'CPF', LOGIN_DEMO.cpf)}
+        ${L.enviado ? `<div class="ok-box"><p class="imp-level-text">${icon('check', 22)} Link enviado (simulação)</p><p class="meta">No portal real, chega um link no e-mail cadastrado na corretora para criar uma nova senha.</p></div>` : '<p class="muted">Vamos enviar um link para o e-mail cadastrado na sua corretora.</p>'}</div>
+      <div class="btn-row" style="margin-top:20px">${L.enviado ? '' : '<button type="button" class="btn btn-yellow" data-action="login-esqueci-enviar">Enviar link</button>'}
+        <button type="button" class="btn btn-outline" data-action="login-modo" data-modo="entrar">Voltar para o acesso</button></div>`;
+  } else {
+    const p = L.passo;
+    let conteudo;
+    if (p === 1) conteudo = `${campoDemo('lg-cpf', 'CPF', LOGIN_DEMO.cpf)}`;
+    else if (p === 2) conteudo = `<p class="muted">CPF <strong>${LOGIN_DEMO.cpf}</strong> · <button type="button" class="btn btn-link btn-sm" style="padding:0;min-height:auto" data-action="login-back">Trocar</button></p>
+      ${campoDemo('lg-senha', 'Senha', LOGIN_DEMO.senha, { tipo: 'password', dica: 'Senha de demonstração.' })}
+      <button type="button" class="btn btn-link btn-sm" style="padding-left:0;align-self:flex-start" data-action="login-modo" data-modo="esqueci">Esqueci minha senha</button>`;
+    else conteudo = `<h2 class="h2">Verificação em duas etapas</h2><p class="muted">Digite o código de 6 dígitos do seu aplicativo autenticador.</p>
+      <div class="code-boxes" aria-hidden="true">${LOGIN_DEMO.codigo.split('').map((d) => `<span>${d}</span>`).join('')}</div>
+      ${campoDemo('lg-2fa', 'Código de verificação', LOGIN_DEMO.codigo, { dica: 'Código de demonstração.' })}
+      <button type="button" class="btn btn-link btn-sm" style="padding-left:0;align-self:flex-start" data-action="login-reenviar">Não recebi o código</button>`;
+    corpo = `<h1 class="h1" id="acc">${p === 3 ? 'Confirme que é você' : 'Acesse a Área do Investidor'}</h1>
+      ${passosLogin(['CPF', 'Senha', 'Verificação'], p)}${aviso}${voltaPara}
+      <div class="stack-sm" style="margin-top:12px">${conteudo}</div>
+      <div class="btn-row" style="margin-top:20px">
+        ${p < 3 ? `<button type="button" class="btn btn-yellow" data-action="login-next">${p === 1 ? 'Continuar' : 'Entrar'}</button>`
+          : `<button type="button" class="btn btn-yellow" data-action="demo-login" data-conta="principal" data-destino="${dest}">Confirmar e entrar</button>`}
+        ${p > 1 ? '<button type="button" class="btn btn-outline" data-action="login-back">Voltar</button>' : '<button type="button" class="btn btn-outline" data-action="back">Voltar</button>'}
+      </div>
+      ${p === 1 ? `<div class="login-links"><span class="meta">Ainda não tem acesso?</span> <button type="button" class="btn btn-link btn-sm" data-action="login-modo" data-modo="primeiro">Primeiro acesso</button></div>` : ''}
+      <div class="card-foot login-atalhos"><span class="meta">Atalhos da demo:</span>
+        <button type="button" class="btn btn-link btn-sm" data-action="demo-login" data-conta="principal" data-destino="${dest}">Entrar direto (pular etapas)</button>
+        <button type="button" class="btn btn-link btn-sm" data-action="demo-login" data-conta="vazia" data-destino="${dest}">Conta vazia (primeiro investimento)</button></div>`;
+  }
   return {
     title: 'Entre para ver sua carteira', crumbs: [['Acesso']], nav: null, noCta: true,
     html: `<div class="access"><section class="card access-card" aria-labelledby="acc">
       ${logo('profundo', 96)}
       <p class="proto-tag" style="display:inline-block;margin:20px 0 12px">Protótipo acadêmico · Dados simulados</p>
-      ${c ? `<h1 class="h1" id="acc">Você já entrou</h1>
-        <p style="margin-top:8px">Você está com a conta ${esc(c.nome)}.</p>
-        <div class="btn-row"><a class="btn btn-primary" href="#${destino || '/carteira'}">Continuar</a></div>`
-      : `<h1 class="h1" id="acc">Entre para ver sua carteira</h1>
-      <p style="margin-top:8px">Esta é uma demonstração. Você entra com uma conta fictícia, já preenchida, sem senha, código ou CPF.</p>
-      ${label ? `<p class="note" style="margin-top:16px">${icon('arrowRight', 18)}<span>Depois de entrar, você volta para ${esc(label)}.</span></p>` : ''}
-      <div class="btn-row" style="margin-top:20px">
-        <button type="button" class="btn btn-yellow" data-action="demo-login" data-conta="principal" data-destino="${esc(destino || '')}">Entrar com conta demo</button>
-        <button type="button" class="btn btn-outline" data-action="back">Voltar</button>
-      </div>
-      <p class="meta" style="margin-top:16px">Dados fictícios. Conta: ${esc(CONTAS.principal.nome)} · CPF ${CONTAS.principal.cpf} · ${esc(CONTAS.principal.email)} (somente leitura).</p>
-      <div class="card-foot" style="justify-content:flex-start">
-        <span class="meta">Outro cenário:</span>
-        <button type="button" class="btn btn-link btn-sm" data-action="demo-login" data-conta="vazia" data-destino="${esc(destino || '')}">Entrar com conta vazia (primeiro investimento)</button>
-      </div>`}
+      ${corpo}
+      <p class="meta" style="margin-top:16px">Conta fictícia: ${esc(CONTAS.principal.nome)} · CPF ${CONTAS.principal.cpf} · ${esc(CONTAS.principal.email)}.</p>
     </section></div>`,
   };
 }
+const focoLogin = '#acc';
+ACTIONS['login-next'] = () => { ui.login.passo += 1; rerender(focoLogin); };
+ACTIONS['login-back'] = () => { ui.login.passo = Math.max(1, ui.login.passo - 1); rerender(focoLogin); };
+ACTIONS['login-modo'] = (el) => { Object.assign(ui.login, { modo: el.dataset.modo, passo: 1, enviado: false }); rerender(focoLogin); };
+ACTIONS['login-reenviar'] = () => toast('Código reenviado (simulação). Use o código de demonstração 246810.');
+ACTIONS['login-esqueci-enviar'] = () => { ui.login.enviado = true; rerender(focoLogin); };
+CHANGES['login-metodo'] = (el) => { ui.login.metodo = el.value; rerender('[data-change="login-metodo"]:checked'); };
 ACTIONS['demo-login'] = (el) => {
+  ui.login = { modo: 'entrar', passo: 1, metodo: 'app', enviado: false };
   state.session = { conta: el.dataset.conta };
   state.lidas = [];
   save();

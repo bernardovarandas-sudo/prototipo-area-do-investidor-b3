@@ -85,7 +85,12 @@ function pv(text) {
 }
 const pBrl = (n) => pv(fmt.brl(n));
 const pSbrl = (n) => pv(fmt.sbrl(n));
-const pQtd = (n) => pv(fmt.int(n));
+const fmtQtd = (n) => (Number.isInteger(n) ? fmt.int(n) : nf2.format(n));
+const pQtd = (n) => pv(fmtQtd(n));
+/* Unidade de cada produto: ações, cotas, títulos, aplicação. */
+const unid = (a, q) => (a.unidade === 'aplicação' ? (q === 1 ? 'aplicação' : 'aplicações') : a.unidade || 'ações');
+const precoFmt = (a, n) => (a.preco < 10 && a.classe === 'Fundos' ? 'R$ ' + new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 4, maximumFractionDigits: 4 }).format(n) : fmt.brl(n));
+const acoesMercado = () => ATIVOS.filter((a) => a.classe === 'Ações');
 
 /* Variação com sinal, seta e palavra — nunca só cor. */
 function trend(pct, { label = null, size = '' } = {}) {

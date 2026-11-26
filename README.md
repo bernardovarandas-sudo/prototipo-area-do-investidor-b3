@@ -6,8 +6,14 @@ Protótipo acadêmico do Squad Capital, feito no ciclo prático com a B3. **Todo
 
 ## O que dá para clicar
 
-- **Início** (sem login): Ibovespa, busca de ações e ficha do ativo.
-- **Acesso demo:** um clique entra na conta fictícia.
+- **Início** (sem login): Ibovespa, busca de ações, "Mais negociados" e ficha do ativo.
+- **Acesso:** CPF → senha → verificação em duas etapas, "Primeiro acesso" em 5 etapas e "Esqueci minha senha". Os campos já vêm com dados fictícios e não aceitam digitação (o site nunca recebe CPF ou senha reais). Há atalho para entrar direto.
+- **Carteira com todos os tipos de investimento:** ações, FIIs, ETFs, renda fixa (Tesouro, CDB, LCI) e fundos, com filtro por classe. Visão geral com destaques, alocação por classe/produto/instituição e evolução do patrimônio.
+- **Investimentos:** Posição com filtro por classe e Garantias preenchidas.
+- **Downloads no modelo padrão:** todo "Baixar" gera PDF (cabeçalho da Área do Investidor, dados da conta, tabela, totais, marca d'água de demonstração) ou Excel com a mesma estrutura.
+- **Serviços como no portal:** Calculadoras de IR (aba Revar com vínculo simulado + parceiras), Voto a distância (Início, Em aberto, Histórico), CALC de Renda Fixa calculando DI, títulos públicos, debêntures, CRA e CRI.
+- **Meu acesso:** dados pessoais, contas de investimento, e-mail principal, segurança e central de notificações.
+- **Assistente de ajuda** (canto inferior direito): responde dúvidas comuns com dados da conta demo e links. Funciona por regras, sem servidor.
 - **Comprar:** na ficha de cada ação, "Comprar" mostra que a compra é feita na corretora e leva ao site dela. Ao lado, "Comprar na demo" (só no protótipo) adiciona a ação à carteira fictícia.
 - **Minha carteira:** resumo, "O que mudou", composição e ativos, já com as compras da demo.
 - **Notícias:** notícias reais de novembro de 2026, resumidas com link para a reportagem, e notícias fictícias. O painel "Impacto na carteira" calcula a relação com a sua carteira na hora.

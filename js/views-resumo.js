@@ -1,48 +1,5 @@
 /* Resumo semanal (carteira + e-mail opcional), perfil com Preferências e proventos no calendário pessoal (.ics). */
 
-/* ---------- Perfil e Preferências ---------- */
-function viewPerfil() {
-  const c = conta();
-  const on = prefResumo();
-  return {
-    title: 'Perfil e preferências', nav: null, crumbs: [['Perfil']],
-    html: `<div class="page-head"><div><h1 class="h1">Perfil</h1><p class="meta lead">Conta fictícia de demonstração · somente leitura</p></div></div>
-    <div class="stack" style="max-width:760px">
-      <section class="card" aria-labelledby="pf-dados"><h2 class="h2" id="pf-dados">Dados pessoais</h2>
-        <dl class="dl" style="margin-top:12px"><div><dt>Nome</dt><dd>${esc(c.nome)}</dd></div><div><dt>CPF</dt><dd>${c.cpf}</dd></div><div><dt>E-mail</dt><dd>${esc(c.email)}</dd></div></dl>
-        <p class="meta" style="margin-top:12px">O e-mail vem do cadastro na sua corretora. Para mudar, atualize o cadastro lá. Na demo, os dados não podem ser alterados.</p>
-      </section>
-      <section class="card" aria-labelledby="pf-pref"><h2 class="h2" id="pf-pref">Preferências</h2>
-        <div class="pref-row">
-          <div><p class="pref-title" id="pref-resumo-l">Receber resumo semanal da carteira</p>
-            <p class="meta" id="pref-resumo-d">Toda segunda-feira, um e-mail avisa que o resumo da semana está pronto. O e-mail não mostra valores, quantidades nem nomes dos seus investimentos.</p></div>
-          <button type="button" class="switch" role="switch" aria-checked="${on}" aria-labelledby="pref-resumo-l" aria-describedby="pref-resumo-d pref-resumo-s" data-action="pref-resumo">
-            <span class="switch-track" aria-hidden="true"><span class="switch-thumb"></span></span><span class="switch-text" aria-hidden="true">${on ? 'Ativado' : 'Desativado'}</span></button>
-        </div>
-        <p class="note ${on ? '' : 'neutral'}" id="pref-resumo-s" style="margin-top:12px">${icon(on ? 'check' : 'info', 18)}<span>${on
-          ? 'Ativado. Próximo resumo (simulado): segunda, 30 nov. Na demo, nenhum e-mail é enviado.'
-          : 'Desativado. Você ainda pode ver o resumo da semana em Minha carteira.'}</span></p>
-        <div class="btn-row"><a class="btn btn-outline btn-sm" href="#/demo/resumo-email">${icon('mail', 16)}Ver prévia do e-mail</a><a class="btn btn-link btn-sm" href="#/carteira/resumo">Abrir resumo semanal</a></div>
-        <p class="meta" style="margin-top:8px">A preferência fica salva neste navegador.</p>
-      </section>
-      <section class="card" aria-labelledby="pf-seg"><h2 class="h2" id="pf-seg">Segurança</h2>
-        <p style="margin-top:8px">Na Área do Investidor real, o acesso usa senha e verificação em duas etapas. Na demo, a entrada é em um clique, sem senha.</p>
-      </section>
-      <section class="card" aria-labelledby="pf-sair"><h2 class="h2" id="pf-sair">Sair</h2>
-        <p style="margin-top:8px" class="muted">Ao sair, os valores somem da tela e as compras feitas na demo são apagadas.</p>
-        <div class="btn-row"><button type="button" class="btn btn-outline" data-action="logout">${icon('logout', 18)}Sair da conta demo</button></div>
-      </section>
-    </div>`,
-  };
-}
-ACTIONS['pref-resumo'] = () => {
-  const k = state.session.conta;
-  state.prefs[k] = { ...(state.prefs[k] || {}), resumoSemanal: !prefResumo() };
-  save();
-  announce(prefResumo() ? 'Resumo semanal ativado. Preferência salva.' : 'Resumo semanal desativado. Preferência salva.');
-  rerender('[data-action="pref-resumo"]');
-};
-
 /* ---------- Prévia do e-mail (não pede endereço e não envia nada) ---------- */
 function viewResumoEmail(route) {
   const sem = SEMANAS.find((x) => x.id === route.q.get('semana')) || SEMANAS[0];
@@ -61,7 +18,7 @@ function viewResumoEmail(route) {
         <p style="margin-top:8px">O resumo da ${sem.titulo.toLowerCase()} está pronto. Veja quanto sua carteira variou, os destaques da semana e as notícias ligadas aos seus investimentos.</p>
         <div class="btn-row" style="margin-top:20px"><a class="btn btn-yellow" href="#/carteira/resumo?semana=${sem.id}">Ver meu resumo na B3</a></div>
         <p class="meta" style="margin-top:20px">Por segurança, este e-mail não mostra valores, quantidades nem nomes dos seus investimentos. Você vê os detalhes depois de entrar.</p>
-        <p class="meta" style="margin-top:8px">Você recebe este e-mail porque ativou “Receber resumo semanal da carteira” em Perfil › Preferências. Para parar, desative a opção lá.</p>
+        <p class="meta" style="margin-top:8px">Você recebe este e-mail porque ativou “Receber resumo semanal da carteira” em Meu acesso › Configuração de notificações. Para parar, desative a opção lá.</p>
       </article>
       <p class="note neutral" style="margin-top:16px;max-width:600px">${icon('info', 18)}<span>Prévia demonstrativa: não pedimos endereço de e-mail e nenhuma mensagem é disparada.</span></p>`,
   };
@@ -161,7 +118,7 @@ function viewResumo(route) {
       <div class="stack">${corpo}
         <section class="card strip-card" aria-labelledby="rs-email"><div class="strip">
           <div><h2 class="h3" id="rs-email">Resumo por e-mail</h2><p class="meta">${on ? 'Ativado: você recebe um aviso toda segunda (simulado).' : 'Desativado. Ative para receber um aviso quando o resumo ficar pronto.'}</p></div>
-          <div class="btn-row" style="margin:0"><a class="btn btn-outline btn-sm" href="#/perfil">${on ? 'Alterar em Preferências' : 'Ativar em Preferências'}</a><a class="btn btn-link btn-sm" href="#/demo/resumo-email?semana=${sem.id}">Ver prévia do e-mail</a></div>
+          <div class="btn-row" style="margin:0"><a class="btn btn-outline btn-sm" href="#/perfil?secao=config">${on ? 'Alterar nas notificações' : 'Ativar nas notificações'}</a><a class="btn btn-link btn-sm" href="#/demo/resumo-email?semana=${sem.id}">Ver prévia do e-mail</a></div>
         </div></section>
       </div>`,
   };
