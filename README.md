@@ -11,7 +11,7 @@ Protótipo acadêmico do Squad Capital, feito no ciclo prático com a B3. **Todo
 - **Comprar:** na ficha de cada ação, "Comprar" mostra que a compra é feita na corretora e leva ao site dela. Ao lado, "Comprar na demo" (só no protótipo) adiciona a ação à carteira fictícia.
 - **Minha carteira:** resumo, "O que mudou", composição e ativos, já com as compras da demo.
 - **Notícias:** notícias reais de novembro de 2026, resumidas com link para a reportagem, e notícias fictícias. O painel "Impacto na carteira" calcula a relação com a sua carteira na hora.
-- **Proventos e Extratos:** mostram os pagamentos e as negociações das compras feitas na demo.
+- **Proventos e Extratos:** mostram os pagamentos e as negociações das compras feitas na demo. Em Proventos › Visão geral, um gráfico de colunas de jan a dez mostra o recebido em cada mês e o que está previsto.
 - **Portabilidade:** simulação em 4 etapas, com a solicitação em "Minhas solicitações".
 - **Voto a distância:** votação simulada na assembleia da Nova Azul.
 - **Serviços, Feedback e páginas institucionais:** consulta e exemplos.

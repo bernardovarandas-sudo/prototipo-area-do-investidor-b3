@@ -151,7 +151,7 @@ function viewProventos(route) {
         <div class="kpi"><div class="label">Próximo pagamento</div><div class="value h2">${p1 ? p1.data : 'Nenhum previsto'}</div><div class="sub meta">${p1 ? `${esc(ativo(p1.code).name)} · ${p1.tipo}` : 'Compre uma ação na demo para ver um exemplo'}</div></div>
       </div>
       ${comprasDemo().length ? `<p class="note demo-note" style="margin-top:16px">${icon('cart', 18)}<span>Inclui proventos das ações compradas na demo. Valores e datas desses pagamentos são simulados.</span></p>` : ''}`;
-    body += `
+    body += graficoProventos(RECEBIDOS, A_RECEBER) + `
       <section class="card" style="margin-top:24px" aria-labelledby="prox"><h2 class="h2" id="prox">Próximos pagamentos</h2>
         <div class="table-wrap" style="margin-top:8px"><table><caption class="sr-only">Próximos pagamentos</caption>
           <thead><tr><th scope="col">Data prevista</th><th scope="col">Ativo</th><th scope="col" class="col-sec">Tipo</th><th scope="col" class="num">Valor previsto</th></tr></thead>
@@ -160,7 +160,7 @@ function viewProventos(route) {
       </section>`;
   } else if (aba === 'recebidos') {
     const s = ui.prov;
-    const per = { '3m': ['Últimos 3 meses', ['2026-09', '2026-10', '2026-11']], nov: ['Novembro de 2026', ['2026-11']], '2025': ['Ano de 2025', []] };
+    const per = { '3m': ['Últimos 3 meses', ['2026-09', '2026-10', '2026-11']], nov: ['Novembro de 2026', ['2026-11']], '2026': ['Ano de 2026', Array.from({ length: 11 }, (_, i) => `2026-${String(i + 1).padStart(2, '0')}`)], '2025': ['Ano de 2025', []] };
     const linhas = RECEBIDOS.filter((p) => per[s.periodo][1].includes(p.mes) && (!s.inst || p.inst === s.inst));
     body = `<div class="query-bar">
         <div class="field"><label for="pr-per">Período</label><select id="pr-per" class="select" data-change="prov-per">${Object.entries(per).map(([k, v]) => `<option value="${k}" ${k === s.periodo ? 'selected' : ''}>${v[0]}</option>`).join('')}</select></div>
@@ -198,6 +198,51 @@ function viewProventos(route) {
 CHANGES['prov-per'] = (el) => { ui.prov.periodo = el.value; rerender('#pr-per'); };
 CHANGES['prov-inst'] = (el) => { ui.prov.inst = el.value; rerender('#pr-inst'); };
 ACTIONS.focus = (el) => { const t = document.querySelector(el.dataset.target); t && t.focus(); };
+
+/* Gráfico de colunas jan–dez 2026: recebido por mês e previsto (a receber). Rótulo direto só no mês atual e no próximo;
+   os demais meses mostram o valor no hover/foco. Cores validadas (contraste ≥ 3:1) e listras no previsto. */
+const MES_CURTO = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+function graficoProventos(recebidos, aReceber) {
+  const meses = MES_CURTO.map((nome, i) => ({ nome, i, rec: 0, prev: 0 }));
+  recebidos.forEach((p) => { const [, mm, yy] = p.data.split('/'); if (yy === '2026') meses[+mm - 1].rec += p.valor; });
+  aReceber.forEach((p) => { if (p.dia && p.valor != null && p.dia.startsWith('2026')) meses[+p.dia.slice(5, 7) - 1].prev += p.valor; });
+  const fora = aReceber.filter((p) => p.dia && !p.dia.startsWith('2026')).length;
+  const semData = aReceber.filter((p) => !p.dia).length;
+  const atual = 10, proximo = 11; // novembro e dezembro de 2026 na demo
+  const max = Math.max(...meses.map((m) => m.rec + m.prev), 1);
+  const passo = max <= 100 ? 25 : max <= 200 ? 50 : max <= 500 ? 100 : Math.ceil(max / 500) * 100;
+  const topo = Math.ceil((max * 1.3) / passo) * passo; // folga para os rótulos do mês atual e do próximo
+  const ticks = []; for (let v = 0; v <= topo; v += passo) ticks.push(v);
+  const h = (v) => (v / topo) * 100;
+  const totalAno = meses.reduce((t, m) => t + m.rec, 0);
+  const desc = (m) => [m.rec ? `recebido ${fmt.brl(m.rec)}` : '', m.prev ? `previsto ${fmt.brl(m.prev)}` : ''].filter(Boolean).join(', ') || 'sem pagamentos';
+  const rot = (m) => (m.i === atual ? { t: 'Este mês', v: m.rec + m.prev } : m.i === proximo ? { t: 'Próximo', v: m.prev + m.rec } : null);
+  return `<section class="card" style="margin-top:24px" aria-labelledby="pg-chart">
+    <div class="card-head"><div><h2 class="h2" id="pg-chart">Proventos em 2026</h2><p class="meta">Recebido em cada mês e previsto para os próximos · Total recebido no ano: ${pBrl(totalAno)}</p></div>
+      <ul class="legend pchart-legend" aria-label="Legenda"><li><span class="swatch sw-rec"></span>Recebido</li><li><span class="swatch sw-prev"></span>A receber</li></ul></div>
+    <p class="pchart-sum"><span>Este mês (nov): <strong>${pBrl(meses[atual].rec + meses[atual].prev)}</strong></span><span>Próximo mês (dez): <strong>${pBrl(meses[proximo].rec + meses[proximo].prev)}</strong></span></p>
+    <div class="pchart" role="group" aria-label="Gráfico de colunas: proventos por mês em 2026. Use Tab para ouvir cada mês.">
+      <div class="pchart-y" aria-hidden="true">${ticks.slice().reverse().map((v) => `<span>${state.hide ? '' : 'R$ ' + nf0.format(v)}</span>`).join('')}</div>
+      <div class="pchart-plot">
+        <div class="pchart-grid" aria-hidden="true">${ticks.map(() => '<span></span>').join('')}</div>
+        ${meses.map((m) => { const r = rot(m); return `<div class="pcol ${m.i < 2 ? 'tip-l' : m.i > 9 ? 'tip-r' : ''}" tabindex="0" aria-label="${MESES[m.i]}: ${state.hide ? 'valor oculto' : desc(m)}${m.i === atual ? ' (mês atual)' : m.i === proximo ? ' (próximo mês)' : ''}">
+          <div class="pstack">
+            ${r && (m.rec + m.prev) ? `<span class="plabel" style="bottom:${h(m.rec + m.prev)}%" aria-hidden="true"><small>${r.t}</small>${pBrl(r.v)}</span>` : ''}
+            ${m.prev ? `<span class="pbar prev" style="height:${h(m.prev)}%"></span>` : ''}
+            ${m.rec ? `<span class="pbar rec" style="height:${h(m.rec)}%"></span>` : ''}
+          </div>
+          <span class="ptip" style="bottom:calc(${Math.min(h(m.rec + m.prev), 70)}% + 10px)" aria-hidden="true"><strong>${MESES[m.i][0].toUpperCase() + MESES[m.i].slice(1)}</strong>${m.rec ? `<span><i class="swatch sw-rec"></i>Recebido ${pBrl(m.rec)}</span>` : ''}${m.prev ? `<span><i class="swatch sw-prev"></i>A receber ${pBrl(m.prev)}</span>` : ''}${m.rec + m.prev ? '' : '<span>Sem pagamentos</span>'}</span>
+        </div>`; }).join('')}
+      </div>
+      <div class="pchart-x" aria-hidden="true">${meses.map((m) => `<span class="${m.i === atual || m.i === proximo ? 'is-on' : ''}">${m.nome}</span>`).join('')}</div>
+    </div>
+    ${fora || semData ? `<p class="meta" style="margin-top:8px">${[fora ? `${fora} ${fora === 1 ? 'pagamento previsto' : 'pagamentos previstos'} para 2027` : '', semData ? `${semData} com data a confirmar` : ''].filter(Boolean).join(' e ')} ${fora + semData === 1 ? 'aparece' : 'aparecem'} na lista abaixo, fora do gráfico.</p>` : ''}
+    <button type="button" class="btn btn-link btn-sm" style="padding-left:0;margin-top:4px" data-action="disclose" aria-expanded="false" aria-controls="pchart-tabela">Ver em tabela</button>
+    <div id="pchart-tabela" hidden><div class="table-wrap"><table><caption class="sr-only">Proventos por mês em 2026</caption>
+      <thead><tr><th scope="col">Mês</th><th scope="col" class="num">Recebido</th><th scope="col" class="num">A receber</th></tr></thead>
+      <tbody>${meses.map((m) => `<tr><td>${MESES[m.i][0].toUpperCase() + MESES[m.i].slice(1)}</td><td class="num">${m.rec ? pBrl(m.rec) : '—'}</td><td class="num">${m.prev ? pBrl(m.prev) : '—'}</td></tr>`).join('')}</tbody></table></div></div>
+  </section>`;
+}
 
 const MESES = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
 function calendario() {

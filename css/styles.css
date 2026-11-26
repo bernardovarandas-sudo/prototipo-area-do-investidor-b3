@@ -416,6 +416,54 @@ th.num, td.num { text-align: right; }
 .logo-profundo .logo-text { color: var(--brand-deep); }
 
 /* ---------- Tablet: barra compacta ---------- */
+/* ---------- Destaques da semana (simples) ---------- */
+.dest-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 0; border-bottom: 1px solid var(--line); }
+.dest-row:last-child { border-bottom: 0; }
+.dest-nome { font-size: 20px; line-height: 28px; font-weight: 700; color: var(--ink); }
+.dest-link { display: inline-block; margin-top: 4px; font-size: 14px; font-weight: 600; }
+.dest-val { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; text-align: right; flex: none; }
+.dest-pct { display: inline-flex; align-items: center; gap: 4px; font-size: 26px; line-height: 32px; font-weight: 700; }
+.dest-brl { font-size: 15px; font-weight: 600; color: var(--muted); }
+.dest-up { color: var(--positive-text); }
+.dest-down { color: var(--negative-text); }
+.dest-flat { color: var(--neutral-text); }
+.dest-prov { color: var(--brand-deep); font-size: 22px; }
+@media (max-width: 480px) { .dest-pct { font-size: 22px; } .dest-nome { font-size: 18px; } }
+
+/* ---------- Gráfico de proventos (colunas jan–dez) ---------- */
+:root { --pg-rec: #2E2ECC; --pg-prev: #1E9AA6; }
+.sw-rec { background: var(--pg-rec); }
+.sw-prev { background: repeating-linear-gradient(45deg, var(--pg-prev) 0 3px, #8FD0D6 3px 5px); }
+.pchart-legend { margin: 0; }
+.pchart { display: grid; grid-template-columns: auto 1fr; grid-template-rows: 220px auto; column-gap: 8px; margin-top: 16px; }
+.pchart-y { grid-row: 1; display: flex; flex-direction: column; justify-content: space-between; font-size: 12px; color: var(--muted); text-align: right; transform: translateY(-7px); height: calc(100% + 14px); min-width: 44px; }
+.pchart-plot { grid-row: 1; grid-column: 2; position: relative; display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); align-items: end; border-bottom: 1px solid var(--line); }
+.pchart-grid { position: absolute; inset: 0; display: flex; flex-direction: column-reverse; justify-content: space-between; pointer-events: none; }
+.pchart-grid span { border-top: 1px dashed var(--line); height: 0; }
+.pchart-grid span:first-child { border-top: 0; }
+.pcol { position: relative; height: 100%; display: flex; justify-content: center; align-items: flex-end; outline: none; cursor: default; }
+.pcol:focus-visible { box-shadow: inset 0 0 0 2px var(--brand-vivid); border-radius: 6px; }
+.pcol:hover, .pcol:focus-visible { background: rgba(10, 3, 73, .04); }
+.pstack { position: relative; display: flex; flex-direction: column; justify-content: flex-end; gap: 2px; width: min(60%, 30px); height: 100%; }
+.pbar { display: block; width: 100%; min-height: 3px; }
+.pbar.rec { background: var(--pg-rec); }
+.pbar.prev { background: repeating-linear-gradient(45deg, var(--pg-prev) 0 4px, #8FD0D6 4px 7px); }
+.pstack > .pbar:first-of-type { border-radius: 4px 4px 0 0; }
+.plabel { position: absolute; left: 50%; transform: translateX(-50%); white-space: nowrap; text-align: center; font-size: 13px; font-weight: 700; color: var(--ink); line-height: 16px; padding-bottom: 4px; }
+.plabel small { display: block; font-size: 11px; font-weight: 600; color: var(--muted); }
+.ptip { display: none; position: absolute; left: 50%; transform: translateX(-50%); z-index: 3; min-width: 150px; padding: 8px 10px; border-radius: 8px; background: var(--brand-deep); color: #fff; font-size: 12px; line-height: 18px; box-shadow: 0 4px 12px rgba(0,0,0,.18); }
+.ptip strong { display: block; font-size: 13px; color: #fff; }
+.ptip span { display: flex; align-items: center; gap: 6px; }
+.ptip .swatch { width: 10px; height: 10px; border-radius: 2px; display: inline-block; outline: 1px solid rgba(255,255,255,.6); }
+.pcol:hover .ptip, .pcol:focus-visible .ptip { display: block; }
+.pcol.tip-l .ptip { left: 0; transform: none; }
+.pcol.tip-r .ptip { left: auto; right: 0; transform: none; }
+.pchart-x { grid-column: 2; display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); font-size: 12px; color: var(--muted); text-align: center; padding-top: 6px; }
+.pchart-x .is-on { color: var(--ink); font-weight: 700; }
+.pchart-sum { display: none; flex-wrap: wrap; gap: 4px 16px; margin-top: 12px; font-size: 14px; color: var(--muted); }
+.pchart-sum strong { color: var(--ink); }
+@media (max-width: 600px) { .pchart { grid-template-rows: 180px auto; } .pchart-x span { font-size: 10px; } .plabel { display: none; } .pchart-sum { display: flex; } .pchart-y { min-width: 36px; font-size: 10px; } }
+
 /* ---------- Painel “Por que mudou?” ---------- */
 .pblock.motivos p + p { margin-top: 8px; }
 .motivo-lead { font-size: 18px; line-height: 26px; font-weight: 600; color: var(--ink); }

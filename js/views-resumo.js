@@ -97,24 +97,31 @@ function noticiaDoAtivo(code, sem) {
   return NOTICIAS.find((n) => naSemana(n) && n.tipo !== 'evento') || NOTICIAS.find(naSemana);
 }
 
+/* Destaques simples: nome da ação e valorização da semana, com cor e letra grande. */
 function destaquesSemana(sem, r) {
   const movers = r.linhas.slice().sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta));
   const evs = ehPrincipal() ? sem.eventos : [];
-  const qtdMovers = Math.max(0, 3 - Math.min(evs.length, 1));
-  const lista = movers.slice(0, qtdMovers).map((l) => {
+  const lista = movers.slice(0, Math.max(0, 3 - Math.min(evs.length, 1))).map((l) => {
     const n = noticiaDoAtivo(l.a.code, sem);
-    const sobe = l.delta >= 0;
-    return {
-      icon: sobe ? 'arrowUp' : 'arrowDown',
-      titulo: `${l.a.name} ${sobe ? 'subiu' : 'caiu'} ${nf2.format(Math.abs(l.pct))}% na semana`,
-      texto: `${pSbrl(l.delta)} na sua carteira · ${fmt.brl(l.ini)} → ${fmt.brl(l.fim)}${l.demo ? ' · compra feita na demo, considerada desde 23 nov' : ''}`,
-      acao: n ? `<a class="btn btn-outline btn-sm" href="#/noticias?aba=carteira&painel=${n.id}">${icon('wallet', 16)}Ver como afeta minha carteira<span class="sr-only">: ${esc(n.titulo)}</span></a><span class="meta destaque-news">Notícia: ${esc(n.titulo)}</span>` : '',
-    };
+    const dir = l.pct > 0.005 ? 'up' : l.pct < -0.005 ? 'down' : 'flat';
+    return `<li class="dest-row">
+      <div class="dest-main"><p class="dest-nome">${esc(l.a.name)} <span class="asset-code">${l.a.code}</span></p>
+        ${n ? `<a class="dest-link" href="#/noticias?aba=carteira&painel=${n.id}">Ver como afeta minha carteira<span class="sr-only">: ${esc(n.titulo)}</span></a>` : ''}
+        ${l.demo ? '<p class="meta">Compra feita na demo, conta desde 23 nov</p>' : ''}</div>
+      <div class="dest-val"><span class="dest-pct dest-${dir}">${icon(dir === 'up' ? 'arrowUp' : dir === 'down' ? 'arrowDown' : 'minus', 20)}<span class="sr-only">${dir === 'up' ? 'Alta' : dir === 'down' ? 'Baixa' : 'Estável'}: </span>${fmt.pct(l.pct)}</span>
+        <span class="dest-brl dest-${dir}">${pSbrl(l.delta)} na carteira</span></div>
+    </li>`;
   });
-  evs.slice(0, 1).forEach((e) => lista.push({
-    icon: 'coins', titulo: `Provento anunciado em ${e.data}`, texto: esc(e.texto),
-    acao: `<a class="btn btn-outline btn-sm" href="#/proventos/pagamento/${e.provId}">${icon('calendar', 16)}Ver pagamento</a>`,
-  }));
+  evs.slice(0, 1).forEach((e) => {
+    const p = acharProvento(e.provId);
+    lista.push(`<li class="dest-row">
+      <div class="dest-main"><p class="dest-nome">${esc(ativo(e.code).name)} <span class="asset-code">${e.code}</span></p>
+        <p class="meta">Anunciou dividendos em ${e.data}</p>
+        <a class="dest-link" href="#/proventos/pagamento/${e.provId}">Ver pagamento</a></div>
+      <div class="dest-val"><span class="dest-pct dest-prov">${icon('coins', 20)}${p && p.valor != null ? pBrl(p.valor) : 'Provento'}</span>
+        <span class="dest-brl">previsto para ${p && p.data ? p.data : 'data a confirmar'}</span></div>
+    </li>`);
+  });
   return lista.slice(0, 3);
 }
 
@@ -141,8 +148,8 @@ function viewResumo(route) {
         ${sem.compras && comprasDemo().length ? `<p class="note demo-note" style="margin-top:12px">${icon('cart', 18)}<span>Inclui compras feitas na demo, consideradas desde ${REF.anteriorCurta}.</span></p>` : ''}
       </section>
       <section class="card" aria-labelledby="rs-dest">
-        <div class="card-head"><h2 class="h2" id="rs-dest">Destaques da semana</h2><span class="meta">Até três</span></div>
-        <ul class="destaques">${ds.map((d) => `<li><span class="destaque-ic">${icon(d.icon, 20)}</span><div><p class="destaque-t">${d.titulo}</p><p class="meta">${d.texto}</p>${d.acao ? `<div class="btn-row" style="margin-top:8px;align-items:center">${d.acao}</div>` : ''}</div></li>`).join('')}</ul>
+        <div class="card-head"><h2 class="h2" id="rs-dest">Destaques da semana</h2><span class="meta">Valorização de ${sem.ini} a ${sem.fim}</span></div>
+        <ul class="destaques">${ds.join('')}</ul>
         <p class="meta" style="margin-top:8px">As notícias ajudam a entender o contexto, mas não comprovam a causa das variações.</p>
       </section>`;
   }

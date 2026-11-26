@@ -160,6 +160,14 @@ const PROVENTOS_RECEBIDOS = [
   { id: 'rec-demo1a-20261014', data: '14/10/2026', mes: '2026-10', code: 'DEMO1', tipo: 'Dividendos', inst: 'Corretora A', valor: 63.00 },
   { id: 'rec-demo1b-20261014', data: '14/10/2026', mes: '2026-10', code: 'DEMO1', tipo: 'Dividendos', inst: 'Corretora B', valor: 27.00 },
   { id: 'rec-demo3-20260922', data: '22/09/2026', mes: '2026-09', code: 'DEMO3', tipo: 'Dividendos', inst: 'Corretora A', valor: 36.00 },
+  { id: 'rec-demo2-20260805', data: '05/08/2026', mes: '2026-08', code: 'DEMO2', tipo: 'Juros sobre capital próprio', inst: 'Corretora B', valor: 76.00 },
+  { id: 'rec-demo1a-20260714', data: '14/07/2026', mes: '2026-07', code: 'DEMO1', tipo: 'Dividendos', inst: 'Corretora A', valor: 49.00 },
+  { id: 'rec-demo1b-20260714', data: '14/07/2026', mes: '2026-07', code: 'DEMO1', tipo: 'Dividendos', inst: 'Corretora B', valor: 21.00 },
+  { id: 'rec-demo3-20260623', data: '23/06/2026', mes: '2026-06', code: 'DEMO3', tipo: 'Dividendos', inst: 'Corretora A', valor: 27.00 },
+  { id: 'rec-demo2-20260506', data: '06/05/2026', mes: '2026-05', code: 'DEMO2', tipo: 'Juros sobre capital próprio', inst: 'Corretora B', valor: 72.00 },
+  { id: 'rec-demo1a-20260316', data: '16/03/2026', mes: '2026-03', code: 'DEMO1', tipo: 'Dividendos', inst: 'Corretora A', valor: 42.00 },
+  { id: 'rec-demo1b-20260316', data: '16/03/2026', mes: '2026-03', code: 'DEMO1', tipo: 'Dividendos', inst: 'Corretora B', valor: 18.00 },
+  { id: 'rec-demo3-20260120', data: '20/01/2026', mes: '2026-01', code: 'DEMO3', tipo: 'Juros sobre capital próprio', inst: 'Corretora A', valor: 24.00 },
 ];
 const PROVENTOS_A_RECEBER = [
   { id: 'prev-demo1-20261215', data: '15/12/2026', dia: '2026-12-15', code: 'DEMO1', tipo: 'Dividendos', inst: 'Corretoras A e B', valor: 40.00 },
