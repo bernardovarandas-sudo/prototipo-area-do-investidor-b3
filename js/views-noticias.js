@@ -110,8 +110,17 @@ const NEWS_ART = {
     <g transform="translate(430 250)"><circle r="34" fill="#067684"/><circle r="12" fill="#DDE9F6"/>${[0, 60, 120, 180, 240, 300].map((a) => `<rect x="-8" y="-46" width="16" height="16" fill="#067684" transform="rotate(${a})"/>`).join('')}</g>`,
 };
 function newsImage(n, sufixo = '') {
-  const art = NEWS_ART[n.arte || n.id];
-  return `<svg class="news-img" viewBox="0 0 640 320" preserveAspectRatio="xMidYMid slice" role="img" aria-label="${esc(n.imagem || 'Ilustração da notícia')}">${art ? art('g-' + n.id + sufixo) : ''}</svg>`;
+  const art = NEWS_ART[n.arte || n.id], f = FOTOS_NOTICIA[n.id];
+  const svg = `<svg class="news-img" viewBox="0 0 640 320" preserveAspectRatio="xMidYMid slice" ${f ? 'aria-hidden="true"' : `role="img" aria-label="${esc(n.imagem || 'Ilustração da notícia')}"`}>${art ? art('g-' + n.id + sufixo) : ''}</svg>`;
+  if (!f) return svg;
+  // Foto real com licença livre; se não carregar, fica a ilustração por baixo.
+  return `<div class="news-media">${svg}<img src="${esc(f.src)}" alt="${esc(f.alt)}" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.remove()"></div>`;
+}
+/* Legenda: fonte da notícia + crédito da foto (autor, licença e link para o Wikimedia Commons). */
+function creditoNoticia(n) {
+  const f = FOTOS_NOTICIA[n.id], fonte = `Fonte: ${esc(n.fonte.replace(/^Fonte demo · /, ''))}`;
+  if (!f) return `${fonte} · Imagem ilustrativa`;
+  return `${fonte} · ${f.ilustrativa ? 'Foto ilustrativa' : 'Foto'}: <a href="${esc(f.pagina)}" target="_blank" rel="noopener">${esc(f.autor)}</a>, ${esc(f.licenca)}, via Wikimedia Commons`;
 }
 
 function newsItem(n, aba, ctx) {
@@ -123,7 +132,7 @@ function newsItem(n, aba, ctx) {
     <h2 class="h2 news-title" id="t-${n.id}">${esc(n.titulo)}</h2>
     <figure class="news-figure">
       ${newsImage(n)}
-      <figcaption class="meta">Fonte: ${esc(n.fonte.replace(/^Fonte demo · /, ''))} · Imagem ilustrativa</figcaption>
+      <figcaption class="meta">${creditoNoticia(n)}</figcaption>
     </figure>
     <p class="news-summary">${esc(n.resumo)}</p>
     <div class="news-actions">
@@ -236,7 +245,7 @@ function viewMateria(route) {
           : `<a class="btn btn-primary" href="#/acesso?destino=${encodeURIComponent('/noticias/' + n.id + '?painel=1')}">${icon('wallet', 18)}Impacto na carteira</a>`}
         ${n.real ? fonteLink(n, 'btn btn-outline', 'Abrir reportagem original') : ''}
       </div>
-      <figure class="news-figure">${newsImage(n, '-m')}<figcaption class="meta">Fonte: ${esc(n.fonte.replace(/^Fonte demo · /, ''))} · Imagem ilustrativa</figcaption></figure>
+      <figure class="news-figure">${newsImage(n, '-m')}<figcaption class="meta">${creditoNoticia(n)}</figcaption></figure>
       <p class="news-summary">${esc(n.resumo)}</p>
       ${n.detalhe.map(([t, p]) => `<h2 class="h3" style="margin-top:20px">${esc(t)}</h2><p style="margin-top:4px">${esc(p)}</p>`).join('')}
       ${n.real ? `<p class="meta" style="margin-top:16px">Resumo de reportagem de ${esc(n.fonte)}.</p>` : ''}

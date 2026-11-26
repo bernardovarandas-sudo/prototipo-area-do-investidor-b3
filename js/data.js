@@ -795,3 +795,136 @@ const AGENDA = {
 
 /* Código ISIN das empresas reais usadas no protótipo. */
 const ISIN_REAL = { PETR4: 'BRPETRACNPR6', VALE3: 'BRVALEACNOR0', ITUB4: 'BRITUBACNPR1', BBAS3: 'BRBBASACNOR3', MGLU3: 'BRMGLUACNOR2', WEGE3: 'BRWEGEACNOR0' };
+
+/* Fotos das notícias: imagens com licença livre do Wikimedia Commons (autor e licença na legenda).
+   Nas notícias de empresas fictícias, a foto é ilustrativa do setor. */
+const FOTOS_NOTICIA = {
+ "r2": {
+  "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/9/90/Trem_da_Vale_com_min%C3%A9rio_de_ferro_na_EFVM_e_BR-381_em_Tim%C3%B3teo_MG.JPG/960px-Trem_da_Vale_com_min%C3%A9rio_de_ferro_na_EFVM_e_BR-381_em_Tim%C3%B3teo_MG.JPG",
+  "alt": "Trem da Vale carregado de minério de ferro na Estrada de Ferro Vitória a Minas, em Timóteo (MG)",
+  "autor": "HVL",
+  "licenca": "CC BY 4.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Trem_da_Vale_com_min%C3%A9rio_de_ferro_na_EFVM_e_BR-381_em_Tim%C3%B3teo_MG.JPG",
+  "ilustrativa": false
+ },
+ "r3": {
+  "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/9/92/New_York_Stock_Exchange_August_2017_02.jpg/960px-New_York_Stock_Exchange_August_2017_02.jpg",
+  "alt": "Fachada da Bolsa de Valores de Nova York, em Wall Street",
+  "autor": "Arild Vågen",
+  "licenca": "CC BY-SA 4.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:New_York_Stock_Exchange_August_2017_02.jpg",
+  "ilustrativa": true
+ },
+ "r1": {
+  "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/ab/Oil_platform_P-51_%28Brazil%29.jpg/960px-Oil_platform_P-51_%28Brazil%29.jpg",
+  "alt": "Plataforma de petróleo P-51 da Petrobras, no mar",
+  "autor": "Divulgação Petrobras / ABr",
+  "licenca": "CC BY 3.0 br",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Oil_platform_P-51_(Brazil).jpg",
+  "ilustrativa": false
+ },
+ "r6": {
+  "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/a6/Fachada_do_edif%C3%ADcio_sede_do_Banco_do_Brasil_em_Bras%C3%ADlia.jpg/960px-Fachada_do_edif%C3%ADcio_sede_do_Banco_do_Brasil_em_Bras%C3%ADlia.jpg",
+  "alt": "Edifício-sede do Banco do Brasil, em Brasília",
+  "autor": "Agência Senado",
+  "licenca": "CC BY 2.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Fachada_do_edif%C3%ADcio_sede_do_Banco_do_Brasil_em_Bras%C3%ADlia.jpg",
+  "ilustrativa": false
+ },
+ "r7": {
+  "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/9/91/Magalu_-_LF_-_Loja_Centro_de_SP.jpg/960px-Magalu_-_LF_-_Loja_Centro_de_SP.jpg",
+  "alt": "Loja do Magazine Luiza no centro de São Paulo",
+  "autor": "Magazine Luiza - Magalu",
+  "licenca": "CC BY 2.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Magalu_-_LF_-_Loja_Centro_de_SP.jpg",
+  "ilustrativa": false
+ },
+ "r5": {
+  "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/9/98/Edif%C3%ADcio_%22Sede%22_do_Banco_Central_do_Brasil_em_Bras%C3%ADlia.jpg/960px-Edif%C3%ADcio_%22Sede%22_do_Banco_Central_do_Brasil_em_Bras%C3%ADlia.jpg",
+  "alt": "Edifício-sede do Banco Central do Brasil, em Brasília",
+  "autor": "Banco Central do Brasil",
+  "licenca": "CC BY 2.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Edif%C3%ADcio_%22Sede%22_do_Banco_Central_do_Brasil_em_Bras%C3%ADlia.jpg",
+  "ilustrativa": false
+ },
+ "r4": {
+  "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/b/b8/Banco_Ita%C3%BA%2C_Sousa_%28PB%29.jpg/960px-Banco_Ita%C3%BA%2C_Sousa_%28PB%29.jpg",
+  "alt": "Agência do Itaú em Sousa (PB)",
+  "autor": "Marcos Elias de Oliveira Júnior",
+  "licenca": "CC0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Banco_Ita%C3%BA,_Sousa_(PB).jpg",
+  "ilustrativa": false
+ },
+ "r8": {
+  "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/14/Transformador_WEG.jpg/960px-Transformador_WEG.jpg",
+  "alt": "Transformador fabricado pela WEG",
+  "autor": "Guigag1",
+  "licenca": "CC BY-SA 4.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Transformador_WEG.jpg",
+  "ilustrativa": false
+ },
+ "n1": {
+  "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/5d/BalticServers_data_center.jpg/960px-BalticServers_data_center.jpg",
+  "alt": "Corredor de servidores em um data center",
+  "autor": "BalticServers.com",
+  "licenca": "CC BY-SA 3.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:BalticServers_data_center.jpg",
+  "ilustrativa": true
+ },
+ "n2": {
+  "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/0/04/Electricity_pylons%2C_sunset_01.jpg/960px-Electricity_pylons%2C_sunset_01.jpg",
+  "alt": "Torres de transmissão de energia elétrica ao pôr do sol",
+  "autor": "Novoklimov",
+  "licenca": "CC BY 4.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Electricity_pylons,_sunset_01.jpg",
+  "ilustrativa": true
+ },
+ "n3": {
+  "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/3/3d/Shopping_P%C3%A1tio_Paulista%2C_S%C3%A3o_Paulo%2C_Brazil.jpg/960px-Shopping_P%C3%A1tio_Paulista%2C_S%C3%A3o_Paulo%2C_Brazil.jpg",
+  "alt": "Praça de alimentação de um shopping center em São Paulo",
+  "autor": "Wilfredor",
+  "licenca": "CC BY-SA 4.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Shopping_P%C3%A1tio_Paulista,_S%C3%A3o_Paulo,_Brazil.jpg",
+  "ilustrativa": true
+ },
+ "n4": {
+  "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/e7/Bovespa%2C_S%C3%A3o_Paulo_city_downtown.jpg/960px-Bovespa%2C_S%C3%A3o_Paulo_city_downtown.jpg",
+  "alt": "Fachada do antigo prédio da Bovespa, no centro de São Paulo",
+  "autor": "Wilfredor",
+  "licenca": "CC BY-SA 4.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Bovespa,_S%C3%A3o_Paulo_city_downtown.jpg",
+  "ilustrativa": true
+ },
+ "n5": {
+  "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/3/3d/R.C._Harris_Water_Treatment_Plant_Aerial_view_2023.jpg/960px-R.C._Harris_Water_Treatment_Plant_Aerial_view_2023.jpg",
+  "alt": "Vista aérea de uma estação de tratamento de água",
+  "autor": "Canmenwalker",
+  "licenca": "CC BY 4.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:R.C._Harris_Water_Treatment_Plant_Aerial_view_2023.jpg",
+  "ilustrativa": true
+ },
+ "n6": {
+  "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/cc/Port_Santos.jpg/960px-Port_Santos.jpg",
+  "alt": "Guindastes e navio de contêineres no Porto de Santos",
+  "autor": "Claus Bunks aka Afrobrasil on flickr",
+  "licenca": "CC BY 3.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Port_Santos.jpg",
+  "ilustrativa": true
+ },
+ "n7": {
+  "src": "https://upload.wikimedia.org/wikipedia/commons/5/52/Warehouse_md17.jpg",
+  "alt": "Corredor de um galpão logístico com mercadorias em pallets",
+  "autor": "Paranoid",
+  "licenca": "Public domain",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Warehouse_md17.jpg",
+  "ilustrativa": true
+ },
+ "n8": {
+  "src": "https://thumb.wikimedia.org/wikipedia/commons/thumb/2/22/Sunrise_Dam_Gold_Mine_open_pit_11.jpg/960px-Sunrise_Dam_Gold_Mine_open_pit_11.jpg",
+  "alt": "Mina a céu aberto com bancadas escavadas",
+  "autor": "Calistemon",
+  "licenca": "CC BY-SA 4.0",
+  "pagina": "https://commons.wikimedia.org/wiki/File:Sunrise_Dam_Gold_Mine_open_pit_11.jpg",
+  "ilustrativa": true
+ }
+};
