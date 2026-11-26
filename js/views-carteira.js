@@ -18,7 +18,7 @@ function viewCarteira(route) {
                   <button type="button" class="btn btn-outline btn-sm" data-action="disclose" aria-expanded="false" aria-controls="nao-apareceu">Minha compra ainda não apareceu</button>`,
       })}
       <div class="note" id="como-comecar" hidden style="margin-top:12px">${icon('info', 18)}<span>A compra de ações acontece pela sua corretora, não pela Área do Investidor. Depois da compra e da liquidação, a posição passa a aparecer aqui. ${termHelp('liquidacao', 'liquidação')}</span></div>
-      <div class="note" id="nao-apareceu" hidden style="margin-top:12px">${icon('info', 18)}<span>Em ações à vista, a liquidação costuma ocorrer em D+2 (dois dias úteis) e a posição aparece depois da atualização seguinte. Não dá para saber daqui o estado da sua ordem: se o prazo passou, confirme com a corretora.</span></div>
+      <div class="note" id="nao-apareceu" hidden style="margin-top:12px">${icon('info', 18)}<span>Em ações à vista, a liquidação costuma ocorrer em D+2 (dois dias úteis) e a posição aparece depois da atualização seguinte. Não dá para saber daqui o estado da sua ordem: se o prazo passou, confirme com a corretora. <a href="#/carteira/compras">Acompanhar compras</a></span></div>
       ${demoBuyCta()}
       <p style="margin-top:24px">Enquanto isso, <a href="#/">acompanhe o mercado</a> ou veja <a href="#/noticias?aba=todo">as notícias</a>.</p>`,
     };
@@ -73,9 +73,12 @@ function viewCarteira(route) {
         <p class="meta" style="margin-top:8px">Soma: ${pSbrl(vp.delta)} = ${ordenados.map((g) => pSbrl(vp.por[g.a.code].delta)).join(' ')}</p>
       </section>
 
+      ${comprasAndamentoHtml()}
       ${destaquesCarteira(w)}
+      ${ehPrincipal() ? retroCard() : ''}
       ${alocacaoCard(w)}
       ${evolucaoCard(w)}
+      ${rentabCard()}
       ${produtosCard(w, vp, comparavel)}
       ${demoBuyCta()}
     </div>`,
@@ -145,56 +148,7 @@ function alocacaoCard(w) {
 }
 ACTIONS['aloc-aba'] = (el) => { ui.compo.aba = el.dataset.k; rerender(`[data-action="aloc-aba"][data-k="${el.dataset.k}"]`); };
 
-function evolucaoPontos(w) {
-  const v30 = ehPrincipal() ? Object.entries(QTD_30D_PRINCIPAL).reduce((t, [c, q]) => t + q * ativo(c).p30, 0) : 0;
-  const base = ehPrincipal() ? EVOLUCAO.map(([m, v]) => [m, v]) : EVOLUCAO.map(([m]) => [m, 0]);
-  return [...base, ['24 out', v30], ['24 nov', w.atual]];
-}
-function evolucaoCard(w) {
-  const pts = evolucaoPontos(w);
-  const W = 640, H = 200, px = 8, py = 14;
-  const vals = pts.map((p) => p[1]), max = Math.max(...vals), min = Math.min(...vals.filter((v) => v > 0), max);
-  const lo = Math.floor((min * 0.95) / 1000) * 1000, hi = Math.ceil((max * 1.03) / 1000) * 1000, span = hi - lo || 1;
-  const xy = pts.map((p, i) => [px + (i * (W - 2 * px)) / (pts.length - 1), py + (1 - (Math.max(p[1], lo) - lo) / span) * (H - 2 * py)]);
-  const d = xy.map((q, i) => (i ? 'L' : 'M') + q[0].toFixed(1) + ' ' + q[1].toFixed(1)).join(' ');
-  const area = `${d} L ${xy[xy.length - 1][0].toFixed(1)} ${H} L ${xy[0][0].toFixed(1)} ${H} Z`;
-  const ini = pts[0][1], fim = pts[pts.length - 1][1];
-  return `<section class="card" aria-labelledby="ev-t">
-    <div class="card-head"><div><h2 class="h2" id="ev-t">Evolução do patrimônio</h2><p class="meta">Últimos 12 meses · inclui aportes e resgates, não é rentabilidade</p></div>
-      <p class="ev-resumo">${pBrl(ini)} → <strong>${pBrl(fim)}</strong></p></div>
-    <figure class="ev-chart">
-      <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="${state.hide ? 'Gráfico da evolução do patrimônio, valores ocultos' : `Patrimônio foi de ${fmt.brl(ini)} em ${pts[0][0]} para ${fmt.brl(fim)} em 24 nov`}">
-        <path d="${area}" class="ev-area"/><path d="${d}" class="ev-line" vector-effect="non-scaling-stroke"/>
-      </svg>
-      <div class="ev-pts">${xy.map((q, i) => `<span class="ev-pt ${i === xy.length - 1 ? 'last' : ''}" style="left:${(q[0] / W) * 100}%;top:${(q[1] / H) * 100}%" tabindex="0" aria-label="${pts[i][0]}: ${state.hide ? 'valor oculto' : fmt.brl(pts[i][1])}"><span class="ev-tip">${pts[i][0]}<br><strong>${pBrl(pts[i][1])}</strong></span></span>`).join('')}</div>
-      <div class="ev-x" aria-hidden="true">${pts.map((p, i) => `<span>${i % 2 === 0 || i === pts.length - 1 ? p[0] : ''}</span>`).join('')}</div>
-    </figure>
-    <button type="button" class="btn btn-link btn-sm" style="padding-left:0" data-action="disclose" aria-expanded="false" aria-controls="ev-tab">Ver em tabela</button>
-    <div id="ev-tab" hidden><div class="table-wrap"><table><caption class="sr-only">Evolução do patrimônio</caption><thead><tr><th scope="col">Data</th><th scope="col" class="num">Patrimônio</th></tr></thead>
-      <tbody>${pts.map((p) => `<tr><td>${p[0]}</td><td class="num">${pBrl(p[1])}</td></tr>`).join('')}</tbody></table></div></div>
-  </section>`;
-}
 
-function produtosCard(w, vp, comparavel) {
-  const filtro = ui.carteiraClasse || 'todos';
-  const classes = CLASSES.filter((c) => w.itens.some((g) => g.a.classe === c));
-  const mostrar = classes.filter((c) => filtro === 'todos' || c === filtro);
-  return `<section class="card" aria-labelledby="ativos">
-    <div class="card-head"><h2 class="h2" id="ativos">Produtos da sua carteira</h2><span class="meta">Mudança ${comparavel ? `${REF.anteriorCurta} → ${REF.atualCurta}` : 'em 30 dias'}</span></div>
-    <div class="chips-filter" role="group" aria-label="Filtrar por classe">${[['todos', 'Todos'], ...classes.map((c) => [c, CLASSE_CURTA[c]])].map(([k, t]) => `<button type="button" class="chip-btn" data-action="cart-classe" data-k="${esc(k)}" aria-pressed="${filtro === k}">${t}</button>`).join('')}</div>
-    <div class="table-wrap"><table class="prod-table"><caption class="sr-only">Produtos da carteira por classe</caption>
-      <thead><tr><th scope="col">Produto</th><th scope="col" class="num">Quantidade</th><th scope="col" class="num">Valor atual</th><th scope="col" class="num">Mudança</th></tr></thead>
-      ${mostrar.map((c) => {
-        const its = w.itens.filter((g) => g.a.classe === c);
-        const tot = its.reduce((t, g) => t + g.atual, 0), dl = its.reduce((t, g) => t + vp.por[g.a.code].delta, 0);
-        return `<tbody><tr class="class-row"><th scope="rowgroup" colspan="2">${esc(c)} <span class="meta">· ${its.length} ${its.length === 1 ? 'produto' : 'produtos'} · ${nf1.format(w.atual ? (tot / w.atual) * 100 : 0)}% da carteira</span></th>
-          <td class="num"><strong>${pBrl(tot)}</strong></td><td class="num">${trendValue(dl, pSbrl(dl))}</td></tr>
-          ${its.map((g) => ativoRow(g, vp)).join('')}</tbody>`;
-      }).join('')}
-    </table></div>
-    <div class="card-foot"><a href="#/carteira/investimentos">Ir para posição</a><a href="#/carteira/investimentos/garantias">Ver garantias</a><a href="#/extratos/movimentacao">Ver movimentações</a></div>
-  </section>`;
-}
 ACTIONS['cart-classe'] = (el) => { ui.carteiraClasse = el.dataset.k; rerender(`[data-action="cart-classe"][data-k="${el.dataset.k}"]`); };
 
 /* Variação por período: desde a última visita (23 → 24 nov) ou 30 dias (24 out → 24 nov, quantidade de hoje).
@@ -216,17 +170,6 @@ function variacaoPeriodo(per) {
   return { por, delta, pct: base ? (delta / base) * 100 : 0 };
 }
 
-function ativoRow(g, vp) {
-  const v = vp.por[g.a.code];
-  const multi = g.insts.length > 1, key = 'inst-' + g.a.code, open = !!ui.expand[key];
-  return `<tr>
-    <td><div class="asset-cell"><a href="#/ativos/${g.a.code}?de=carteira">${esc(g.a.name)}</a><span class="asset-code">${g.a.code} · ${multi
-      ? `<button type="button" class="expand-btn" data-action="expand" data-key="${key}" aria-expanded="${open}" aria-controls="${key}">${g.insts.length} instituições ${icon('chevronDown', 14)}</button>`
-      : g.insts[0].inst}${g.demo ? ' · <span class="demo-badge sm">Compra na demo</span>' : ''}</span></div></td>
-    <td class="num">${pQtd(g.qtd)} <span class="meta">${unid(g.a, g.qtd)}</span></td><td class="num">${pBrl(g.atual)}</td>
-    <td class="num">${trendValue(v.delta, pSbrl(v.delta))}</td></tr>
-    ${multi ? g.insts.map((i) => `<tr class="sub-row" data-group="${key}" ${open ? '' : 'hidden'}><td>${i.inst}</td><td class="num">${pQtd(i.qtd)}</td><td class="num">${pBrl(i.atual)}</td><td class="num">${trendValue(v.insts[i.inst], pSbrl(v.insts[i.inst]))}</td></tr>`).join('') : ''}`;
-}
 
 function compoDetalhe(w) {
   const inst = {};
@@ -330,7 +273,7 @@ function viewInvestimentos(route) {
       ${linhas.length ? `<div class="card"><div class="table-wrap"><table><caption class="sr-only">Posição em ${dataLabel}</caption>
         <thead><tr><th scope="col">Ativo</th><th scope="col">Instituição</th><th scope="col" class="num">Quantidade</th><th scope="col" class="num col-sec">Preço de fechamento</th><th scope="col" class="num">Valor</th><th scope="col"><span class="sr-only">Detalhes</span></th></tr></thead>
         <tbody>${linhas.map((l, li) => { const k = `pos-${l.code}-${l.inst.slice(-1)}-${li}`; const open = !!ui.expand[k]; return `<tr>
-          <td><div class="asset-cell"><a href="#/ativos/${l.code}?de=carteira">${esc(l.a.name)}</a><span class="asset-code">${l.code}${l.demo ? ' · <span class="demo-badge sm">Compra na demo</span>' : ''}</span></div></td>
+          <td><div class="asset-cell"><a href="#/ativos/${l.code}?de=carteira">${esc(l.a.name)}</a><span class="asset-code">${l.code}${l.demo ? ` · <span class="demo-badge sm">${l.etapa < 2 ? 'A liquidar' : 'Compra na demo'}</span>` : ''}</span></div></td>
           <td>${l.inst}</td><td class="num">${pQtd(l.qtd)} <span class="meta">${unid(l.a, l.qtd)}</span></td><td class="num col-sec">${precoFmt(l.a, l.preco)}</td><td class="num">${pBrl(l.valor)}</td>
           <td class="num"><button type="button" class="expand-btn" data-action="expand" data-key="${k}" aria-expanded="${open}" aria-controls="${k}">Detalhes<span class="sr-only"> de ${esc(l.a.name)} na ${l.inst}</span>${icon('chevronDown', 14)}</button></td></tr>
           <tr class="detail-row" data-group="${k}" id="${k}" ${open ? '' : 'hidden'}><td colspan="6"><dl class="dl">
@@ -338,7 +281,8 @@ function viewInvestimentos(route) {
             <div><dt>Tipo de preço</dt><dd>${l.a.negociavel ? 'Fechamento do pregão' : l.a.classe === 'Fundos' ? 'Valor da cota' : 'Preço unitário (PU)'}</dd></div><div><dt>Data do preço</dt><dd>${dataLabel}</dd></div>
             ${l.a.vencimento ? `<div><dt>Vencimento</dt><dd>${l.a.vencimento}</dd></div><div><dt>Rentabilidade</dt><dd>${esc(l.a.indexador)}</dd></div>` : ''}
             <div><dt>Código ISIN</dt><dd>${l.a.real ? 'Não exibido na demo' : `BR${l.code.slice(0, 6)}00X0 (fictício)`}</dd></div>
-            <div><dt>Situação</dt><dd>${l.garantia ? `${fmtQtd(l.garantia)} em garantia · ${fmtQtd(l.qtd - l.garantia)} disponíveis` : 'Disponível'}</dd></div>
+            ${(() => { const pm = pmPos(l); return pm == null ? '<div><dt>Preço médio</dt><dd>Indisponível</dd></div>' : `<div><dt>${rotPM(l.a)}</dt><dd>${ehRendaFixa(l.a) ? pBrl(pm * l.qtd) : precoFmt(l.a, pm)}</dd></div><div><dt>Custo total</dt><dd>${pBrl(pm * l.qtd)}</dd></div><div><dt>${rotRes(l.a)}</dt><dd>${trendValue(l.valor - pm * l.qtd, pSbrl(l.valor - pm * l.qtd))}</dd></div>`; })()}
+            <div><dt>Situação</dt><dd>${l.demo && l.etapa < 2 ? 'A liquidar (D+2)' : ''}${l.garantia ? `${fmtQtd(l.garantia)} em garantia · ${fmtQtd(l.qtd - l.garantia)} disponíveis` : 'Disponível'}</dd></div>
             <div><dt>${l.a.classe === 'Ações' || l.a.negociavel ? 'Escriturador' : 'Custodiante'}</dt><dd>Banco Escriturador Demo</dd></div></dl></td></tr>`; }).join('')}</tbody></table></div>
         <p class="meta" style="margin-top:8px">Valor estimado pelo preço de fechamento de cada data. Dados simulados.</p></div>`
       : emptyState({ title: posicoes().length ? 'Nenhum resultado para esse filtro' : 'Não há posições para esta data', actions: s.aplicado || s.classe ? '<button type="button" class="btn btn-outline btn-sm" data-action="pos-limpar">Limpar filtros</button>' : '' })}`;

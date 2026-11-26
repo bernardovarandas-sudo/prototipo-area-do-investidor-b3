@@ -660,3 +660,135 @@ const RADAR_EXTRA = {
   ITUB4: ['14 nov', 0.02], PETR4: ['22 dez', 0.45], WEGE3: ['30 nov', 0.13], GLPD11: ['31 out', 0.80],
 };
 RADAR.forEach((r) => { const x = RADAR_EXTRA[r.code]; if (x) { r.dataCom = x[0]; r.vps = x[1]; } });
+
+/* =====================================================================================
+   RODADA 5 · dados novos (todos fictícios e coerentes com as telas existentes)
+   ===================================================================================== */
+const _at = (code) => ATIVOS.find((a) => a.code === code);
+
+/* ---- Item 11: duas mudanças aplicadas na origem, com o valor anterior guardado ---- */
+(() => {
+  const lum = PROVENTOS_A_RECEBER.find((p) => p.id === 'prev-demo3-jcp');
+  Object.assign(lum, { data: '18/12/2026', dia: '2026-12-18', valor: 36.00, mudou: { em: '24 nov', antes: 'Data a confirmar · valor a confirmar', agora: '18/12/2026 · R$ 0,18 por ação' } });
+  PROVENTOS_A_RECEBER.sort((a, b) => (a.dia || '9999').localeCompare(b.dia || '9999'));
+  const rl = RADAR.find((r) => r.code === 'DEMO3'); rl.pagamento = '18 dez';
+  const na = ASSEMBLEIAS.find((a) => a.empresa.startsWith('Nova Azul'));
+  Object.assign(na, { prazo: '30 nov 2026', mudou: { em: '24 nov', antes: '28 nov 2026', agora: '30 nov 2026' } });
+  const n5 = NOTICIAS.find((n) => n.id === 'n5');
+  n5.detalhe = n5.detalhe.map(([t, x]) => [t, x.replace('até 28 nov', 'até 30 nov (prazo atualizado em 24 nov)')]);
+})();
+const MUDANCAS = [
+  { id: 'm1', code: 'DEMO3', tipo: 'mudancas', titulo: 'JCP da Lumina confirmado', campo: 'Pagamento', antes: 'data a confirmar', agora: '18/12/2026 · R$ 0,18 por ação (R$ 36,00 para você)', destino: '/proventos/pagamento/prev-demo3-jcp', acao: 'Ver pagamento' },
+  { id: 'm2', code: 'DEMO2', tipo: 'mudancas', titulo: 'Prazo do voto da Nova Azul mudou', campo: 'Prazo do voto a distância', antes: '28 nov', agora: '30 nov', destino: '/servicos/voto?aba=aberto', acao: 'Ver assembleia' },
+];
+/* Avisos fixos ganham tipo e ativo (para o filtro da central de notificações). */
+const _tiposNotif = { a1: ['comunicados', 'DEMO1'], a2: ['assembleias', 'DEMO2'], a3: ['proventos', 'DEMO1'], a4: ['resumoSemanal', null] };
+NOTIFICACOES.forEach((n) => { const t = _tiposNotif[n.id]; if (t) { n.tipo = t[0]; n.code = t[1]; } });
+
+/* ---- Item 4: comunicados novos de empresas acompanhadas (favoritos que a pessoa não tem) ---- */
+NOTICIAS.splice(1, 0, {
+  id: 'n7', tipo: 'comunicado', data: '24 nov, 17h', fonte: 'Fonte demo · Relações com Investidores Pátria', arte: 'n6',
+  titulo: 'Pátria Logística confirma teleconferência de resultados em 29 nov', ativos: ['DEMO5'], setores: ['Logística'], tipoAlerta: 'resultados',
+  imagem: 'Ilustração: caminhão de carga ao lado de contêineres',
+  resumo: 'A Pátria Logística confirmou que apresenta os números do 3º trimestre em 28 nov, depois do pregão, e faz teleconferência com analistas em 29 nov, às 10h.',
+  detalhe: [['O que foi comunicado', 'Data e horário da divulgação do resultado e da teleconferência, com link de inscrição no site de RI.'], ['Por que acompanhar', 'Resultados costumam mexer no preço da ação nos dias seguintes à divulgação.']],
+  aconteceu: 'A Pátria Logística marcou a divulgação do resultado para 28 nov e a teleconferência para 29 nov.',
+  mexe: 'O preço costuma reagir depois da divulgação, conforme o resultado vier melhor ou pior do que o esperado.',
+  possivel: ['incerta', 'A ação pode subir ou cair depois de 28 nov.'],
+}, {
+  id: 'n8', tipo: 'comunicado', data: '24 nov, 12h', fonte: 'Fonte demo · Relações com Investidores Atlas', arte: 'mineracao',
+  titulo: 'Atlas Mineração revisa produção de minério para 2027', ativos: ['DEMO8'], setores: ['Mineração'], tipoAlerta: 'comunicados',
+  imagem: 'Ilustração: montanha de minério e caminhão',
+  resumo: 'A Atlas Mineração reduziu em 5% a projeção de produção de minério de ferro para 2027, por causa de uma pausa programada em uma das minas.',
+  detalhe: [['O que foi comunicado', 'Produção prevista para 2027 passa de 42 para 40 milhões de toneladas. A empresa manteve o plano de investimentos.'], ['Contexto', 'O minério de ferro está em baixa, o que já pressiona as mineradoras.']],
+  aconteceu: 'A Atlas Mineração reduziu em 5% a projeção de produção de minério para 2027.',
+  mexe: 'Produzir menos significa vender menos, o que pode pesar no lucro e no preço da ação.',
+  possivel: ['baixa', 'Se o mercado ainda não reagiu, a ação pode cair.'],
+});
+
+/* ---- Item 1: preço médio por posição (coerente com o extrato de negociação) ---- */
+const PRECO_MEDIO = {
+  DEMO1: { 'Corretora A': 20.743, 'Corretora B': 21.40 }, // 500 a R$ 19,80 + 200 a R$ 23,10 em 14/11
+  DEMO2: { 'Corretora B': 27.90 },
+  DEMO3: { 'Corretora A': 42.10 },                      // 150 a R$ 41,20 + 50 a R$ 44,80 em 04/11
+  GLPD11: { 'Corretora A': 95.40 },
+  IBOD11: { 'Corretora B': 121.15 },                    // 30 a R$ 118,50 + 10 a R$ 129,10 em 10/11
+  TSELIC29: { 'Corretora A': 15428.80 },                // 0,4 a R$ 15.210 + 0,1 a R$ 16.304 em 05/11
+  TIPCA35: { 'Corretora A': 2250.00 },
+  CDBDEMO: { 'Corretora B': 5000.00 }, LCIDEMO: { 'Corretora B': 2800.00 }, FMULTI: { 'Corretora B': 1.7100 },
+};
+
+/* ---- Preço de 12 meses atrás (24 nov 2025): gráfico 1A da ficha e retrospectiva ---- */
+Object.entries({ DEMO1: 17.90, DEMO2: 28.10, DEMO3: 46.20, DEMO4: 15.20, DEMO5: 16.10, DEMO6: 29.80, DEMO7: 10.40, DEMO8: 58.70,
+  PETR4: 37.80, VALE3: 61.10, ITUB4: 33.20, BBAS3: 27.40, MGLU3: 8.90, WEGE3: 52.30, GLPD11: 92.30, IBOD11: 120.10,
+  TSELIC29: 14350.00, TIPCA35: 2105.00, CDBDEMO: 5345.00, LCIDEMO: 2690.00, FMULTI: 1.6250 }).forEach(([c, v]) => (_at(c).p12 = v));
+
+/* ---- Item 2: fluxos de cada período (aportes, resgates e variação de mercado). Proventos vêm de PROVENTOS_RECEBIDOS.
+   Período “nov” = 24 out → 24 nov; aportes de nov = entradas do extrato (6, 5, 12 e 18 nov) ao custo. ---- */
+const PERIODOS_CARTEIRA = [
+  { label: 'dez/25', fim: '2025-12-31', aportes: 800, resgates: 0, mercado: 900 },
+  { label: 'jan/26', fim: '2026-01-31', aportes: 500, resgates: 0, mercado: 620 },
+  { label: 'fev/26', fim: '2026-02-28', aportes: 500, resgates: 0, mercado: -300 },
+  { label: 'mar/26', fim: '2026-03-31', aportes: 2000, resgates: 0, mercado: 410 },
+  { label: 'abr/26', fim: '2026-04-30', aportes: 500, resgates: 0, mercado: 350 },
+  { label: 'mai/26', fim: '2026-05-31', aportes: 1500, resgates: 0, mercado: 480 },
+  { label: 'jun/26', fim: '2026-06-30', aportes: 500, resgates: 800, mercado: -260 },
+  { label: 'jul/26', fim: '2026-07-31', aportes: 1200, resgates: 0, mercado: 540 },
+  { label: 'ago/26', fim: '2026-08-31', aportes: 500, resgates: 0, mercado: 120 },
+  { label: 'set/26', fim: '2026-09-30', aportes: 1500, resgates: 0, mercado: 390 },
+  { label: 'out/26', fim: '2026-10-24', aportes: 0, resgates: 0, mercado: 310, rotulo: 'até 24 out' },
+  { label: 'nov/26', fim: '2026-11-24', aportes: 50 * 44.80 + 10 * 129.10 + 200 * 23.10 + 1630.40, resgates: 0, mercado: null, rotulo: '24 out a 24 nov' },
+];
+const INICIO_SERIE = '2025-11-24';
+
+/* ---- Item 19: Ibovespa no fim de cada período (118.300 há 12 meses → 130.000) ---- */
+const IBOV_SERIE = { '2025-11-24': 118300, '2025-12-31': 119800, '2026-01-31': 121500, '2026-02-28': 120200, '2026-03-31': 122900, '2026-04-30': 124100,
+  '2026-05-31': 125600, '2026-06-30': 123900, '2026-07-31': 125200, '2026-08-31': 124600, '2026-09-30': 125900, '2026-10-24': 126400, '2026-11-24': 130000,
+  '2026-10-27': 127100, '2026-11-03': 126800, '2026-11-10': 127600, '2026-11-17': 128300 };
+
+/* ---- Item 15: mais duas semanas (preços de fechamento de 27 out e 3 nov) ---- */
+const P27OUT = { DEMO1: 21.95, DEMO2: 30.40, DEMO3: 43.70, GLPD11: 96.90, IBOD11: 127.90, TSELIC29: 16262, TIPCA35: 2360, CDBDEMO: 6028, LCIDEMO: 3008, FMULTI: 1.8270 };
+const P03NOV = { DEMO1: 22.30, DEMO2: 29.60, DEMO3: 44.20, GLPD11: 97.00, IBOD11: 128.60, TSELIC29: 16301, TIPCA35: 2381, CDBDEMO: 6045, LCIDEMO: 3016, FMULTI: 1.8300 };
+SEMANAS.push(
+  { id: '2026-11-10', titulo: 'Semana de 4 a 10 nov 2026', curto: '4 a 10 nov', de: 20261104, ate: 20261110, ini: '3 nov, 18h', fim: '10 nov, 18h', fimData: '10 nov', iniIso: '2026-11-03', fimIso: '2026-11-10',
+    precoIni: { ...P03NOV }, precoFim: { ...SEMANAS[1].precoIni },
+    qtd: { DEMO1: 800, DEMO2: 400, DEMO3: 200, GLPD11: 50, IBOD11: 30, TSELIC29: 0.5, TIPCA35: 2.1, CDBDEMO: 1, LCIDEMO: 1, FMULTI: 2500 },
+    entradas: [{ data: '5 nov', code: 'TSELIC29', qtd: 0.1, inst: 'Corretora A', origem: 'aplicação no Tesouro Direto' }, { data: '6 nov', code: 'DEMO3', qtd: 50, inst: 'Corretora A', origem: 'compra de 4 nov, liquidada em 6 nov' }],
+    eventos: [], compras: false },
+  { id: '2026-11-03', titulo: 'Semana de 28 out a 3 nov 2026', curto: '28 out a 3 nov', de: 20261028, ate: 20261103, ini: '27 out, 18h', fim: '3 nov, 18h', fimData: '3 nov', iniIso: '2026-10-27', fimIso: '2026-11-03',
+    precoIni: { ...P27OUT }, precoFim: { ...P03NOV },
+    qtd: { DEMO1: 800, DEMO2: 400, DEMO3: 150, GLPD11: 50, IBOD11: 30, TSELIC29: 0.4, TIPCA35: 2.1, CDBDEMO: 1, LCIDEMO: 1, FMULTI: 2500 },
+    entradas: [], eventos: [], compras: false },
+);
+Object.assign(SEMANAS[0], { iniIso: '2026-11-17', fimIso: '2026-11-24' });
+Object.assign(SEMANAS[1], { iniIso: '2026-11-10', fimIso: '2026-11-17' });
+
+/* ---- Item 3: proventos por ação nos últimos 12 meses [data com, pagamento, tipo, valor por ação] e agenda ---- */
+const PROV_HIST = {
+  DEMO1: [['02/03/2026', '16/03/2026', 'Dividendos', 0.075], ['30/06/2026', '14/07/2026', 'Dividendos', 0.0875], ['30/09/2026', '14/10/2026', 'Dividendos', 0.1125], ['25/11/2026', '15/12/2026', 'Dividendos', 0.04, true]],
+  DEMO2: [['22/04/2026', '06/05/2026', 'Juros sobre capital próprio', 0.18], ['22/07/2026', '05/08/2026', 'Juros sobre capital próprio', 0.19], ['22/10/2026', '05/11/2026', 'Juros sobre capital próprio', 0.20]],
+  DEMO3: [['06/01/2026', '20/01/2026', 'Juros sobre capital próprio', 0.16], ['09/06/2026', '23/06/2026', 'Dividendos', 0.18], ['08/09/2026', '22/09/2026', 'Dividendos', 0.24], ['28/11/2026', '18/12/2026', 'Juros sobre capital próprio', 0.18, true]],
+  GLPD11: [...Array.from({ length: 11 }, (_, i) => { const mm = String(i + 1).padStart(2, '0'); const ant = i === 0 ? '31/12/2025' : `${['31', '28', '31', '30', '31', '30', '31', '31', '30', '31'][i - 1]}/${String(i).padStart(2, '0')}/2026`; return [ant, `14/${mm}/2026`, 'Rendimento', 0.80]; }), ['30/11/2026', '14/12/2026', 'Rendimento', 0.80, true]],
+  DEMO6: [['02/03/2026', '16/03/2026', 'Dividendos', 0.45], ['01/06/2026', '15/06/2026', 'Dividendos', 0.45], ['01/09/2026', '15/09/2026', 'Dividendos', 0.45], ['26/11/2026', '10/12/2026', 'Dividendos', 0.50, true]],
+  DEMO8: [['01/06/2026', '18/06/2026', 'Juros sobre capital próprio', 0.65], ['27/11/2026', '18/12/2026', 'Juros sobre capital próprio', 0.70, true]],
+  PETR4: [['24/02/2026', '20/03/2026', 'Dividendos', 0.95], ['02/06/2026', '20/06/2026', 'Dividendos', 0.80], ['21/08/2026', '20/09/2026', 'Dividendos', 0.62], ['22/12/2026', '19/02/2027', 'Dividendos', 0.45, true]],
+  VALE3: [['10/03/2026', '24/03/2026', 'Dividendos', 2.10], ['11/08/2026', '10/09/2026', 'Juros sobre capital próprio', 1.85], ['12/02/2027', '12/03/2027', 'Juros sobre capital próprio', 0.80, true]],
+  ITUB4: [...Array.from({ length: 11 }, (_, i) => { const mm = String(i + 1).padStart(2, '0'); return [`28/${String(i === 0 ? 12 : i).padStart(2, '0')}/${i === 0 ? 2025 : 2026}`, `01/${mm}/2026`, 'Juros sobre capital próprio', 0.02]; }), ['14/11/2026', '01/12/2026', 'Juros sobre capital próprio', 0.02, true]],
+  WEGE3: [['15/03/2026', '13/04/2026', 'Juros sobre capital próprio', 0.12], ['15/06/2026', '13/07/2026', 'Juros sobre capital próprio', 0.12], ['15/09/2026', '13/10/2026', 'Juros sobre capital próprio', 0.13], ['30/11/2026', '11/03/2027', 'Juros sobre capital próprio', 0.13, true]],
+  BBAS3: [['11/03/2026', '31/03/2026', 'Juros sobre capital próprio', 0.42], ['10/06/2026', '30/06/2026', 'Juros sobre capital próprio', 0.38], ['10/09/2026', '30/09/2026', 'Dividendos', 0.21]],
+  DEMO5: [['20/05/2026', '05/06/2026', 'Dividendos', 0.22]],
+};
+const AGENDA = {
+  DEMO1: [['2026-11-25', 'Teleconferência de resultados do 3º trimestre', 'resultado'], ['2026-12-18', 'Assembleia: plano de remuneração', 'assembleia']],
+  DEMO2: [['2026-11-30', 'Fim do prazo do voto a distância (atualizado)', 'assembleia'], ['2026-12-02', 'Assembleia geral extraordinária: dividendos', 'assembleia']],
+  DEMO3: [['2027-02-25', 'Divulgação do resultado anual (previsão)', 'resultado']],
+  DEMO5: [['2026-11-28', 'Divulgação do resultado do 3º trimestre', 'resultado'], ['2026-11-29', 'Teleconferência com analistas', 'resultado']],
+  GLPD11: [['2026-12-10', 'Assembleia geral extraordinária: 3ª emissão de cotas', 'assembleia']],
+  VALE3: [['2026-12-01', 'Vale Day 2026, em Nova York', 'resultado'], ['2027-02-19', 'Divulgação do resultado anual (previsão)', 'resultado']],
+  PETR4: [['2027-02-26', 'Divulgação do resultado anual (previsão)', 'resultado']],
+  ITUB4: [['2027-02-04', 'Divulgação do resultado anual (previsão)', 'resultado']],
+  BBAS3: [['2027-02-12', 'Divulgação do resultado anual (previsão)', 'resultado']],
+  MGLU3: [['2027-03-05', 'Divulgação do resultado anual (previsão)', 'resultado']],
+  WEGE3: [['2027-02-18', 'Divulgação do resultado anual (previsão)', 'resultado']],
+  DEMO8: [['2027-02-20', 'Divulgação do resultado anual (previsão)', 'resultado']],
+};

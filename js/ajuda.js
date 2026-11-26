@@ -2,7 +2,7 @@
    e responde com dados da conta demo e links para a tela certa. Não dá recomendação de investimento. */
 
 const chat = { aberto: false, msgs: [] };
-const SUGESTOES_CHAT = ['Quanto tenho na carteira?', 'Quando recebo o próximo provento?', 'Por que a Vale caiu?', 'Como compro uma ação?', 'Onde vejo o informe para o IR?'];
+const SUGESTOES_CHAT = ['Quero declarar meu IR', 'Ver o que eu recebi', 'Conferir minha compra', 'Quanto tenho na carteira?', 'Quanto rendeu minha carteira?', 'Por que a Vale caiu?', 'Como compro uma ação?'];
 
 const lk = (href, texto) => `<a href="#${href}" data-action="chat-link">${esc(texto)}</a>`;
 const exigeLogin = (oque) => `Para ver ${oque}, entre com a conta demo: ${lk('/acesso', 'Entrar')}.`;
@@ -14,6 +14,14 @@ function acharAtivoNaPergunta(q) {
 
 const INTENCOES = [
   { k: ['recomenda', 'devo comprar', 'devo vender', 'compensa', 'o que comprar', 'vale a pena', 'qual acao', 'melhor investimento'], r: () => 'Não posso recomendar investimentos. Posso explicar termos, mostrar seus dados e onde encontrar informações. Para recomendação, procure um profissional certificado.' },
+  { k: ['declarar', 'declaracao', 'imposto de renda', 'ir 2027', ' irpf'], r: () => `O guia ${lk('/servicos/ir/guia', 'Declarar meu imposto de renda')} mostra o passo a passo: informe da corretora, relatório consolidado, proventos do ano, bens e direitos e a Revar para o imposto mensal.` },
+  { k: ['o que recebi', 'o que eu recebi', 'quanto recebi', 'recebi este ano'], r: () => { if (!state.session) return exigeLogin('o que você recebeu'); ui.prov.periodo = '2026'; const t = provRecebidos().filter((p) => p.data.endsWith('/2026')).reduce((s, p) => s + p.valor, 0); return `Em 2026 você recebeu ${state.hide ? 'um valor oculto' : fmt.brl(t)} em proventos. ${lk('/proventos/recebidos', 'Ver recebidos de 2026')}`; } },
+  { k: ['minha compra', 'conferir compra', 'conferir minha compra', 'acompanhar compra', 'ordem'], r: () => `Em ${lk('/carteira/compras', 'Acompanhar compras')} você vê cada compra da ordem registrada até a carteira (liquidação em D+2, dois dias úteis).` },
+  { k: ['rendeu', 'rentabilidade', 'rendimento', 'cdi', 'comparar'], r: () => { if (!state.session) return exigeLogin('a rentabilidade'); const ag = agregar(serieCarteira()); return `Em 12 meses, sua carteira rendeu cerca de ${fmt.pct(ag.r * 100)} (aproximado, sem contar aportes)${state.hide ? '' : `, ou ${fmt.sbrl(ag.ganho)} entre mercado e proventos`}. Compare com CDI e Ibovespa em ${lk('/carteira', 'Visão geral › Rentabilidade comparada')}.`; } },
+  { k: ['preco medio', 'lucro', 'prejuizo', 'resultado'], r: () => `O preço médio e o resultado de cada ativo ficam em ${lk('/carteira', 'Produtos da sua carteira')} e na ficha de cada ativo. Não incluem proventos, taxas e impostos.` },
+  { k: ['retrospectiva', 'meu ano', 'resumo do ano'], r: () => `Sua retrospectiva está em ${lk('/carteira/retrospectiva', 'Sua carteira em 2026')}.` },
+  { k: ['alerta', 'aviso', 'notificac'], r: () => `Escolha quais avisos receber, por tipo e por ativo, em ${lk('/perfil?secao=config', 'Meu acesso › Configuração de notificações')}. Para acompanhar uma empresa, use “Receber alertas” na ficha dela.` },
+  { k: ['data com', 'direito ao dividendo', 'direito ao provento'], r: () => `Data com é o último dia para ter o ativo e receber o provento anunciado. As próximas ficam em ${lk('/proventos', 'Proventos › Próximas datas com')}.` },
   { k: ['oi', 'ola', 'bom dia', 'boa tarde', 'boa noite', 'ajuda'], r: () => 'Oi! Sou o assistente da Área do Investidor (demonstração). Posso explicar termos, mostrar onde fica cada coisa e resumir sua carteira demo. O que você quer saber?' },
   { k: ['por que', 'porque', 'caiu', 'subiu', 'mudou', 'variou'], precisaAtivo: true, r: (q, a) => {
     const m = (MOTIVOS[a.code] || {}).dia;

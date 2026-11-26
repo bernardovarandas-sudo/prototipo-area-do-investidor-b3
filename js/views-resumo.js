@@ -101,6 +101,7 @@ function viewResumo(route) {
           <div class="kpi"><div class="label">Valor em ${sem.fimData}</div><div class="value big" style="color:var(--text)">${pBrl(r.valorFim)}</div><div class="sub meta">Pelo preço de fechamento</div></div>
           <div class="kpi"><div class="label">Período</div><div class="value h2">${sem.curto}</div><div class="sub meta">Fechamento de ${sem.ini} a ${sem.fim}</div></div>
         </div>
+        ${comparativoSemana(sem)}
         ${ent.length ? `<p class="note neutral" style="margin-top:16px">${icon('info', 18)}<span>${ent.map((e) => `Entrou na carteira: ${pQtd(e.qtd)} ações de ${esc(ativo(e.code).name)} na ${e.inst} (${e.origem}).`).join(' ')} Entradas não contam como variação de preço.</span></p>` : ''}
         ${sem.compras && comprasDemo().length ? `<p class="note demo-note" style="margin-top:12px">${icon('cart', 18)}<span>Inclui compras feitas na demo, consideradas desde ${REF.anteriorCurta}.</span></p>` : ''}
       </section>
@@ -169,6 +170,7 @@ function viewProvento(route) {
         <p class="note ${prev ? 'warn' : ''}" style="margin-top:16px">${icon('info', 18)}<span>${prev
           ? 'Este valor ainda não foi pago. Ele pode mudar até a data de pagamento e depende de você ter o ativo na data de corte.'
           : 'Este valor já foi creditado na sua conta na instituição. Ele aparece em Recebidos e no extrato de Eventos.'}</span></p>
+        ${p.mudou ? `<p class="note" style="margin-top:12px">${icon('refresh', 18)}<span><strong>Atualizado em ${p.mudou.em}.</strong> Antes: ${esc(p.mudou.antes)} → agora: ${esc(p.mudou.agora)}.</span></p>` : ''}
         ${cal}
         <div class="card-foot">${mesCal ? `<button type="button" class="btn btn-link btn-sm" data-action="cal-ir" data-mes="${mesCal}">Ver no calendário</button>` : ''}<a href="#/proventos/${prev ? 'a-receber' : 'recebidos'}">${prev ? 'Todos a receber' : 'Todos os recebidos'}</a><a href="#/ativos/${a.code}">Ver ${esc(a.name)}</a></div>
       </section>`,

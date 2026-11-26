@@ -139,7 +139,7 @@ function servicoVoto(route) {
 function cardAssembleia(a, i) {
   const k = 'ass-' + i, voto = ui.votos[i], pode = temAtivo(a.code) && a.aberta;
   return `<section class="card">
-    <div class="card-head" style="margin:0"><div><h3 class="h3">${esc(a.empresa)}</h3><p class="meta">${a.tipoAtivo} · ${a.tipo || 'AGE'} · Assembleia em ${a.data} · Prazo para voto a distância: ${a.prazo}</p></div>
+    <div class="card-head" style="margin:0"><div><h3 class="h3">${esc(a.empresa)}</h3><p class="meta">${a.tipoAtivo} · ${a.tipo || 'AGE'} · Assembleia em ${a.data} · Prazo para voto a distância: ${a.prazo}${a.mudou ? ` <span class="rel-tag rel-insuf sm">${icon('refresh', 12)}Atualizado em ${a.mudou.em} · antes: ${a.mudou.antes}</span>` : ''}</p></div>
       <span class="rel-tag ${voto ? 'rel-direta' : a.aberta ? 'rel-indireta' : 'rel-sem'}">${voto ? 'Voto registrado (demo)' : a.aberta ? 'Aberta para voto' : esc(a.estado)}</span></div>
     ${voto
       ? `<ul class="calc-list" style="margin-top:8px">${a.pauta.map((p, j) => `<li><span>${esc(p)}</span><strong>${voto[j]}</strong></li>`).join('')}</ul><div class="btn-row"><button type="button" class="btn btn-link btn-sm" data-action="voto-refazer" data-i="${i}">Editar voto</button></div>`
@@ -287,10 +287,6 @@ const CONTAS_INVEST = {
   ],
   vazia: [{ inst: 'Corretora A', codigo: '0001', conta: '555123-0', desde: 'nov 2026', email: 'nova.demo@corretora-a.test', principal: true }],
 };
-const CONFIG_AVISOS = [['resumoSemanal', 'Receber resumo semanal da carteira', 'Toda segunda, um e-mail avisa que o resumo da semana está pronto. Sem valores no e-mail.'],
-  ['proventos', 'Proventos', 'Anúncios e pagamentos de dividendos, JCP e rendimentos.'], ['assembleias', 'Assembleias e voto a distância', 'Quando abrir uma assembleia de um ativo seu.'],
-  ['noticias', 'Notícias da minha carteira', 'Comunicados e notícias ligadas aos seus ativos.'], ['movimentacoes', 'Movimentações', 'Entradas e saídas registradas na sua conta.']];
-const prefDe = (k) => !!(state.prefs[state.session.conta] || {})[k];
 function viewPerfil(route) {
   const c = conta(), sec = route.q.get('secao') || 'dados';
   const contas = CONTAS_INVEST[state.session.conta] || [];
@@ -329,13 +325,9 @@ function viewPerfil(route) {
       <div class="btn-row"><button type="button" class="btn btn-outline" data-action="disclose" aria-expanded="false" aria-controls="desat-conf">Desativar meu acesso</button></div>
       <div id="desat-conf" hidden class="note warn" style="margin-top:8px">${icon('alert', 18)}<span>Na demonstração, nada é desativado. No portal real, você confirmaria com a senha e o código da verificação em duas etapas.</span></div>`;
   } else if (sec === 'notificacoes') {
-    corpo = `<div class="card-head" style="margin:0"><h2 class="h2">Notificações</h2><button type="button" class="btn btn-link btn-sm" data-action="notif-todas">Marcar todas como lidas</button></div>
-      <div class="stack-sm" style="margin-top:12px">${NOTIFICACOES.map((n) => { const lida = state.lidas.includes(n.id); return `<a class="notif-row ${lida ? '' : 'nao-lida'}" href="#${n.destino}" data-action="notif" data-id="${n.id}"><span><strong>${esc(n.titulo)}</strong><br><span class="meta">${n.data} · ${lida ? 'Lida' : 'Não lida'}</span></span><span class="meta" style="color:var(--brand-vivid);font-weight:600">${n.acao} ${icon('arrowRight', 14)}</span></a>`; }).join('')}</div>`;
+    corpo = notificacoesListaHtml();
   } else {
-    corpo = `<h2 class="h2">Configuração de notificações</h2><p class="muted" style="margin-top:4px">Escolha o que você quer receber por e-mail. As preferências ficam salvas neste navegador.</p>
-      ${CONFIG_AVISOS.map(([k, t, d]) => { const on = prefDe(k); return `<div class="pref-row"><div><p class="pref-title" id="pf-${k}-l">${t}</p><p class="meta" id="pf-${k}-d">${d}</p></div>
-        <button type="button" class="switch" role="switch" aria-checked="${on}" aria-labelledby="pf-${k}-l" aria-describedby="pf-${k}-d" data-action="pref-toggle" data-k="${k}"><span class="switch-track" aria-hidden="true"><span class="switch-thumb"></span></span><span class="switch-text" aria-hidden="true">${on ? 'Ativado' : 'Desativado'}</span></button></div>`; }).join('')}
-      <div class="btn-row"><a class="btn btn-outline btn-sm" href="#/demo/resumo-email">${icon('mail', 16)}Ver prévia do resumo semanal</a></div>`;
+    corpo = configNotificacoesHtml();
   }
   return {
     title: 'Meu acesso', nav: null, crumbs: [['Meu acesso']],
@@ -343,14 +335,8 @@ function viewPerfil(route) {
       <div class="acesso-layout">${nav}<section class="card acesso-corpo">${corpo}</section></div>`,
   };
 }
-ACTIONS['pref-toggle'] = (el) => {
-  const k = state.session.conta, chave = el.dataset.k;
-  state.prefs[k] = { ...(state.prefs[k] || {}), [chave]: !prefDe(chave) };
-  save(); announce(prefDe(chave) ? 'Ativado. Preferência salva.' : 'Desativado. Preferência salva.');
-  rerender(`[data-action="pref-toggle"][data-k="${chave}"]`);
-};
 CHANGES['email-principal'] = (el) => { const k = state.session.conta; state.prefs[k] = { ...(state.prefs[k] || {}), emailPrincipal: el.value }; save(); toast('E-mail principal atualizado (simulação).'); rerender('[data-change="email-principal"]:checked'); };
 ACTIONS['senha-alterar'] = () => toast('Senha alterada (simulação). No portal real, você confirmaria com o código da verificação em duas etapas.');
 ACTIONS['app-revogar'] = (el) => { ui.appsRevogados.push(el.dataset.n); if (el.dataset.n.startsWith('Calculadora Revar')) ui.revar = { vinculado: false, tela: 'inicio' }; toast('Acesso revogado (simulação).'); rerender('#conteudo h2'); };
 ACTIONS['validacao-reenviar'] = () => toast('E-mail de validação reenviado (simulação). Nenhuma mensagem foi enviada.');
-ACTIONS['notif-todas'] = () => { state.lidas = NOTIFICACOES.map((n) => n.id); save(); rerender('#conteudo h2'); };
+

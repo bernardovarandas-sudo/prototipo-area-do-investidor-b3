@@ -25,7 +25,7 @@ const storeLocal = {
 const state = {
   session: store.get('session', null),        // { conta: 'principal' | 'vazia' }
   hide: store.get('hide', false),             // ocultar valores pessoais
-  favoritos: store.get('favoritos', ['DEMO1', 'DEMO5']),
+  favoritos: store.get('favoritos', ['DEMO1', 'DEMO5', 'DEMO8']),
   lidas: store.get('lidas', []),
   compras: storeLocal.get('compras', {}),     // compras feitas na demo, por conta: { principal: [...], vazia: [...] }
   prefs: storeLocal.get('prefs', {}),         // preferências por conta: { principal: { resumoSemanal: false } }
@@ -51,14 +51,18 @@ const comprasDemo = () => (state.session ? state.compras[state.session.conta] ||
 function posicoes() {
   const c = conta();
   if (!c) return [];
-  return [...c.posicoes, ...comprasDemo().map((x) => ({ code: x.code, inst: x.inst, qtd: x.qtd, demo: true }))];
+  return [...c.posicoes, ...comprasDemo().map((x) => ({ code: x.code, inst: x.inst, qtd: x.qtd, demo: true, preco: x.preco, id: x.id, etapa: x.etapa || 0 }))];
 }
-const prefResumo = () => !!(state.session && (state.prefs[state.session.conta] || {}).resumoSemanal);
+const prefResumo = () => {
+  if (!state.session) return false;
+  const p = state.prefs[state.session.conta] || {};
+  return p.avisos && p.avisos.resumoSemanal && p.avisos.resumoSemanal.email != null ? !!p.avisos.resumoSemanal.email : !!p.resumoSemanal;
+};
 const temAtivo = (code) => posicoes().some((p) => p.code === code);
 function registrarCompra(code, qtd, inst) {
   const a = ativo(code);
   const lista = state.compras[state.session.conta] || (state.compras[state.session.conta] = []);
-  lista.push({ id: Date.now().toString(36), code: a.code, qtd, inst, preco: a.preco });
+  lista.push({ id: Date.now().toString(36), code: a.code, qtd, inst, preco: a.preco, etapa: 0 });
   save();
 }
 

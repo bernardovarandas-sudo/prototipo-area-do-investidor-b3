@@ -119,7 +119,7 @@ function newsItem(n, aba, ctx) {
   const rel = relacaoNoticia(n);
   const aberto = !!ui.expand['mais-' + n.id];
   return `<article class="card news-item" data-news="${n.id}" aria-labelledby="t-${n.id}">
-    <div class="news-meta">${tipoTag(n.tipo)}<span>${n.data}</span>${aba === 'carteira' ? relTag(rel.estado) : ''}</div>
+    <div class="news-meta">${tipoTag(n.tipo)}<span>${n.data}</span>${aba === 'carteira' ? relTag(rel.estado) : ''}${n.ativos.some((c) => acompanhaComAlerta(c) && !temAtivo(c)) ? `<span class="rel-tag rel-indireta">${icon('bell', 14)}Você acompanha</span>` : ''}</div>
     <h2 class="h2 news-title" id="t-${n.id}">${esc(n.titulo)}</h2>
     <figure class="news-figure">
       ${newsImage(n)}
@@ -263,7 +263,7 @@ function ligacaoCarteira(n, rel, peso) {
     return `Você tem ações ${listaAcoes(rel.codes)}: ${um ? 'elas são' : 'juntas, são'} ${pctPeso(peso)} da sua carteira${peso >= 40 ? ', então isso pesa bastante no seu total' : ''}.`;
   }
   if (rel.estado === 'indireta') return `Você tem ações ${listaAcoes(rel.codes)}, do ${setorTxt(rel.codes.map((c) => ativo(c).setor))}, que a notícia pode afetar (${pctPeso(peso)} da sua carteira).`;
-  if (n.ativos.length) return `Você não tem ações ${listaAcoes(n.ativos)}, então sua carteira não muda por isso.`;
+  if (n.ativos.length) return `Sem relação direta: você não tem ações ${listaAcoes(n.ativos)}, então sua carteira não muda por isso.${n.ativos.some(acompanhaComAlerta) ? ' Você acompanha esta empresa e recebe alertas dela.' : ''}`;
   return `Você não tem ações do ${setorTxt(n.setoresAfetados || [])}, então sua carteira não muda por isso.`;
 }
 function porqueImpacto(n, rel, peso) {

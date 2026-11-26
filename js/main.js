@@ -29,6 +29,7 @@ const ROUTES = [
   { re: /^\/feedback$/, view: viewFeedback, private: true },
   { re: /^\/info\/([a-z]+)$/, view: viewInfo },
   { re: /^\/saida$/, view: viewSaida },
+  ...ROTAS_EXTRA,
 ];
 
 function parseHash() {
@@ -78,7 +79,8 @@ function render(opts = {}) {
   renderSidebar(v.nav);
   renderTopbar(v, route);
   renderFooter();
-  $content.innerHTML = v.html;
+  $content.innerHTML = (route.path !== '/acesso' ? bannerHtml() : '') + v.html;
+  registrarVisitaCheckin(route);
   document.title = `${v.title} · Área do Investidor B3 (protótipo)`;
 
   if (v.panel) openPanel(v.panel.kind, v.panel.id, { fromRoute: true, focus: pageChanged || firstRender });
@@ -149,7 +151,8 @@ function renderSidebar(current) {
 /* ---------- Cabeçalho ---------- */
 function renderTopbar(v, route) {
   const crumbs = [['Início', '/'], ...(v.crumbs || [])];
-  const unread = NOTIFICACOES.filter((n) => !state.lidas.includes(n.id)).length;
+  const avisos = avisosVisiveis();
+  const unread = avisos.filter((n) => !state.lidas.includes(n.id)).length;
   const c = conta();
   $topbar.innerHTML = `
     <div class="topbar-left">
@@ -164,9 +167,8 @@ function renderTopbar(v, route) {
         <div class="pop-wrap">
           <button type="button" class="icon-btn" data-action="toggle-pop" data-pop="pop-bell" aria-expanded="false" aria-controls="pop-bell" aria-label="Avisos${unread ? `, ${unread} não ${unread === 1 ? 'lido' : 'lidos'}` : ''}">${icon('bell', 22)}${unread ? `<span class="count" aria-hidden="true">${unread}</span>` : ''}</button>
           <div class="popover" id="pop-bell" hidden><h2>Avisos</h2>
-            ${NOTIFICACOES.map((n) => { const lida = state.lidas.includes(n.id); return `<a class="notif" href="#${n.destino}" data-action="notif" data-id="${n.id}">
-              <strong>${lida ? '' : '<span class="unread" aria-hidden="true"></span>'}${esc(n.titulo)}</strong>
-              <span class="meta">${n.data} · ${lida ? 'Lido' : 'Não lido'} · </span><span class="meta" style="color:var(--brand-vivid);font-weight:600">${n.acao}</span></a>`; }).join('')}
+            ${avisos.slice(0, 8).map((n) => notifItemHtml(n)).join('') || '<p class="meta" style="padding:8px">Nenhum aviso com as suas preferências.</p>'}
+            <a class="notif-todas" href="#/perfil?secao=notificacoes">Ver todas e configurar</a>
           </div>
         </div>
         <button type="button" class="icon-btn" data-action="toggle-hide" aria-pressed="${state.hide}">${icon(state.hide ? 'eyeOff' : 'eye', 22)}<span class="btn-text">Ocultar valores</span></button>
@@ -193,6 +195,7 @@ function renderFooter() {
     <li><a href="#/info/acessibilidade">Acessibilidade</a></li>
     <li><a href="#/demo/aviso">Prévia de aviso por e-mail (demo)</a></li>
     <li><a href="#/demo/resumo-email">Prévia do resumo semanal (demo)</a></li>
+    <li><a href="#/demo/checkin-email">Prévia do lembrete mensal (demo)</a></li>
     <li>Protótipo acadêmico · Squad Capital · Dados simulados, sem relação com contas reais</li>
   </ul>`;
 }
@@ -294,6 +297,7 @@ Object.assign(ACTIONS, {
     const id = el.dataset.pop, pop = document.getElementById(id), open = pop.hidden;
     closePops(id);
     pop.hidden = !open; el.setAttribute('aria-expanded', open);
+    if (open && id === 'pop-bell') marcarCheckin('avisos');
     if (open) { const f = pop.querySelector('a, button'); f && f.focus(); }
   },
   notif: (el) => { if (!state.lidas.includes(el.dataset.id)) { state.lidas.push(el.dataset.id); save(); } },

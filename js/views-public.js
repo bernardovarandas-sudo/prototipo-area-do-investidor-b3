@@ -164,7 +164,7 @@ ACTIONS['market-tab'] = (el) => {
 };
 
 /* ---------- Início ---------- */
-function viewInicio() {
+function viewInicio(route) {
   const c = conta();
   return {
     title: 'Início', crumbs: [], nav: 'inicio',
@@ -178,7 +178,9 @@ function viewInicio() {
       <div class="span-7">${ibovCard('inicio')}</div>
       <div class="span-5">${marketCard('inicio')}</div>
     </div>
-    ${c ? homeCarteira() : ''}
+    ${c ? homeCarteira() : route && route.q.get('checkin') ? `<p class="note" style="margin-top:24px">${icon('info', 18)}<span>Entre para fazer seu check-in do mês. <a href="#/acesso?destino=${encodeURIComponent('/?checkin=1')}">Entrar</a></span></p>` : ''}
+    ${c ? objetivosHtml() : ''}
+    ${c ? `<div class="grid-12" style="margin-top:24px"><div class="span-7">${checkinCard()}</div><div class="span-5">${ehPrincipal() ? retroCard() : ''}</div></div>` : ''}
     <section class="card" style="margin-top:24px" aria-labelledby="mais">
       <h2 class="h3" id="mais">Mais da Área do Investidor</h2>
       <ul class="legend" style="margin-top:8px">
@@ -256,9 +258,9 @@ function viewMercado(route) {
         <button class="btn btn-primary" type="submit" ${outros.length ? '' : 'disabled'}>Adicionar</button>
       </form>
       ${favs.length ? `<div class="card"><div class="table-wrap"><table><caption class="sr-only">Favoritos</caption>
-        <thead><tr><th scope="col">Ativo</th><th scope="col" class="num">Preço</th><th scope="col" class="num">Variação no dia</th><th scope="col"><span class="sr-only">Ações</span></th></tr></thead>
+        <thead><tr><th scope="col">Ativo</th><th scope="col" class="num">Preço</th><th scope="col" class="num">Variação no dia</th><th scope="col">Alertas</th><th scope="col"><span class="sr-only">Ações</span></th></tr></thead>
         <tbody>${favs.map((a) => `<tr><td><div class="asset-cell"><a href="#/ativos/${a.code}">${esc(a.name)}</a><span class="asset-code">${a.code}</span></div></td>
-          <td class="num">${fmt.brl(a.preco)}</td><td class="num">${trend(varPct(a))}</td>
+          <td class="num">${fmt.brl(a.preco)}</td><td class="num">${trend(varPct(a))}</td><td>${alertaBotao(a.code, true)}</td>
           <td class="num"><button type="button" class="btn btn-link btn-sm" data-action="fav-remove" data-code="${a.code}">Remover<span class="sr-only"> ${esc(a.name)} dos favoritos</span></button></td></tr>`).join('')}</tbody></table></div>
           <p class="meta" style="margin-top:8px">Cotações de ${REF.atual}.</p></div>`
         : emptyState({ title: 'Você ainda não tem favoritos', text: 'Use “Adicionar ativo” acima ou o botão Favoritar na ficha de um ativo.', iconName: 'star' })}`;
@@ -371,26 +373,14 @@ function viewFicha(route) {
           ${relacionadas.length ? `<ul class="stack-sm" style="margin-top:12px">${relacionadas.map((x) => `<li>${tipoTag(x.tipo)} <span class="meta">${x.data}</span><br><a href="#/noticias/${x.id}">${esc(x.titulo)}</a></li>`).join('')}</ul>`
             : '<p class="muted" style="margin-top:8px">Nenhuma notícia recente para este ativo.</p>'}
         </section>
+        ${a.negociavel ? alertasCard(a) : ''}
+        ${agendaCard(a)}
+        ${proventosAtivoCard(a)}
       </div>
     </div>`,
   };
 }
 
-function naMinhaCarteira(g) {
-  return `<section class="card" aria-labelledby="nmc">
-    <div class="card-head"><h2 class="h2" id="nmc">Na minha carteira</h2><span class="meta">Posição de ${REF.atual}</span></div>
-    <div class="kpis">
-      <div class="kpi"><div class="label">Quantidade</div><div class="value h2">${pQtd(g.qtd)} ${unid(g.a, g.qtd)}</div><div class="sub meta">${g.insts.length} ${g.insts.length > 1 ? 'instituições' : 'instituição'}</div></div>
-      <div class="kpi"><div class="label">Valor atual</div><div class="value h2">${pBrl(g.atual)}</div></div>
-      <div class="kpi"><div class="label">Mudança de 23 a 24 nov</div><div class="value h2">${trendValue(g.delta, pSbrl(g.delta))}</div><div class="sub">${trend(g.pct)}</div></div>
-    </div>
-    <div class="table-wrap" style="margin-top:16px"><table><caption class="sr-only">Contribuição por instituição</caption>
-      <thead><tr><th scope="col">Instituição</th><th scope="col" class="num">Quantidade</th><th scope="col" class="num col-sec">Conta</th><th scope="col" class="num">Contribuição</th></tr></thead>
-      <tbody>${g.insts.map((i) => `<tr><td>${i.inst}</td><td class="num">${pQtd(i.qtd)}</td><td class="num col-sec meta">${pQtd(i.qtd)} × ${fmt.sbrl(g.a.preco - g.a.anterior)}</td><td class="num">${trendValue(i.delta, pSbrl(i.delta))}</td></tr>`).join('')}</tbody>
-    </table></div>
-    <p class="meta" style="margin-top:8px">Contribuição de preço = quantidade × (preço de 24 nov − preço de 23 nov). ${g.demo ? 'Inclui compra feita na demo, considerada desde o fechamento de 23 nov.' : 'Não houve compras, vendas ou eventos no período.'}</p>
-  </section>`;
-}
 ACTIONS['fav-toggle'] = (el) => {
   const code = el.dataset.code;
   const on = state.favoritos.includes(code);
@@ -434,7 +424,10 @@ function panelCompra(code) {
       title: 'Compra adicionada',
       body: `<div class="imp-level ok-box"><p class="imp-level-text">${icon('check', 22)} ${pQtd(ok.qtd)} ações de ${esc(a.name)}</p>
           <p class="meta">${esc(ok.inst)} · ${fmt.brl(a.preco)} por ação · Total ${pBrl(ok.qtd * a.preco)}</p></div>
-        <p>A ação já aparece na sua carteira demo. Veja onde ela muda as coisas:</p>
+        <h3 class="h3">Andamento até a carteira</h3>
+        ${(() => { const x = comprasDemo().slice().reverse().find((c) => c.code === a.code); return x ? timelineCompra(x) : ''; })()}
+        <p class="meta">${D2_TXT}</p>
+        <p>Na demo, a ação já aparece na carteira (com o selo “A liquidar” até a liquidação). Veja onde ela muda as coisas:</p>
         <ul class="broker-list">
           <li><a href="#/carteira"><span>Visão geral da carteira</span>${icon('arrowRight', 16)}</a></li>
           ${noticia ? `<li><a href="#/noticias?aba=carteira&painel=${noticia.id}"><span>Impacto da notícia: ${esc(noticia.titulo)}</span>${icon('arrowRight', 16)}</a></li>` : ''}

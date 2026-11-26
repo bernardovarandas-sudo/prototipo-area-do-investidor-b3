@@ -13,6 +13,7 @@ Protótipo acadêmico do Squad Capital, feito no ciclo prático com a B3. **Todo
 - **Downloads no modelo padrão:** todo "Baixar" gera PDF (cabeçalho da Área do Investidor, dados da conta, tabela, totais, marca d'água de demonstração) ou Excel com a mesma estrutura.
 - **Serviços como no portal:** Calculadoras de IR (aba Revar com vínculo simulado + parceiras), Voto a distância (Início, Em aberto, Histórico), CALC de Renda Fixa calculando DI, títulos públicos, debêntures, CRA e CRI.
 - **Meu acesso:** dados pessoais, contas de investimento, e-mail principal, segurança e central de notificações.
+- **Rodada 5 (ideias dos benchmarks):** preço médio e resultado por ativo; rendimento separado de aportes e resgates; rentabilidade comparada com CDI e Ibovespa; acompanhamento da compra até a carteira (D+2); aviso "o que mudou · antes → agora" com banner temporário; lembrete de data com; alertas de empresas acompanhadas; avisos por tipo e por ativo; ficha com proventos de 12 meses e agenda; projeção de proventos para 12 meses; resumo semanal comparado; retrospectiva do ano; "O que você quer fazer?" no Início com guia do IR; check-in do mês.
 - **Assistente de ajuda** (canto inferior direito): responde dúvidas comuns com dados da conta demo e links. Funciona por regras, sem servidor.
 - **Comprar:** na ficha de cada ação, "Comprar" mostra que a compra é feita na corretora e leva ao site dela. Ao lado, "Comprar na demo" (só no protótipo) adiciona a ação à carteira fictícia.
 - **Minha carteira:** resumo, "O que mudou", composição e ativos, já com as compras da demo.
