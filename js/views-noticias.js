@@ -251,22 +251,40 @@ const pctPeso = (p) => nf0.format(p) + '%';
 const nomes = (codes) => { const ns = codes.map((c) => ativo(c).name); return ns.length > 1 ? ns.slice(0, -1).join(', ') + ' e ' + ns[ns.length - 1] : ns[0]; };
 const SETOR_TXT = { Financeiro: 'setor financeiro', 'Bens industriais': 'setor de bens industriais' };
 const setorTxt = (lista) => { const t = [...new Set(lista)].map((x) => SETOR_TXT[x] || 'setor de ' + x.toLowerCase()); return t.length > 1 ? t.slice(0, -1).join(', ') + ' e ' + t[t.length - 1] : t[0]; };
+/* Primeiro parágrafo do painel: só a ligação básica entre você e a notícia. */
+const artDe = (code) => `${ARTIGO[code] || 'da'} ${ativo(code).name}`;
+const listaAcoes = (codes) => { const t = codes.map(artDe); return t.length > 1 ? t.slice(0, -1).join(', ') + ' e ' + t[t.length - 1] : t[0]; };
 function porqueImpacto(n, rel, peso) {
-  if (rel.vazia) return 'Sua carteira ainda não tem ativos, então esta notícia não a afeta.';
-  if (rel.estado === 'insuf') return 'A notícia não diz quais empresas ou fundos estão envolvidos. Sem isso, não dá para medir o impacto na sua carteira.';
+  if (rel.vazia) return 'Sua carteira ainda não tem ações.';
+  if (rel.estado === 'insuf') return 'A notícia não diz quais empresas estão envolvidas.';
   if (rel.estado === 'direta') {
     const um = rel.codes.length === 1;
-    const pesoTxt = peso >= 40 ? `${um ? 'Ela é' : 'Juntas, são'} ${pctPeso(peso)} da sua carteira, então mudanças no preço pesam bastante no seu total.`
-      : `${um ? 'Ela representa' : 'Juntas, representam'} ${pctPeso(peso)} da sua carteira.`;
-    return `A notícia é sobre ${nomes(rel.codes)}, e você tem ações ${um ? 'dela' : 'delas'}. ${pesoTxt} ${n.efeito || ''}`.trim();
+    return `Você tem ações ${listaAcoes(rel.codes)}. ${um ? 'Essa ação é' : 'Juntas, elas são'} ${pctPeso(peso)} da sua carteira.`;
   }
   if (rel.estado === 'indireta') {
     const setores = setorTxt(rel.codes.map((c) => ativo(c).setor));
-    return `A notícia afeta o ${setores}, e ${nomes(rel.codes)}, que você tem, ${rel.codes.length > 1 ? 'atuam' : 'atua'} nesse setor (${pctPeso(peso)} da sua carteira). ${n.efeitoSetor || 'O efeito sobre cada empresa ainda é incerto.'}`;
+    return `Você tem ações ${listaAcoes(rel.codes)}, que ${rel.codes.length > 1 ? 'são' : 'é'} do ${setores}. A notícia mexe com esse setor.`;
   }
-  if (n.ativos.length) return `${nomes(n.ativos)} não ${n.ativos.length > 1 ? 'estão' : 'está'} entre os seus ativos. Efeitos indiretos no mercado continuam possíveis.`;
-  return `A notícia afeta o ${setorTxt(n.setoresAfetados || [])}, e nenhum ativo da sua carteira atua ${(n.setoresAfetados || []).length > 1 ? 'nesses setores' : 'nesse setor'}.`;
+  if (n.ativos.length) return `Você não tem ações ${listaAcoes(n.ativos)}.`;
+  return `Você não tem ações do ${setorTxt(n.setoresAfetados || [])}.`;
 }
+
+/* Possível mudança: aparece quando a ação ainda não mudou de preço ou quando o evento ainda vai acontecer. */
+const POSSIVEL = {
+  alta: { label: 'Pode subir', icon: 'arrowUp', cls: 'trend-up' },
+  baixa: { label: 'Pode cair', icon: 'arrowDown', cls: 'trend-down' },
+  incerta: { label: 'Pode subir ou cair', icon: 'approx', cls: 'trend-flat' },
+  neutra: { label: 'Pouca mudança esperada', icon: 'minus', cls: 'trend-flat' },
+};
+function possivelMudanca(n, quem) {
+  if (!n.possivel) return '';
+  const [dir, texto] = n.possivel, d = POSSIVEL[dir];
+  return `${quem ? `<p class="meta" style="margin-bottom:4px">${quem}</p>` : ''}
+    <p><span class="trend ${d.cls} possivel-tag">${icon(d.icon, 14)}${d.label}</span></p>
+    <p style="margin-top:6px">${esc(texto)}</p>
+    <p class="imp-note">${icon('info', 16)}<span>É uma possibilidade, não uma previsão.</span></p>`;
+}
+
 function nivelImpacto(estado, peso) {
   if (estado === 'direta') return peso >= 40 ? { n: 3, label: 'Impacto alto' } : peso >= 10 ? { n: 2, label: 'Impacto médio' } : { n: 1, label: 'Impacto baixo' };
   if (estado === 'indireta') return { n: 1, label: 'Impacto baixo' };
@@ -309,23 +327,37 @@ function panelNoticia(id) {
     <div class="imp-tagline">${relTag(rel.estado)}</div>
     <p class="meta">O nível considera a ligação com a notícia e o peso do ativo na sua carteira. Não é uma previsão.</p>`;
 
+  const explica = (n.aconteceu ? impBlock('O que aconteceu', esc(n.aconteceu)) : '')
+    + (n.mexe ? impBlock(rel.estado === 'direta' ? 'Por que isso mexe com a ação' : 'Por que isso pode mexer com o preço', esc(n.mexe)) : '');
+
   if (!grupos.length) {
-    return { title: 'Impacto na carteira', body: topo + impBlock('Por que', esc(porque)) + simular,
+    const quem = rel.estado === 'sem' && n.ativos.length ? `Para quem tem ações ${listaAcoes(n.ativos)}. Sua carteira não muda por isso, porque você não tem essa ação.` : '';
+    const poss = rel.estado === 'sem' && n.possivel ? impBlock('Possível mudança', possivelMudanca(n, quem)) : '';
+    return { title: 'Impacto na carteira', body: topo + impBlock('Por que pode ter impacto', esc(porque)) + explica + poss + simular,
       foot: rel.estado === 'sem' ? `<button type="button" class="btn btn-primary" data-action="close-panel">Voltar às notícias</button>${fonteBtn}` : fonteBtn };
   }
 
   const delta = grupos.reduce((s, g) => s + g.delta, 0), anterior = grupos.reduce((s, g) => s + g.anterior, 0);
   const pct = anterior ? (delta / anterior) * 100 : 0;
   const g = grupos[0];
-  const variacao = `<p class="meta" style="margin-bottom:2px">${grupos.map((x) => `${esc(x.a.name)} · ${x.a.code}`).join(', ')} na sua carteira</p>
+  const nomesCarteira = grupos.map((x) => `${esc(x.a.name)} · ${x.a.code}`).join(', ');
+  const semMudanca = Math.abs(delta) < 0.005;
+  const futuro = n.tipo === 'evento';
+  const variacao = semMudanca ? '' : impBlock('Variação no período', `<p class="meta" style="margin-bottom:2px">${nomesCarteira} na sua carteira</p>
       <p class="imp-number">${trendValue(delta, pSbrl(delta))} ${trend(pct)}</p>
       <p class="meta">De ${REF.anteriorCurta} a ${REF.atualCurta}</p>
-      <p class="imp-note">${icon('info', 16)}<span>${rel.estado === 'direta'
-        ? 'É a variação do preço no período. Não prova que a notícia causou a mudança.'
-        : 'Não dá para separar o efeito desta notícia nessa variação.'}</span></p>`;
+      <p class="imp-note">${icon('info', 16)}<span>${futuro
+        ? 'O evento ainda não aconteceu. Essa variação não tem relação comprovada com ele.'
+        : rel.estado === 'direta' ? 'É a variação do preço no período. Não prova que a notícia causou a mudança.'
+        : 'Não dá para separar o efeito desta notícia nessa variação.'}</span></p>`);
+  const poss = (semMudanca || futuro) && n.possivel
+    ? impBlock('Possível mudança', possivelMudanca(n, semMudanca
+      ? `${nomesCarteira}: o preço ainda não mudou (${fmt.brl(g.a.preco)} em ${REF.anteriorCurta} e em ${REF.atualCurta}).`
+      : 'Depois do evento:'))
+    : '';
   return {
     title: 'Impacto na carteira',
-    body: topo + impBlock('Por que pode ter impacto', esc(porque)) + impBlock('Variação no período', variacao) + simular
+    body: topo + impBlock('Por que pode ter impacto', esc(porque)) + explica + variacao + poss + simular
       + `<p class="meta">Posição de ${REF.atual} · Preços simulados</p>`,
     foot: `<a class="btn btn-primary" href="#/ativos/${g.a.code}?de=${n.id}&aba=${aba}">${rel.estado === 'direta' ? 'Ver ativo' : 'Ver ' + esc(g.a.name)}</a>${fonteBtn}`,
   };

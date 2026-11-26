@@ -416,6 +416,9 @@ th.num, td.num { text-align: right; }
 .logo-profundo .logo-text { color: var(--brand-deep); }
 
 /* ---------- Tablet: barra compacta ---------- */
+/* ---------- Painel de impacto: possível mudança ---------- */
+.possivel-tag { font-size: 14px; }
+
 /* ---------- Preferências, resumo semanal e calendário ---------- */
 .pref-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-top: 12px; }
 .pref-title { font-weight: 600; color: var(--ink); }

@@ -29,7 +29,7 @@ Entre com a conta demo e compre na demo uma destas ações. Depois abra Notícia
 | ITUB4 | Itaú lucra R$ 12,6 bi · Copom mantém a Selic | Direta · indireta (setor financeiro) |
 | BBAS3 | Lucro do Banco do Brasil cai 66% · Copom | Direta · indireta |
 | MGLU3 | Magazine Luiza tem lucro menor, mas ações sobem · Copom | Direta · indireta (varejo) |
-| WEGE3 | WEG lucra abaixo do esperado | Relação direta |
+| WEGE3 | WEG lucra abaixo do esperado | Relação direta · preço ainda não mudou, então aparece "Possível mudança" |
 | DEMO8 | Vale cai com minério em baixa | Indireta (mineração) |
 
 As empresas reais aparecem com **preço simulado**. Os proventos das compras da demo têm valor e data fictícios. "Desfazer compras da demo", na carteira, volta tudo ao início.
