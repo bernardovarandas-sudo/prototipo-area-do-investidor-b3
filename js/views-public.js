@@ -2,7 +2,7 @@
 
 /* Estado de interface que não precisa ir para o endereço */
 const ui = {
-  market: { inicio: { lista: 'destaques', busca: '' }, mercado: { lista: 'destaques', busca: '' } },
+  market: { inicio: { lista: 'destaques', busca: '', aberto: false }, mercado: { lista: 'destaques', busca: '', aberto: false } },
   ibovPer: '1D',
   fichaPer: '1D',
   periodo: 'visita',
@@ -70,6 +70,7 @@ ACTIONS['ibov-per'] = (el) => {
   ui.ibovPer = el.dataset.per;
   const key = el.dataset.key;
   document.getElementById('ibov-chart-' + key).innerHTML = ibovChart(key);
+  ajustarMercado();
   el.parentNode.querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', b === el));
 };
 
@@ -112,12 +113,36 @@ function marketBody(key) {
 
 function marketCard(key, { title = 'Principais ações', headingId } = {}) {
   const s = ui.market[key];
-  return `<section class="card" aria-labelledby="${headingId || 'mk-' + key}">
+  return `<section class="card mk-card${s.aberto ? ' aberto' : ''}" data-mk-card="${key}" aria-labelledby="${headingId || 'mk-' + key}">
     <div class="card-head"><h2 class="h2" id="${headingId || 'mk-' + key}">${title}</h2><span class="meta">${REF.atualCurta}</span></div>
     ${btnTabs([['destaques', 'Destaques'], ['negociados', 'Mais negociados'], ['altas', 'Altas'], ['baixas', 'Baixas']], s.lista, { label: 'Lista de ações', action: 'market-tab', id: 'mt-' + key })}
-    <div id="mt-${key}-panel" role="tabpanel" data-market-body="${key}">${marketBody(key)}</div>
+    <div id="mt-${key}-panel" class="mk-panel" role="tabpanel" data-market-body="${key}">${marketBody(key)}</div>
+    <div class="mk-mais" hidden><button type="button" class="btn btn-link btn-sm" data-action="mk-mais" data-key="${key}" aria-expanded="${s.aberto}" aria-controls="mt-${key}-panel">${mkMaisRotulo(s.aberto)}</button></div>
   </section>`;
 }
+
+/* Lista de ações da mesma altura do quadro do Ibovespa; a seta mostra o resto. */
+function mkMaisRotulo(aberto) {
+  return `<span>${aberto ? 'Ver menos' : 'Ver mais ações'}</span><span class="mk-seta${aberto ? ' cima' : ''}">${icon('chevronDown', 18)}</span>`;
+}
+function ajustarMercado() {
+  document.querySelectorAll('[data-mk-card]').forEach((card) => {
+    const s = ui.market[card.dataset.mkCard], panel = card.querySelector('.mk-panel'), mais = card.querySelector('.mk-mais');
+    card.classList.toggle('aberto', s.aberto);
+    const cortada = !s.aberto && panel.scrollHeight > panel.clientHeight + 2;
+    card.classList.toggle('cortada', cortada);
+    mais.hidden = !(cortada || s.aberto);
+  });
+}
+ACTIONS['mk-mais'] = (el) => {
+  const key = el.dataset.key, s = ui.market[key];
+  s.aberto = !s.aberto;
+  el.setAttribute('aria-expanded', s.aberto);
+  el.innerHTML = mkMaisRotulo(s.aberto);
+  ajustarMercado();
+  if (!s.aberto) el.closest('[data-mk-card]').scrollIntoView({ block: 'nearest' });
+};
+addEventListener('resize', () => requestAnimationFrame(ajustarMercado));
 
 function searchBox(key, id) {
   const s = ui.market[key];
@@ -132,6 +157,7 @@ function searchBox(key, id) {
 function refreshMarket(key) {
   const body = document.querySelector(`[data-market-body="${key}"]`);
   if (body) body.innerHTML = marketBody(key);
+  ajustarMercado();
 }
 INPUTS['market-search'] = (el) => {
   const key = el.dataset.key;
@@ -174,7 +200,7 @@ function viewInicio(route) {
       <p class="meta lead">${REF.atual} · ${REF.pregao}</p></div>
       ${searchBox('inicio', 'busca-inicio')}
     </div>
-    <div class="grid-12">
+    <div class="grid-12 mk-par">
       <div class="span-7">${ibovCard('inicio')}</div>
       <div class="span-5">${marketCard('inicio')}</div>
     </div>
@@ -239,7 +265,7 @@ function viewMercado(route) {
   let body = '';
   if (aba === 'visao') {
     body = `<div class="query-bar">${searchBox('mercado', 'busca-mercado')}</div>
-      <div class="grid-12">
+      <div class="grid-12 mk-par">
         <div class="span-7">${ibovCard('mercado')}</div>
         <div class="span-5">${marketCard('mercado', { title: 'Ações' })}</div>
       </div>

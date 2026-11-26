@@ -82,6 +82,7 @@ function render(opts = {}) {
   renderFooter();
   $content.innerHTML = (route.path !== '/acesso' ? bannerHtml() : '') + v.html;
   registrarVisitaCheckin(route);
+  ajustarMercado();
   document.title = `${v.title} · Área do Investidor B3`;
 
   if (v.panel) openPanel(v.panel.kind, v.panel.id, { fromRoute: true, focus: pageChanged || firstRender });
