@@ -6,10 +6,10 @@ function viewResumoEmail(route) {
   return {
     title: 'Prévia do resumo semanal por e-mail', crumbs: [['Prévia do resumo por e-mail']], nav: null,
     html: `<div class="page-head"><div><h1 class="h1">Prévia do resumo semanal por e-mail</h1>
-      <p class="meta lead">Demonstração do convite enviado a quem ativa a preferência. Nenhum e-mail é enviado.</p></div></div>
+      <p class="meta lead">E-mail enviado a quem ativa a preferência.</p></div></div>
       <article class="card mail" aria-label="Exemplo de e-mail do resumo semanal">
         <div class="mail-head">
-          <p><strong>De:</strong> Área do Investidor B3 (demonstração)</p>
+          <p><strong>De:</strong> Área do Investidor B3</p>
           <p><strong>Para:</strong> <span class="meta">e-mail do seu cadastro (não exibido na prévia)</span></p>
           <p><strong>Assunto:</strong> Veja o que mudou na sua carteira esta semana</p>
         </div>
@@ -20,7 +20,7 @@ function viewResumoEmail(route) {
         <p class="meta" style="margin-top:20px">Por segurança, este e-mail não mostra valores, quantidades nem nomes dos seus investimentos. Você vê os detalhes depois de entrar.</p>
         <p class="meta" style="margin-top:8px">Você recebe este e-mail porque ativou “Receber resumo semanal da carteira” em Meu acesso › Configuração de notificações. Para parar, desative a opção lá.</p>
       </article>
-      <p class="note neutral" style="margin-top:16px;max-width:600px">${icon('info', 18)}<span>Prévia demonstrativa: não pedimos endereço de e-mail e nenhuma mensagem é disparada.</span></p>`,
+`,
   };
 }
 
@@ -115,10 +115,10 @@ function viewResumo(route) {
     title: 'Resumo semanal', nav: 'carteira', pageKey: 'resumo',
     crumbs: [['Minha carteira', '/carteira'], ['Resumo semanal']],
     html: `<a class="back-link" href="#/carteira">${icon('arrowLeft', 16)}Voltar à visão geral</a>
-      <div class="page-head"><div><h1 class="h1">Resumo semanal</h1><p class="meta lead">${sem.titulo} · Dados simulados</p></div>${seletor}</div>
+      <div class="page-head"><div><h1 class="h1">Resumo semanal</h1><p class="meta lead">${sem.titulo}</p></div>${seletor}</div>
       <div class="stack">${corpo}
         <section class="card strip-card" aria-labelledby="rs-email"><div class="strip">
-          <div><h2 class="h3" id="rs-email">Resumo por e-mail</h2><p class="meta">${on ? 'Ativado: você recebe um aviso toda segunda (simulado).' : 'Desativado. Ative para receber um aviso quando o resumo ficar pronto.'}</p></div>
+          <div><h2 class="h3" id="rs-email">Resumo por e-mail</h2><p class="meta">${on ? 'Ativado: você recebe um aviso toda segunda.' : 'Desativado. Ative para receber um aviso quando o resumo ficar pronto.'}</p></div>
           <div class="btn-row" style="margin:0"><a class="btn btn-outline btn-sm" href="#/perfil?secao=config">${on ? 'Alterar nas notificações' : 'Ativar nas notificações'}</a><a class="btn btn-link btn-sm" href="#/demo/resumo-email?semana=${sem.id}">Ver prévia do e-mail</a></div>
         </div></section>
       </div>`,
@@ -160,7 +160,7 @@ function viewProvento(route) {
     title: `${p.tipo} · ${a.name}`, nav: 'proventos', pageKey: 'provento', crumbs: [['Proventos', '/proventos'], [prev ? 'Pagamento previsto' : 'Pagamento recebido']],
     html: `${back}
       <div class="page-head"><div><p style="margin-bottom:6px">${tag}</p><h1 class="h1">${esc(p.tipo)} · ${esc(a.name)} <span class="asset-code" style="font-size:18px">${a.code}</span></h1>
-        <p class="meta lead">${esc(p.inst)}${p.demo ? ' · compra feita na demo · valor e data simulados' : ' · Dados simulados'}</p></div></div>
+        <p class="meta lead">${esc(p.inst)}${p.demo ? ' · compra feita na demo · valor e data simulados' : ''}</p></div></div>
       <section class="card" style="max-width:760px" aria-labelledby="pg-det"><h2 class="sr-only" id="pg-det">Detalhes do pagamento</h2>
         <div class="kpis">
           <div class="kpi"><div class="label">${prev ? 'Valor previsto' : 'Valor recebido'}</div><div class="value big">${p.valor != null ? pBrl(p.valor) : '<span style="color:var(--neutral-text)">A confirmar</span>'}</div></div>
@@ -207,7 +207,7 @@ function gerarIcs(p) {
     `DTSTART;VALUE=DATE:${ini}`,
     `DTEND;VALUE=DATE:${fim}`,
     'SUMMARY:Conferir provento na B3',
-    `DESCRIPTION:${icsTexto(`Pagamento previsto de ${p.tipo.toLowerCase()} de ${a.name} (${a.code}). Veja o detalhe na Área do Investidor: ${url}\nProtótipo acadêmico · Dados simulados.`)}`,
+    `DESCRIPTION:${icsTexto(`Pagamento previsto de ${p.tipo.toLowerCase()} de ${a.name} (${a.code}). Veja o detalhe na Área do Investidor: ${url}`)}`,
     `URL:${url}`,
     'TRANSP:TRANSPARENT',
     'END:VEVENT', 'END:VCALENDAR',

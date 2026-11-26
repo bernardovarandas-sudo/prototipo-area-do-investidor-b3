@@ -11,7 +11,7 @@ function viewCarteira(route) {
   if (w.vazia) {
     return {
       title: 'Visão geral da carteira', crumbs, nav: 'carteira',
-      html: `<div class="page-head"><div><h1 class="h1">Visão geral da carteira</h1><p class="meta lead">Conta demo vazia · Dados simulados</p></div></div>
+      html: `<div class="page-head"><div><h1 class="h1">Visão geral da carteira</h1><p class="meta lead">Você ainda não tem investimentos</p></div></div>
       ${emptyState({
         title: 'Seus investimentos vão aparecer aqui quando estiverem disponíveis.', iconName: 'wallet',
         actions: `<button type="button" class="btn btn-outline btn-sm" data-action="disclose" aria-expanded="false" aria-controls="como-comecar">Como começar</button>
@@ -34,7 +34,7 @@ function viewCarteira(route) {
     title: 'Visão geral da carteira', crumbs, nav: 'carteira',
     panel: porque && ativo(porque) && w.itens.some((i) => i.a.code === porque.toUpperCase()) ? { kind: 'mudanca', id: porque.toUpperCase() } : null,
     html: `
-    <div class="page-head"><div><h1 class="h1">Visão geral da carteira</h1><p class="meta lead">Posição de ${REF.atual} · Dados simulados</p></div></div>
+    <div class="page-head"><div><h1 class="h1">Visão geral da carteira</h1><p class="meta lead">Posição de ${REF.atual}</p></div></div>
     <div class="stack">
       <section class="card" aria-labelledby="resumo">
         <div class="card-head">
@@ -239,7 +239,7 @@ function panelMudanca(code) {
       ${n ? `<div class="pblock context-block"><h3>Notícia relacionada</h3>
         <p>${tipoTag(n.tipo)} <span class="meta">${n.data}</span></p>
         <p style="margin-top:4px"><a href="#/noticias?${params}">${esc(n.titulo)}</a></p></div>` : ''}
-      <p class="meta">São possíveis motivos, não uma certeza: o preço também depende de muitos outros fatores. Preços simulados.</p>`,
+      <p class="meta">São possíveis motivos, não uma certeza: o preço também depende de muitos outros fatores.</p>`,
     foot: `<a class="btn btn-primary" href="#/ativos/${code}?de=carteira">Ver ativo</a>${n ? `<a class="btn btn-outline" href="#/noticias?${params}">Ver impacto da notícia</a>` : ''}`,
   };
 }
@@ -280,11 +280,11 @@ function viewInvestimentos(route) {
             <div><dt>Classe</dt><dd>${esc(l.a.classe)}</dd></div><div><dt>Produto</dt><dd>${esc(l.a.produto)} · ${esc(l.a.tipo)}</dd></div>
             <div><dt>Tipo de preço</dt><dd>${l.a.negociavel ? 'Fechamento do pregão' : l.a.classe === 'Fundos' ? 'Valor da cota' : 'Preço unitário (PU)'}</dd></div><div><dt>Data do preço</dt><dd>${dataLabel}</dd></div>
             ${l.a.vencimento ? `<div><dt>Vencimento</dt><dd>${l.a.vencimento}</dd></div><div><dt>Rentabilidade</dt><dd>${esc(l.a.indexador)}</dd></div>` : ''}
-            <div><dt>Código ISIN</dt><dd>${l.a.real ? 'Não exibido na demo' : `BR${l.code.slice(0, 6)}00X0 (fictício)`}</dd></div>
+            <div><dt>Código ISIN</dt><dd>${ISIN_REAL[l.code] || `BR${l.code.slice(0, 6)}00X0`}</dd></div>
             ${(() => { const pm = pmPos(l); return pm == null ? '<div><dt>Preço médio</dt><dd>Indisponível</dd></div>' : `<div><dt>${rotPM(l.a)}</dt><dd>${ehRendaFixa(l.a) ? pBrl(pm * l.qtd) : precoFmt(l.a, pm)}</dd></div><div><dt>Custo total</dt><dd>${pBrl(pm * l.qtd)}</dd></div><div><dt>${rotRes(l.a)}</dt><dd>${trendValue(l.valor - pm * l.qtd, pSbrl(l.valor - pm * l.qtd))}</dd></div>`; })()}
             <div><dt>Situação</dt><dd>${l.demo && l.etapa < 2 ? 'A liquidar (D+2)' : ''}${l.garantia ? `${fmtQtd(l.garantia)} em garantia · ${fmtQtd(l.qtd - l.garantia)} disponíveis` : 'Disponível'}</dd></div>
             <div><dt>${l.a.classe === 'Ações' || l.a.negociavel ? 'Escriturador' : 'Custodiante'}</dt><dd>Banco Escriturador Demo</dd></div></dl></td></tr>`; }).join('')}</tbody></table></div>
-        <p class="meta" style="margin-top:8px">Valor estimado pelo preço de fechamento de cada data. Dados simulados.</p></div>`
+        <p class="meta" style="margin-top:8px">Valor estimado pelo preço de fechamento de cada data.</p></div>`
       : emptyState({ title: posicoes().length ? 'Nenhum resultado para esse filtro' : 'Não há posições para esta data', actions: s.aplicado || s.classe ? '<button type="button" class="btn btn-outline btn-sm" data-action="pos-limpar">Limpar filtros</button>' : '' })}`;
   } else {
     const gs = linhasGarantia();
@@ -298,7 +298,7 @@ function viewInvestimentos(route) {
         <tbody>${gs.map((g) => `<tr><td><div class="asset-cell"><a href="#/ativos/${g.code}?de=carteira">${esc(g.a.name)}</a><span class="asset-code">${g.code}</span></div></td><td>${g.inst}</td>
           <td class="num">${pQtd(g.qtd)} <span class="meta">${unid(g.a, g.qtd)}</span></td><td class="num">${pBrl(g.valor)}</td><td class="col-sec">${esc(g.finalidade)}</td><td class="col-sec">${g.desde}</td></tr>`).join('')}
           <tr class="total-row"><td colspan="3">Total em garantia</td><td class="num">${pBrl(total)}</td><td class="col-sec" colspan="2"></td></tr></tbody></table></div>
-        <p class="meta" style="margin-top:8px">Valor pelo preço de ${dataLabel}. Para liberar uma garantia, encerre ou ajuste a operação na corretora. Dados simulados.</p></div>`
+        <p class="meta" style="margin-top:8px">Valor pelo preço de ${dataLabel}. Para liberar uma garantia, encerre ou ajuste a operação na corretora.</p></div>`
       : emptyState({ title: 'Não há garantias para esta data', text: 'Ter patrimônio na carteira não significa que há garantias registradas.', iconName: 'info' })}`;
   }
   return {
@@ -357,7 +357,7 @@ function viewIA() {
     title: 'Análises com IA', nav: 'ia', crumbs: [['Minha carteira', '/carteira'], ['Análises com IA']],
     html: `<div class="page-head"><div><h1 class="h1">Análises com IA</h1><p class="meta lead">Ferramenta parceira de análise de empresas</p></div></div>
       <section class="card" style="max-width:720px">
-        <p class="note warn">${icon('info', 18)}<span>Acesso demonstrativo. Na Área do Investidor real, este item abre a ferramenta parceira de análise de ações, quando disponível para a conta.</span></p>
+        <p class="note warn">${icon('info', 18)}<span>Este item abre a ferramenta parceira de análise de ações, quando disponível para a conta.</span></p>
         <p style="margin-top:16px">A ferramenta avalia empresas nacionais e internacionais com modelos de inteligência artificial. Ela não substitui recomendação de um profissional.</p>
         <p style="margin-top:12px">Quer saber se uma notícia tem relação com os seus investimentos? Isso fica em <a href="#/noticias">Notícias</a>, no botão “Impacto na carteira”.</p>
         <div class="btn-row"><a class="btn btn-primary" href="#/saida?para=${encodeURIComponent('Ferramenta parceira de análise')}&volta=${encodeURIComponent('/carteira/ia')}">Abrir ferramenta parceira ${icon('external', 16)}</a></div>

@@ -233,7 +233,7 @@ function rentabCard() {
       ${pts.map((p, i) => (i % Math.ceil(pts.length / 6) === 0 || i === pts.length - 1 ? `<text x="${x(i).toFixed(1)}" y="${H - 6}" text-anchor="middle" class="rent-ax">${p.label}</text>` : '')).join('')}
     </svg></figure>
     <div class="rent-cdi"><p>Minha carteira rendeu <strong>${nf0.format(pctCdi)}% do CDI</strong> no período${rfCdi ? ` · Renda fixa: cerca de <strong>${nf0.format(rfCdi)}% do CDI</strong>, pela taxa de cada título` : ''}.</p></div>
-    <p class="meta">Rentabilidade passada não garante resultado futuro. A da carteira é aproximada (veja “De onde veio a mudança”). CDI calculado pela Selic do período; Ibovespa pelos fechamentos. Dados simulados.</p>
+    <p class="meta">Rentabilidade passada não garante resultado futuro. A da carteira é aproximada (veja “De onde veio a mudança”). CDI calculado pela Selic do período; Ibovespa pelos fechamentos.</p>
     <button type="button" class="btn btn-link btn-sm" style="padding-left:0" data-action="disclose" aria-expanded="false" aria-controls="rc-tab">Ver em tabela</button>
     <div id="rc-tab" hidden><div class="table-wrap"><table><caption class="sr-only">Rentabilidade acumulada</caption><thead><tr><th scope="col">Data</th><th scope="col" class="num">Minha carteira</th><th scope="col" class="num">CDI</th><th scope="col" class="num">Ibovespa</th></tr></thead>
       <tbody>${pts.map((p) => `<tr><td>${p.label}</td><td class="num">${fmt.pct(p.carteira)}</td><td class="num">${fmt.pct(p.cdi)}</td><td class="num">${fmt.pct(p.ibov)}</td></tr>`).join('')}</tbody></table></div></div>
@@ -443,7 +443,7 @@ ACTIONS['ics-evento'] = (el) => {
   const url = `${location.origin}${location.pathname}#${e.rota}`;
   const linhas = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Prototipo academico//Area do Investidor B3 demo//PT-BR', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH', 'BEGIN:VEVENT',
     `UID:${e.uid}@prototipo-area-do-investidor`, `DTSTAMP:${new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '')}`, `DTSTART;VALUE=DATE:${e.dia.replace(/-/g, '')}`, `DTEND;VALUE=DATE:${fim.toISOString().slice(0, 10).replace(/-/g, '')}`,
-    `SUMMARY:${icsTexto(e.titulo)}`, `DESCRIPTION:${icsTexto(`${e.desc} ${url}\nProtótipo acadêmico · Dados simulados.`)}`, `URL:${url}`, 'TRANSP:TRANSPARENT', 'END:VEVENT', 'END:VCALENDAR'];
+    `SUMMARY:${icsTexto(e.titulo)}`, `DESCRIPTION:${icsTexto(`${e.desc} ${url}`)}`, `URL:${url}`, 'TRANSP:TRANSPARENT', 'END:VEVENT', 'END:VCALENDAR'];
   const nome = `${e.uid}-${e.dia}.ics`;
   const href = URL.createObjectURL(new Blob([linhas.map(icsDobrar).join('\r\n') + '\r\n'], { type: 'text/calendar;charset=utf-8' }));
   const link = document.createElement('a'); link.href = href; link.download = nome; document.body.appendChild(link); link.click(); link.remove();
@@ -471,7 +471,7 @@ function proventosAtivoCard(a) {
         <thead><tr><th scope="col">Data com</th><th scope="col">Pagamento</th><th scope="col">Tipo</th><th scope="col" class="num">Por ação</th></tr></thead>
         <tbody>${hist.slice().reverse().map((h) => `<tr><td>${h[0]}</td><td>${h[1]}${h[4] ? ' <span class="rel-tag rel-insuf sm">Anunciado</span>' : ''}</td><td>${h[2].replace('Juros sobre capital próprio', 'JCP')}</td><td class="num">${fmt.brl(h[3])}</td></tr>`).join('')}</tbody></table></div>`
       : '<p class="muted" style="margin-top:6px">Sem proventos nos últimos 12 meses.</p>'}
-    <p class="meta" style="margin-top:6px">${a.real ? 'Dados simulados para o protótipo.' : 'Dados fictícios.'}</p></section>`;
+    </section>`;
 }
 function agendaCard(a) {
   const evs = (AGENDA[a.code] || []).map((e, i) => ({ dia: e[0], titulo: e[1], tipo: e[2], id: `ag|${a.code}|${i}` }));
@@ -483,7 +483,7 @@ function agendaCard(a) {
     ${futuros.length ? `<ul class="agenda">${futuros.map((e) => `<li><span class="ag-data"><strong>${curtaDeIso(e.dia)}</strong>${e.dia.slice(0, 4) === '2027' ? '<br>2027' : ''}</span><div><p>${esc(e.titulo)}</p>
       <button type="button" class="btn btn-link btn-sm" style="padding-left:0" data-action="ics-evento" data-id="${e.id}">${icon('calendar', 14)}Adicionar ao meu calendário</button></div></li>`).join('')}</ul>`
       : '<p class="muted" style="margin-top:6px">Sem eventos marcados.</p>'}
-    <p class="meta">${a.real ? 'Datas simuladas para o protótipo.' : 'Datas fictícias.'}</p></section>`;
+    </section>`;
 }
 
 /* =========================== Item 20 · Gráfico de proventos com projeção =========================== */
@@ -613,7 +613,7 @@ function viewRetrospectiva() {
   return {
     title: 'Sua carteira em 2026', nav: 'carteira', crumbs: [['Minha carteira', '/carteira'], ['Retrospectiva 2026']],
     html: `<a class="back-link" href="#/carteira">${icon('arrowLeft', 16)}Voltar à visão geral</a>
-      <div class="page-head"><div><h1 class="h1">Sua carteira em 2026</h1><p class="meta lead">Retrospectiva até ${REF.atual} · Dados simulados</p></div>
+      <div class="page-head"><div><h1 class="h1">Sua carteira em 2026</h1><p class="meta lead">Retrospectiva até ${REF.atual}</p></div>
         <label class="toggle-line"><input type="checkbox" data-change="retro-share" ${sh ? 'checked' : ''}> Versão para compartilhar (sem valores em R$)</label></div>
       <section class="retro" role="region" aria-roledescription="carrossel" aria-label="Retrospectiva" tabindex="0">
         <div class="retro-card" aria-live="polite"><p class="retro-n">${i + 1} de ${cards.length}</p><h2 class="h1">${cards[i][0]}</h2><div class="retro-body">${cards[i][1]}</div></div>
@@ -710,9 +710,9 @@ function checkinCard() {
 function viewCheckinEmail() {
   return {
     title: 'Prévia do lembrete mensal por e-mail', crumbs: [['Prévia do lembrete mensal']], nav: null,
-    html: `<div class="page-head"><div><h1 class="h1">Prévia do lembrete mensal por e-mail</h1><p class="meta lead">Enviado a quem ativa “Lembrete mensal para conferir a carteira”. Nenhum e-mail é enviado.</p></div></div>
+    html: `<div class="page-head"><div><h1 class="h1">Prévia do lembrete mensal por e-mail</h1><p class="meta lead">Enviado a quem ativa “Lembrete mensal para conferir a carteira”.</p></div></div>
       <article class="card mail" aria-label="Exemplo de e-mail do lembrete mensal">
-        <div class="mail-head"><p><strong>De:</strong> Área do Investidor B3 (demonstração)</p><p><strong>Para:</strong> <span class="meta">e-mail do seu cadastro (não exibido)</span></p><p><strong>Assunto:</strong> Já conferiu sua carteira este mês?</p></div>
+        <div class="mail-head"><p><strong>De:</strong> Área do Investidor B3</p><p><strong>Para:</strong> <span class="meta">e-mail do seu cadastro (não exibido)</span></p><p><strong>Assunto:</strong> Já conferiu sua carteira este mês?</p></div>
         ${logo('profundo', 72)}
         <p style="margin-top:16px">Olá,</p>
         <p style="margin-top:8px">Uma vez por mês, vale dar uma olhada rápida: proventos recebidos, extrato, assembleias abertas e avisos. Leva poucos minutos.</p>

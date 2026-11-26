@@ -60,7 +60,7 @@ function extratoTabela(aba, linhas) {
   if (aba === 'movimentacao') {
     return `<table><caption class="sr-only">Movimentação</caption><thead><tr><th scope="col">Data</th><th scope="col">Movimentação</th><th scope="col">Ativo</th><th scope="col" class="col-sec">Instituição</th><th scope="col" class="num">Valor</th><th scope="col"><span class="sr-only">Detalhes</span></th></tr></thead><tbody>
       ${linhas.map((r, i) => { const k = 'mov-' + i; return `<tr><td class="nowrap">${r.data}</td><td>${esc(r.mov)}</td><td>${ativoCell(r.code, r.demo)}</td><td class="col-sec">${r.inst}</td><td class="num">${r.valor != null ? pBrl(r.valor) : '<span class="meta">Não informado</span>'}</td><td class="num">${btn(k, r.mov + ' ' + r.data)}</td></tr>
-        ${det(k, 6, `<dl class="dl"><div><dt>Quantidade</dt><dd>${pQtd(r.qtd)}</dd></div><div><dt>Instituição</dt><dd>${r.inst}</dd></div><div><dt>Origem dos dados</dt><dd>Central depositária (demo)</dd></div></dl><p class="meta" style="margin-top:8px">${esc(r.detalhe)}</p>`)}`; }).join('')}</tbody></table>`;
+        ${det(k, 6, `<dl class="dl"><div><dt>Quantidade</dt><dd>${pQtd(r.qtd)}</dd></div><div><dt>Instituição</dt><dd>${r.inst}</dd></div><div><dt>Origem dos dados</dt><dd>Central depositária da B3</dd></div></dl><p class="meta" style="margin-top:8px">${esc(r.detalhe)}</p>`)}`; }).join('')}</tbody></table>`;
   }
   if (aba === 'negociacao') {
     return `<table><caption class="sr-only">Negociação</caption><thead><tr><th scope="col">Data da negociação</th><th scope="col">Compra/venda</th><th scope="col">Ativo</th><th scope="col" class="col-sec">Instituição</th><th scope="col" class="num">Quantidade</th><th scope="col"><span class="sr-only">Detalhes</span></th></tr></thead><tbody>
@@ -126,7 +126,7 @@ function viewExtratos(route) {
         <fieldset style="border:0;padding:0;margin:0"><legend class="label" style="font-weight:600;color:var(--ink);font-size:14px">Formato</legend>
           <div class="btn-row" style="margin-top:4px">${['PDF', 'Excel'].map((f) => `<label style="display:inline-flex;gap:6px;align-items:center;min-height:44px"><input type="radio" name="fmt" value="${f}" data-change="ext-fmt" ${s.formato === f ? 'checked' : ''}> ${f}</label>`).join('')}</div></fieldset>
         <div class="btn-row"><button type="button" class="btn btn-primary" data-action="ext-download" data-aba="${aba}">Baixar arquivo</button></div>
-        <p class="meta" style="margin-top:8px">O arquivo segue o modelo padrão da Área do Investidor e é marcado como demonstração, com dados simulados.</p>
+        
       </div>
       ${chips.length ? `<div class="chips">${chips.map(([k, t]) => `<span class="chip">${esc(t)}<button type="button" data-action="ext-chip" data-k="${k}" aria-label="Remover filtro ${esc(t)}">${icon('x', 16)}</button></span>`).join('')}<button type="button" class="btn btn-link btn-sm" data-action="ext-limpar">Limpar filtros</button></div>` : ''}
       <p class="exibindo">Exibindo: <strong>${exibindo(p)}</strong> · ${linhas.length} ${linhas.length === 1 ? 'registro' : 'registros'}</p>
@@ -241,14 +241,14 @@ function viewProventos(route) {
         <tbody>${lista.map((r) => { const meu = temAtivo(r.code), a = ativo(r.code), dc = datasComProximas().find((x) => x.code === r.code); return `<tr class="${dc ? 'is-datacom' : ''}"><td>${ativoCell(r.code)}${dc ? `<span class="rel-tag rel-insuf sm">${icon('calendar', 12)}Data com em ${r.dataCom}</span>` : ''}</td><td>${r.tipo}</td><td class="col-sec">${r.anuncio}</td><td>${r.dataCom || '—'}</td><td>${r.pagamento || 'Data a confirmar'}</td>
           <td class="num">${r.vps != null ? fmt.brl(r.vps) : '—'}</td><td class="num col-sec">${r.vps != null ? nf2.format((r.vps / a.preco) * 100) + '%' : '—'}</td>
           <td>${meu ? `<span class="rel-tag rel-direta">${icon('check', 16)}Previsto para você</span>` : `<span class="rel-tag rel-sem">${icon('minus', 16)}Você não tem</span>`}</td></tr>`; }).join('')}</tbody></table></div>
-        <p class="meta" style="margin-top:8px"><strong>Data com</strong>: quem tiver o ativo no fim desse dia tem direito ao provento. <strong>DY</strong>: valor por ação ÷ preço atual. Dados simulados.</p></div>`
+        <p class="meta" style="margin-top:8px"><strong>Data com</strong>: quem tiver o ativo no fim desse dia tem direito ao provento. <strong>DY</strong>: valor por ação ÷ preço atual.</p></div>`
       : emptyState({ title: 'Nenhum anúncio para esses filtros', iconName: 'filter', actions: '<button type="button" class="btn btn-outline btn-sm" data-action="radar-limpar">Limpar filtros</button>' })}`;
   } else {
     body = calendario();
   }
   return {
     title: 'Proventos · ' + nomes[aba], nav: 'proventos', pageKey: 'proventos', crumbs: [['Proventos', '/proventos'], [nomes[aba]]],
-    html: `<div class="page-head"><div><h1 class="h1">Proventos</h1><p class="meta lead">Pagamentos recebidos e previstos · Dados simulados ${termHelp('proventos', 'provento')}</p></div></div>
+    html: `<div class="page-head"><div><h1 class="h1">Proventos</h1><p class="meta lead">Pagamentos recebidos e previstos ${termHelp('proventos', 'provento')}</p></div></div>
       ${tabs(Object.entries(nomes), aba, { label: 'Proventos', id: 'proventos', hrefFor: (k) => '/proventos/' + k })}
       ${body}`,
   };
@@ -363,7 +363,7 @@ function calendarioMes() {
       <div class="seg" role="group" aria-label="Mostrar">${[['todos', 'Todos'], ['recebidos', 'Recebidos'], ['previstos', 'Previstos']].map(([k, t]) => `<button type="button" data-action="cal-filtro" data-f="${k}" aria-pressed="${filtro === k}">${t}</button>`).join('')}</div>
     </div>
     <div class="cal" aria-hidden="true">${['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].map((d) => `<div class="dow">${d}</div>`).join('')}${cells.join('')}</div>
-    <ul class="legend" aria-hidden="true"><li><span class="swatch" style="background:var(--positive-bg);border:1px solid var(--positive-text)"></span>Recebido</li><li><span class="swatch" style="background:var(--warning-bg);border:1px solid var(--warning-text)"></span>Previsto</li><li><span class="swatch" style="border:2px solid var(--brand-vivid)"></span>Hoje na demo (24 nov)</li></ul>
+    <ul class="legend" aria-hidden="true"><li><span class="swatch" style="background:var(--positive-bg);border:1px solid var(--positive-text)"></span>Recebido</li><li><span class="swatch" style="background:var(--warning-bg);border:1px solid var(--warning-text)"></span>Previsto</li><li><span class="swatch" style="border:2px solid var(--brand-vivid)"></span>Hoje (24 nov)</li></ul>
     <h3 class="h3" style="margin-top:20px">Pagamentos em ${MESES[m]} de ${y}</h3>
     ${doMes.length ? `<ul class="calc-list cal-list" style="margin-top:8px">${doMes.map((e) => `<li><a href="#/proventos/pagamento/${e.p.id}?de=calendario"><span>${String(e.d).padStart(2, '0')}/${String(m + 1).padStart(2, '0')} · ${esc(ativo(e.p.code).name)} · ${e.p.tipo}</span>
         <span class="ev-status ${e.tipo}">${e.tipo === 'rec' ? 'Recebido' : 'Previsto'}</span></a><span class="num">${pBrl(e.p.valor)}</span></li>`).join('')}</ul>
@@ -377,7 +377,7 @@ ACTIONS['cal-hoje'] = () => { ui.cal.m = 10; ui.cal.y = 2026; rerender('[data-ac
 ACTIONS['cal-filtro'] = (el) => { ui.cal.filtro = el.dataset.f; rerender(`[data-action="cal-filtro"][data-f="${el.dataset.f}"]`); };
 
 /* ---------- Portabilidade (simulação em 4 etapas; nada é transferido) ---------- */
-const DESTINOS_PORTA = ['Corretora A', 'Corretora B', 'Corretora C (exemplo)'];
+const DESTINOS_PORTA = ['Corretora A', 'Corretora B', 'Corretora C'];
 function viewPortabilidade(route) {
   const aba = route.m[1] || 'transferir';
   const nomes = { transferir: 'Transferir investimentos', solicitacoes: 'Minhas solicitações' };
@@ -411,7 +411,7 @@ function viewPortabilidade(route) {
       passo = `<section class="card stack-sm"><h2 class="h2">Confira antes de enviar</h2>
         <dl class="dl"><div><dt>Origem</dt><dd>${esc(w.origem)}</dd></div><div><dt>Destino</dt><dd>${esc(w.destino)}</dd></div></dl>
         <ul class="calc-list">${Object.entries(w.itens).map(([c, q]) => `<li><span>${esc(ativo(c).name)} · ${c}</span><strong>${pQtd(q)} ações</strong></li>`).join('')}</ul>
-        <p class="note neutral">${icon('info', 18)}<span>Simulação: nenhuma transferência é feita. No real, a instituição de origem analisa o pedido e pode levar alguns dias úteis.</span></p>
+        <p class="note neutral">${icon('info', 18)}<span>A instituição de origem analisa o pedido, o que pode levar alguns dias úteis.</span></p>
         <div class="btn-row"><button class="btn btn-primary" type="button" data-action="porta-enviar">Enviar solicitação</button><button class="btn btn-outline" type="button" data-action="porta-voltar">Voltar</button></div></section>`;
     }
     body = etapas + `<div style="margin-top:20px">${passo}</div>`;
@@ -420,13 +420,13 @@ function viewPortabilidade(route) {
       ? `<div class="stack-sm">${ui.solicitacoes.map((x) => `<section class="card"><div class="card-head" style="margin:0"><div><h2 class="h3">Protocolo ${x.protocolo}</h2>
           <p class="meta">${esc(x.origem)} → ${esc(x.destino)} · Enviada em ${REF.atualCurta}</p></div><span class="rel-tag rel-indireta">${icon('refresh', 16)}Em análise na origem</span></div>
           <ul class="calc-list" style="margin-top:8px">${Object.entries(x.itens).map(([c, q]) => `<li><span>${esc(ativo(c).name)} · ${c}</span><strong>${pQtd(q)}</strong></li>`).join('')}</ul>
-          <p class="meta" style="margin-top:8px">Próximo passo: a instituição de origem confirma o pedido. Simulação, nada foi transferido.</p>
+          <p class="meta" style="margin-top:8px">Próximo passo: a instituição de origem confirma o pedido.</p>
           <div class="btn-row"><button type="button" class="btn btn-link btn-sm" data-action="porta-cancelar" data-p="${x.protocolo}">Cancelar solicitação</button></div></section>`).join('')}</div>`
       : emptyState({ title: 'Você não tem solicitações de portabilidade', text: 'Quando houver, você verá aqui a situação, as instituições, a data da última atualização e o próximo passo.', iconName: 'transfer', actions: '<a class="btn btn-outline btn-sm" href="#/portabilidade/transferir">Simular uma transferência</a>' });
   }
   return {
     title: 'Portabilidade', nav: 'portabilidade', pageKey: 'portabilidade', crumbs: [['Portabilidade', '/portabilidade'], [nomes[aba]]],
-    html: `<div class="page-head"><div><h1 class="h1">Portabilidade</h1><p class="meta lead">Transfira investimentos entre instituições e acompanhe pedidos. Na demo, é uma simulação.</p></div></div>
+    html: `<div class="page-head"><div><h1 class="h1">Portabilidade</h1><p class="meta lead">Transfira investimentos entre instituições e acompanhe pedidos.</p></div></div>
       ${tabs(Object.entries(nomes), aba, { label: 'Portabilidade', id: 'porta', hrefFor: (k) => '/portabilidade/' + k })}
       ${body}`,
   };
@@ -455,12 +455,12 @@ ACTIONS['porta-enviar'] = () => {
   const protocolo = 'PD-' + String(Date.now()).slice(-6);
   ui.solicitacoes.unshift({ protocolo, origem: w.origem, destino: w.destino, itens: { ...w.itens } });
   ui.porta = { passo: 1, origem: '', destino: '', itens: {} };
-  toast(`Solicitação ${protocolo} enviada (simulação).`);
+  toast(`Solicitação ${protocolo} enviada.`);
   go('/portabilidade/solicitacoes');
 };
 ACTIONS['porta-cancelar'] = (el) => {
   ui.solicitacoes = ui.solicitacoes.filter((x) => x.protocolo !== el.dataset.p);
-  toast('Solicitação cancelada (simulação).');
+  toast('Solicitação cancelada.');
   rerender('#conteudo h1');
 };
 
@@ -497,7 +497,7 @@ function viewServicos(route) {
  SUBMITS.voto = (form) => {
   const i = +form.dataset.i;
   ui.votos[i] = ASSEMBLEIAS[i].pauta.map((_, j) => form['q' + j].value);
-  toast('Voto registrado na demonstração. Nada foi enviado.');
+  toast('Voto registrado.');
   rerender('#conteudo h1');
 };
 ACTIONS['voto-refazer'] = (el) => { delete ui.votos[+el.dataset.i]; rerender('#conteudo form [type=radio]'); };
@@ -513,28 +513,28 @@ ACTIONS['rel-baixar'] = () => {
     colunas: [['Classe', 'txt'], ['Produto', 'txt'], ['Código', 'txt'], ['Quantidade', 'qtd'], ['Valor', 'brl'], ['% da carteira', 'pct']],
     linhas: porClasse.flatMap(([c, its]) => its.map((g) => [c, g.a.name, g.a.code, g.qtd, g.atual, w.atual ? (g.atual / w.atual) * 100 : 0])),
     total: ['Total', '', '', '', w.atual, 100],
-    notas: ['O relatório consolidado é consultivo. Para declarar imposto de renda, use o informe de rendimentos fornecido pela sua instituição.', 'Na demonstração, os valores são os da posição de 24 nov 2026 para qualquer período escolhido.'],
+    notas: ['O relatório consolidado é consultivo. Para declarar imposto de renda, use o informe de rendimentos fornecido pela sua instituição.'],
   }, ui.rel.formato === 'Excel' ? 'xlsx' : 'pdf');
 };
 ACTIONS['inf-baixar'] = (el) => baixarDocumento({
   titulo: `Informe de empréstimos de ativos ${el.dataset.y}`, arquivo: `informe-emprestimos-${el.dataset.y}`, periodo: `Ano-calendário ${el.dataset.y}`,
   colunas: [['Ativo', 'txt'], ['Código', 'txt'], ['Papel', 'txt'], ['Quantidade', 'qtd'], ['Remuneração', 'brl']],
   linhas: el.dataset.y === '2025' ? [] : [],
-  notas: ['Não houve operações de empréstimo de ativos no ano nesta conta de demonstração.'],
+  notas: ['Não houve operações de empréstimo de ativos no ano nesta conta.'],
 }, 'pdf');
 
 /* ---------- Feedback ---------- */
 function viewFeedback() {
   return {
     title: 'Feedback', nav: 'feedback', crumbs: [['Feedback']],
-    html: `<div class="page-head"><div><h1 class="h1">Feedback</h1><p class="meta lead">Conte o que funcionou e o que atrapalhou. Na demo, nada é enviado.</p></div></div>
+    html: `<div class="page-head"><div><h1 class="h1">Feedback</h1><p class="meta lead">Conte o que funcionou e o que atrapalhou.</p></div></div>
       ${ui.feedbackEnviado
-        ? emptyState({ title: 'Obrigado pelo feedback.', text: 'Na demonstração, a mensagem não foi enviada nem guardada.', iconName: 'check', actions: '<button type="button" class="btn btn-outline btn-sm" data-action="fb-novo">Escrever outro</button>' })
+        ? emptyState({ title: 'Obrigado pelo feedback.', text: 'Sua mensagem foi registrada.', iconName: 'check', actions: '<button type="button" class="btn btn-outline btn-sm" data-action="fb-novo">Escrever outro</button>' })
         : `<form class="card stack-sm" style="max-width:640px" data-form="feedback">
         <div class="field"><label for="fb-assunto">Assunto</label><select id="fb-assunto" class="select" name="assunto"><option>Notícias</option><option>Minha carteira</option><option>Extratos e proventos</option><option>Outro</option></select></div>
         <div class="field"><label for="fb-texto">Mensagem</label><textarea id="fb-texto" class="textarea" name="texto" required aria-describedby="fb-hint"></textarea><span id="fb-hint" class="meta">Não inclua dados pessoais.</span></div>
         <div><button class="btn btn-primary" type="submit">Enviar feedback</button></div></form>`}`,
   };
 }
-SUBMITS.feedback = () => { ui.feedbackEnviado = true; rerender('#conteudo .empty'); announce('Feedback registrado na demonstração'); };
+SUBMITS.feedback = () => { ui.feedbackEnviado = true; rerender('#conteudo .empty'); announce('Feedback registrado'); };
 ACTIONS['fb-novo'] = () => { ui.feedbackEnviado = false; rerender('#fb-texto'); };

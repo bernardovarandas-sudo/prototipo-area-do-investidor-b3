@@ -123,7 +123,7 @@ function newsItem(n, aba, ctx) {
     <h2 class="h2 news-title" id="t-${n.id}">${esc(n.titulo)}</h2>
     <figure class="news-figure">
       ${newsImage(n)}
-      <figcaption class="meta">Fonte: ${esc(n.fonte.replace(/^Fonte demo · /, ''))} · ${n.real ? 'Notícia real, resumida para o protótipo' : 'Notícia fictícia'} · Imagem ilustrativa</figcaption>
+      <figcaption class="meta">Fonte: ${esc(n.fonte.replace(/^Fonte demo · /, ''))} · Imagem ilustrativa</figcaption>
     </figure>
     <p class="news-summary">${esc(n.resumo)}</p>
     <div class="news-actions">
@@ -135,7 +135,7 @@ function newsItem(n, aba, ctx) {
     </div>
     <div class="news-more" id="mais-${n.id}" ${aberto ? '' : 'hidden'}>
       ${n.detalhe.map(([t, p]) => `<h3 class="h3">${esc(t)}</h3><p>${esc(p)}</p>`).join('')}
-      <p class="meta">${n.real ? `Resumo escrito para o protótipo a partir de reportagem de ${esc(n.fonte)}. Os preços mostrados no app são simulados.` : 'Texto fictício, escrito para a demonstração do protótipo.'}</p>
+      ${n.real ? `<p class="meta">Resumo de reportagem de ${esc(n.fonte)}.</p>` : ''}
       ${fonteLink(n, 'btn btn-link news-site')}
     </div>
   </article>`;
@@ -192,7 +192,7 @@ function viewNoticias(route) {
     panel: painel && NOTICIAS.find((n) => n.id === painel) ? { kind: 'noticia', id: painel } : null,
     html: `
     <div class="page-head"><div><h1 class="h1">Notícias</h1>
-      <p class="meta lead">Notícias, comunicados das empresas e eventos · Dados de demonstração</p></div></div>
+      <p class="meta lead">Notícias, comunicados das empresas e eventos</p></div></div>
     <div class="news-toolbar">
       ${tabs([['todo', 'Todo o mercado'], ['carteira', 'Minha carteira']], aba, { label: 'Recorte das notícias', id: 'noticias', hrefFor: (k) => newsHref({ aba: k, tipo: tipo !== 'todos' ? tipo : '', ativo: ativoF }) })}
       <div class="field"><label for="tipo">Tipo</label>
@@ -236,10 +236,10 @@ function viewMateria(route) {
           : `<a class="btn btn-primary" href="#/acesso?destino=${encodeURIComponent('/noticias/' + n.id + '?painel=1')}">${icon('wallet', 18)}Impacto na carteira</a>`}
         ${n.real ? fonteLink(n, 'btn btn-outline', 'Abrir reportagem original') : ''}
       </div>
-      <figure class="news-figure">${newsImage(n, '-m')}<figcaption class="meta">Fonte: ${esc(n.fonte.replace(/^Fonte demo · /, ''))} · ${n.real ? 'Notícia real, resumida para o protótipo' : 'Notícia fictícia'} · Imagem ilustrativa</figcaption></figure>
+      <figure class="news-figure">${newsImage(n, '-m')}<figcaption class="meta">Fonte: ${esc(n.fonte.replace(/^Fonte demo · /, ''))} · Imagem ilustrativa</figcaption></figure>
       <p class="news-summary">${esc(n.resumo)}</p>
       ${n.detalhe.map(([t, p]) => `<h2 class="h3" style="margin-top:20px">${esc(t)}</h2><p style="margin-top:4px">${esc(p)}</p>`).join('')}
-      <p class="meta" style="margin-top:16px">${n.real ? `Resumo escrito para o protótipo a partir de reportagem de ${esc(n.fonte)}. Os preços mostrados no app são simulados.` : 'Texto fictício, escrito para a demonstração do protótipo.'}</p>
+      ${n.real ? `<p class="meta" style="margin-top:16px">Resumo de reportagem de ${esc(n.fonte)}.</p>` : ''}
       ${n.ativos.length ? `<p style="margin-top:24px" class="meta">Ativos citados: ${n.ativos.map((c) => `<a href="#/ativos/${c}?de=${n.id}">${esc(ativo(c).name)} · ${c}</a>`).join(', ')}</p>` : ''}
     </article>`,
   };
@@ -360,7 +360,7 @@ function panelNoticia(id) {
   return {
     title: 'Impacto na carteira',
     body: topo + impBlock('Por que pode ter impacto', esc(porque)) + explica + variacao + poss + simular
-      + `<p class="meta">Posição de ${REF.atual} · Preços simulados</p>`,
+      + `<p class="meta">Posição de ${REF.atual}</p>`,
     foot: `<a class="btn btn-primary" href="#/ativos/${g.a.code}?de=${n.id}&aba=${aba}">${rel.estado === 'direta' ? 'Ver ativo' : 'Ver ' + esc(g.a.name)}</a>${fonteBtn}`,
   };
 }

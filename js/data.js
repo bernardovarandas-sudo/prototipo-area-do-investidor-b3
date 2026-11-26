@@ -52,7 +52,7 @@ const POSICOES_PRINCIPAL = [
 
 const CONTAS = {
   principal: { nome: 'Investidor Demo', cpf: '***.456.789-**', email: 'investidor.demo@exemplo.test', posicoes: POSICOES_PRINCIPAL },
-  vazia: { nome: 'Investidora Nova (demo)', cpf: '***.321.654-**', email: 'nova.demo@exemplo.test', posicoes: [] },
+  vazia: { nome: 'Investidora Nova', cpf: '***.321.654-**', email: 'nova.demo@exemplo.test', posicoes: [] },
 };
 
 /* Notícias: textos revisados e ligações fixas (PRD §4.3). */
@@ -75,7 +75,7 @@ const NOTICIAS = [
     },
   },
   {
-    id: 'n2', tipo: 'noticia', data: '24 nov, 10h', fonte: 'Fonte demo · Agência de notícias fictícia',
+    id: 'n2', tipo: 'noticia', data: '24 nov, 10h', fonte: 'Fonte demo · Agência de notícias',
     titulo: 'Mudança em estudo para o setor de energia',
     contexto: 'Proposta regulatória ainda em consulta pública.',
     ativos: [], setores: ['Energia elétrica'],
@@ -108,7 +108,7 @@ const NOTICIAS = [
     },
   },
   {
-    id: 'n4', tipo: 'noticia', data: '23 nov, 17h', fonte: 'Fonte demo · Boletim de mercado fictício',
+    id: 'n4', tipo: 'noticia', data: '23 nov, 17h', fonte: 'Fonte demo · Boletim de mercado',
     titulo: 'Fundos ampliam participação em renda variável',
     contexto: 'Levantamento não identifica empresas ou fundos específicos.',
     ativos: [], setores: [],
@@ -218,9 +218,9 @@ const NOTIFICACOES = [
 const ASSEMBLEIAS = [
   { empresa: 'Nova Azul · DEMO2', data: '2 dez 2026', prazo: '28 nov 2026', estado: 'Aberta para consulta',
     pauta: ['Proposta de distribuição de dividendos', 'Eleição de membro do conselho fiscal'],
-    docs: ['Edital de convocação (exemplo)', 'Manual da assembleia (exemplo)'] },
+    docs: ['Edital de convocação', 'Manual da assembleia'] },
   { empresa: 'Aurora · DEMO1', data: '18 dez 2026', prazo: '11 dez 2026', estado: 'Prazo ainda não aberto',
-    pauta: ['Aprovação do plano de remuneração'], docs: ['Edital de convocação (exemplo)'] },
+    pauta: ['Aprovação do plano de remuneração'], docs: ['Edital de convocação'] },
 ];
 
 const TERMOS = {
@@ -792,3 +792,6 @@ const AGENDA = {
   WEGE3: [['2027-02-18', 'Divulgação do resultado anual (previsão)', 'resultado']],
   DEMO8: [['2027-02-20', 'Divulgação do resultado anual (previsão)', 'resultado']],
 };
+
+/* Código ISIN das empresas reais usadas no protótipo. */
+const ISIN_REAL = { PETR4: 'BRPETRACNPR6', VALE3: 'BRVALEACNOR0', ITUB4: 'BRITUBACNPR1', BBAS3: 'BRBBASACNOR3', MGLU3: 'BRMGLUACNOR2', WEGE3: 'BRWEGEACNOR0' };

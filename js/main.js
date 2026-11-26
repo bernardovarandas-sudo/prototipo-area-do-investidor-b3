@@ -81,7 +81,7 @@ function render(opts = {}) {
   renderFooter();
   $content.innerHTML = (route.path !== '/acesso' ? bannerHtml() : '') + v.html;
   registrarVisitaCheckin(route);
-  document.title = `${v.title} · Área do Investidor B3 (protótipo)`;
+  document.title = `${v.title} · Área do Investidor B3`;
 
   if (v.panel) openPanel(v.panel.kind, v.panel.id, { fromRoute: true, focus: pageChanged || firstRender });
   else if (panel.open) closePanel({ silent: true });
@@ -162,7 +162,6 @@ function renderTopbar(v, route) {
         ? `<li><span aria-current="page">${esc(l)}</span></li>` : `<li>${h ? `<a href="#${h}">${esc(l)}</a>` : esc(l)}</li>`).join('')}</ol></nav>
     </div>
     <div class="topbar-right">
-      <span class="proto-tag">Protótipo acadêmico · Dados simulados</span>
       ${c ? `
         <div class="pop-wrap">
           <button type="button" class="icon-btn" data-action="toggle-pop" data-pop="pop-bell" aria-expanded="false" aria-controls="pop-bell" aria-label="Avisos${unread ? `, ${unread} não ${unread === 1 ? 'lido' : 'lidos'}` : ''}">${icon('bell', 22)}${unread ? `<span class="count" aria-hidden="true">${unread}</span>` : ''}</button>
@@ -176,7 +175,7 @@ function renderTopbar(v, route) {
           <button type="button" class="icon-btn" data-action="toggle-pop" data-pop="pop-user" aria-expanded="false" aria-controls="pop-user" aria-label="Perfil: ${esc(c.nome)}">${icon('user', 22)}</button>
           <div class="popover" id="pop-user" hidden style="width:280px">
             <h2>${esc(c.nome)}</h2>
-            <p class="meta" style="padding:0 8px 8px">CPF ${c.cpf} · ${esc(c.email)}<br>Conta fictícia, somente leitura.</p>
+            <p class="meta" style="padding:0 8px 8px">CPF ${c.cpf} · ${esc(c.email)}</p>
             <a class="menu-item" href="#/perfil">${icon('user', 18)}Gerenciar meu acesso</a>
             <a class="menu-item" href="#/demo/resumo-email">${icon('mail', 18)}Prévia do resumo semanal</a>
             <a class="menu-item" href="#/demo/aviso">${icon('mail', 18)}Prévia de aviso por e-mail</a>
@@ -193,10 +192,10 @@ function renderFooter() {
     <li><a href="#/info/condicoes">Condições de uso</a></li>
     <li><a href="https://borainvestir.b3.com.br/" target="_blank" rel="noopener">Educação ${icon('external', 12)}<span class="sr-only">(abre site da B3 em nova aba)</span></a></li>
     <li><a href="#/info/acessibilidade">Acessibilidade</a></li>
-    <li><a href="#/demo/aviso">Prévia de aviso por e-mail (demo)</a></li>
-    <li><a href="#/demo/resumo-email">Prévia do resumo semanal (demo)</a></li>
-    <li><a href="#/demo/checkin-email">Prévia do lembrete mensal (demo)</a></li>
-    <li>Protótipo acadêmico · Squad Capital · Dados simulados, sem relação com contas reais</li>
+    <li><a href="#/demo/aviso">Prévia de aviso por e-mail</a></li>
+    <li><a href="#/demo/resumo-email">Prévia do resumo semanal</a></li>
+    <li><a href="#/demo/checkin-email">Prévia do lembrete mensal</a></li>
+    <li class="rodape-id">Protótipo acadêmico · dados fictícios</li>
   </ul>`;
 }
 

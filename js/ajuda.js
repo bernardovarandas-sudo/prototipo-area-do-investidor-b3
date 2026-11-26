@@ -22,7 +22,7 @@ const INTENCOES = [
   { k: ['retrospectiva', 'meu ano', 'resumo do ano'], r: () => `Sua retrospectiva está em ${lk('/carteira/retrospectiva', 'Sua carteira em 2026')}.` },
   { k: ['alerta', 'aviso', 'notificac'], r: () => `Escolha quais avisos receber, por tipo e por ativo, em ${lk('/perfil?secao=config', 'Meu acesso › Configuração de notificações')}. Para acompanhar uma empresa, use “Receber alertas” na ficha dela.` },
   { k: ['data com', 'direito ao dividendo', 'direito ao provento'], r: () => `Data com é o último dia para ter o ativo e receber o provento anunciado. As próximas ficam em ${lk('/proventos', 'Proventos › Próximas datas com')}.` },
-  { k: ['oi', 'ola', 'bom dia', 'boa tarde', 'boa noite', 'ajuda'], r: () => 'Oi! Sou o assistente da Área do Investidor (demonstração). Posso explicar termos, mostrar onde fica cada coisa e resumir sua carteira demo. O que você quer saber?' },
+  { k: ['oi', 'ola', 'bom dia', 'boa tarde', 'boa noite', 'ajuda'], r: () => 'Oi! Sou o assistente da Área do Investidor. Posso explicar termos, mostrar onde fica cada coisa e resumir sua carteira demo. O que você quer saber?' },
   { k: ['por que', 'porque', 'caiu', 'subiu', 'mudou', 'variou'], precisaAtivo: true, r: (q, a) => {
     const m = (MOTIVOS[a.code] || {}).dia;
     const pct = varPct(a), verbo = pct > 0.005 ? `subiu ${nf2.format(pct)}%` : pct < -0.005 ? `caiu ${nf2.format(-pct)}%` : 'ficou estável';
@@ -50,9 +50,9 @@ const INTENCOES = [
   { k: ['email errado', 'mudar email', 'trocar email', 'cadastro', 'endereco', 'telefone', 'nome errado'], r: () => `Dados cadastrais vêm das corretoras: para mudar nome, e-mail ou telefone, fale com cada instituição. Depois, a informação nova aparece em ${lk('/perfil', 'Meu acesso')} automaticamente.` },
   { k: ['nao aparece', 'nao apareceu', 'sumiu', 'liquidacao', 'd+2'], r: () => `Em ações à vista, a liquidação costuma ocorrer em D+2 (dois dias úteis). A posição aparece depois da atualização seguinte. Se o prazo passou, confirme com a corretora.` },
   { k: ['garantia', 'bloquead'], r: () => `Garantias são ativos bloqueados para cobrir operações, como opções ou aluguel de ações. Eles continuam seus. Veja em ${lk('/carteira/investimentos/garantias', 'Investimentos › Garantias')}.` },
-  { k: ['cdi', 'selic', 'renda fixa', 'tesouro', 'cdb', 'lci', 'calc'], r: () => `A Selic é a taxa básica de juros (13,75% ao ano na demo) e o CDI acompanha a Selic. Tesouro, CDB e LCI aparecem na sua carteira em Renda fixa. Para calcular o rendimento pelo CDI, use a ${lk('/servicos/calc', 'CALC de Renda Fixa')}.` },
+  { k: ['cdi', 'selic', 'renda fixa', 'tesouro', 'cdb', 'lci', 'calc'], r: () => `A Selic é a taxa básica de juros (13,75% ao ano) e o CDI acompanha a Selic. Tesouro, CDB e LCI aparecem na sua carteira em Renda fixa. Para calcular o rendimento pelo CDI, use a ${lk('/servicos/calc', 'CALC de Renda Fixa')}.` },
   { k: ['fii', 'fundo imobiliario', 'etf'], r: () => `FIIs são fundos que investem em imóveis e costumam pagar rendimentos mensais; ETFs copiam um índice, como o Ibovespa. Os dois aparecem em ${lk('/carteira', 'Produtos da sua carteira')}.` },
-  { k: ['atendente', 'humano', 'falar com', 'atendimento', 'reclamacao'], r: () => `Para falar com uma pessoa, use os canais oficiais de atendimento (${lk('/info/atendimento', 'Atendimento')}). No protótipo, nenhuma mensagem é enviada.` },
+  { k: ['atendente', 'humano', 'falar com', 'atendimento', 'reclamacao'], r: () => `Para falar com uma pessoa, use os canais oficiais de atendimento (${lk('/info/atendimento', 'Atendimento')}).` },
 ];
 
 function responder(pergunta) {
@@ -62,7 +62,7 @@ function responder(pergunta) {
     if (it.precisaAtivo && !a) continue;
     if (it.k.some((k) => q.includes(norm(k)))) return it.r(pergunta, a);
   }
-  if (a) return `${esc(a.name)} (${a.code}): ${a.classe === 'Ações' ? `preço de ${fmt.brl(a.preco)}, ${varPct(a) >= 0 ? 'alta' : 'queda'} de ${nf2.format(Math.abs(varPct(a)))}% no dia (simulado)` : `${a.produto}, ${a.indexador || a.tipo}`}. ${lk('/ativos/' + a.code, 'Ver detalhes')}`;
+  if (a) return `${esc(a.name)} (${a.code}): ${a.classe === 'Ações' ? `preço de ${fmt.brl(a.preco)}, ${varPct(a) >= 0 ? 'alta' : 'queda'} de ${nf2.format(Math.abs(varPct(a)))}% no dia` : `${a.produto}, ${a.indexador || a.tipo}`}. ${lk('/ativos/' + a.code, 'Ver detalhes')}`;
   return 'Não entendi bem. Tente perguntar de outro jeito ou escolha uma das sugestões abaixo.';
 }
 
@@ -73,9 +73,9 @@ function renderChat() {
     root.innerHTML = `<button type="button" class="chat-fab" data-action="chat-abrir" aria-label="Abrir assistente de ajuda">${icon('message', 24)}<span>Ajuda</span></button>`;
     return;
   }
-  if (!chat.msgs.length) chat.msgs.push({ de: 'bot', html: 'Oi! Sou o assistente da Área do Investidor (demonstração). Como posso ajudar?' });
+  if (!chat.msgs.length) chat.msgs.push({ de: 'bot', html: 'Oi! Sou o assistente da Área do Investidor. Como posso ajudar?' });
   root.innerHTML = `<section class="chat-box" role="dialog" aria-label="Assistente de ajuda" aria-modal="false">
-    <header class="chat-head"><div><strong>Assistente</strong><span class="meta">Respostas automáticas · demonstração</span></div>
+    <header class="chat-head"><div><strong>Assistente</strong><span class="meta">Respostas automáticas</span></div>
       <button type="button" class="icon-btn" data-action="chat-fechar" aria-label="Fechar assistente">${icon('x', 20)}</button></header>
     <div class="chat-log" role="log" aria-live="polite">${chat.msgs.map((m) => `<p class="chat-msg ${m.de}">${m.html}</p>`).join('')}</div>
     <div class="chat-sug">${SUGESTOES_CHAT.map((s) => `<button type="button" class="chip-btn" data-action="chat-sug" data-q="${esc(s)}">${esc(s)}</button>`).join('')}</div>

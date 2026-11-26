@@ -25,7 +25,6 @@ function servicoIR(route) {
       <form class="stack-sm" data-form="revar" style="margin-top:8px">
         <label class="check"><input type="checkbox" name="autorizo" data-change="revar-check"> Autorizo o envio dos meus dados para a calculadora Revar.</label>
         <label class="check"><input type="checkbox" name="ciente" data-change="revar-check"> Li e estou ciente da Política de Privacidade e dos Termos de Uso da B3.</label>
-        <p class="note demo-note">${icon('info', 18)}<span>Simulação: nenhum dado é enviado à Receita Federal.</span></p>
         <div class="btn-row"><button class="btn btn-yellow" type="submit" id="revar-fim" disabled>Finalizar</button><button type="button" class="btn btn-outline" data-action="revar-tela" data-t="inicio">Cancelar</button></div>
       </form></section>`;
   }
@@ -52,7 +51,7 @@ function servicoIR(route) {
     ${produtos}
     <section class="card" aria-labelledby="rc-t"><h2 class="h2" id="rc-t">Entenda como funciona o cálculo</h2>
       <div class="grid-12" style="margin-top:12px">
-        <div class="span-8 video-demo" role="img" aria-label="Vídeo ilustrativo: 7 perguntas sobre o Revar">${icon('chevronRight', 40)}<span>Vídeo: 7 perguntas sobre o Revar</span><small>No portal real, o vídeo da B3 aparece aqui.</small></div>
+        <div class="span-8 video-demo" role="img" aria-label="Vídeo ilustrativo: 7 perguntas sobre o Revar">${icon('chevronRight', 40)}<span>Vídeo: 7 perguntas sobre o Revar</span></div>
         <div class="span-4 card darf-card">${icon('file', 28)}<p>Ao contrário da renda fixa, algumas operações de renda variável não têm imposto de renda recolhido na fonte. Saiba quando é preciso recolher o imposto e pagar o DARF.</p>
           <button type="button" class="btn btn-outline btn-sm" data-action="disclose" aria-expanded="false" aria-controls="darf-info">Saiba mais sobre o DARF ${icon('arrowRight', 16)}</button>
           <p id="darf-info" hidden class="meta">O DARF é a guia para pagar o imposto. Em ações, vendas acima de R$ 20 mil no mês com lucro pagam 15%; day trade paga 20%. O pagamento vence no último dia útil do mês seguinte.</p></div>
@@ -72,8 +71,8 @@ function servicoIR(route) {
       ['Posso desvincular?', 'Sim, a qualquer momento, nesta página ou em Meu acesso › Aplicativos e sites. O cálculo deixa de receber novas informações.'],
       ['O Revar substitui a declaração anual?', 'Não. Ele ajuda no imposto mensal sobre renda variável. A declaração anual continua sendo feita no programa da Receita.'],
     ])}</section>`;
-  const parceiras = `<p class="muted" style="margin-bottom:16px">Ferramentas parceiras para calcular imposto de renda. Algumas exigem contratação e autorização para compartilhar dados. A demonstração não compartilha dados.</p>
-    <div class="grid-12">${[['Parceiro de IR A (exemplo)', 'Ações, FIIs e day trade', 'Plano pago'], ['Parceiro de IR B (exemplo)', 'Ações e renda fixa', 'Gratuito até 10 operações por mês'], ['Parceiro de IR C (exemplo)', 'Ações e criptoativos', 'Plano pago']].map(([n, e, c]) => `
+  const parceiras = `<p class="muted" style="margin-bottom:16px">Ferramentas parceiras para calcular imposto de renda. Algumas exigem contratação e autorização para compartilhar dados.</p>
+    <div class="grid-12">${[['Parceiro de IR A', 'Ações, FIIs e day trade', 'Plano pago'], ['Parceiro de IR B', 'Ações e renda fixa', 'Gratuito até 10 operações por mês'], ['Parceiro de IR C', 'Ações e criptoativos', 'Plano pago']].map(([n, e, c]) => `
       <section class="card span-4"><h2 class="h3">${n}</h2><p class="meta" style="margin-top:4px">Escopo: ${e}</p><p class="meta">Condição: ${c}</p>
         <div class="btn-row"><a class="btn btn-outline btn-sm" href="#/saida?para=${encodeURIComponent(n)}&volta=${encodeURIComponent('/servicos/ir?aba=parceiras')}">Ir para o site ${icon('external', 16)}</a></div></section>`).join('')}</div>
     <p class="note" style="margin-top:16px">${icon('file', 18)}<span>Procura um documento? <a href="#/servicos/relatorios">Ver Relatórios</a></span></p>`;
@@ -81,18 +80,18 @@ function servicoIR(route) {
 }
 ACTIONS['revar-tela'] = (el) => { ui.revar.tela = el.dataset.t; rerender('#conteudo h2'); window.scrollTo(0, 0); };
 CHANGES['revar-check'] = (el) => { const f = el.form; document.getElementById('revar-fim').disabled = !(f.autorizo.checked && f.ciente.checked); };
-SUBMITS.revar = () => { ui.revar = { vinculado: true, tela: 'sucesso' }; announce('Conta vinculada à calculadora Revar (simulação).'); rerender('#rok-t'); };
-ACTIONS['revar-desvincular'] = () => { ui.revar = { vinculado: false, tela: 'inicio' }; toast('Calculadora Revar desvinculada (simulação).'); rerender('#rh-t'); };
+SUBMITS.revar = () => { ui.revar = { vinculado: true, tela: 'sucesso' }; announce('Conta vinculada à calculadora Revar.'); rerender('#rok-t'); };
+ACTIONS['revar-desvincular'] = () => { ui.revar = { vinculado: false, tela: 'inicio' }; toast('Calculadora Revar desvinculada.'); rerender('#rh-t'); };
 ACTIONS['revar-termo'] = () => baixarDocumento({
   titulo: 'Termo de autorização · calculadora Revar', arquivo: 'termo-revar', periodo: 'Texto do termo de compartilhamento de dados',
   colunas: [['Item', 'txt'], ['Texto', 'txt']], linhas: TERMO_REVAR.map((t, i) => [String(i + 1), t]),
-  notas: ['Termo de exemplo, escrito para o protótipo.'],
+  notas: [],
 }, 'pdf');
 
 /* ---------- Voto a distância ---------- */
 ASSEMBLEIAS.forEach((a) => { a.code = a.empresa.split('· ')[1]; a.tipoAtivo = ativo(a.code).classe; a.aberta = a.estado === 'Aberta para consulta'; });
 ASSEMBLEIAS.push({ empresa: 'Galpões Logísticos Demo FII · GLPD11', code: 'GLPD11', tipoAtivo: 'Fundos imobiliários', data: '10 dez 2026', prazo: '08 dez 2026', estado: 'Aberta para consulta', aberta: true, tipo: 'AGE',
-  pauta: ['Aprovar a 3ª emissão de cotas', 'Aprovar a troca do formador de mercado'], docs: ['Edital de convocação (exemplo)', 'Proposta da administração (exemplo)'] });
+  pauta: ['Aprovar a 3ª emissão de cotas', 'Aprovar a troca do formador de mercado'], docs: ['Edital de convocação', 'Proposta da administração'] });
 const HIST_ASSEMBLEIAS = [
   { empresa: 'Aurora · DEMO1', tipo: 'AGO', data: '28 abr 2026', voto: 'Votou a distância', resultado: 'Contas e dividendos aprovados' },
   { empresa: 'Galpões Logísticos Demo FII · GLPD11', tipo: 'AGO', data: '30 mar 2026', voto: 'Votou a distância', resultado: 'Demonstrações financeiras aprovadas' },
@@ -125,14 +124,13 @@ function servicoVoto(route) {
     corpo = `<div class="query-bar" style="justify-content:space-between"><h2 class="h2" style="margin:0">Assembleias em aberto</h2>
         <div class="btn-row" style="margin:0;align-items:flex-end"><div class="field"><label for="vt-tipo">Tipo</label><select id="vt-tipo" class="select" data-change="voto-tipo"><option value="todos">Todos</option>${['Ações', 'Fundos imobiliários', 'ETFs', 'Fundos'].map((t) => `<option ${V.tipo === t ? 'selected' : ''}>${t}</option>`).join('')}</select></div>
         <div class="seg" role="group" aria-label="Situação do voto">${[['naovotadas', 'Não votadas'], ['votadas', 'Votadas']].map(([k, t]) => `<button type="button" data-action="voto-filtro" data-k="${k}" aria-pressed="${V.filtro === k}">${t}</button>`).join('')}</div></div></div>
-      <p class="note warn" style="margin-bottom:16px">${icon('info', 18)}<span>Simulação: o voto fica registrado só nesta demonstração.</span></p>
       ${lista.length ? `<div class="stack-sm">${lista.map(({ a, i }) => cardAssembleia(a, i)).join('')}</div>`
         : emptyState({ title: V.filtro === 'votadas' ? 'Você ainda não votou em assembleias abertas' : 'Atualmente, não há assembleias em aberto para esse filtro', text: 'Quando o emissor de um ativo seu cadastrar uma assembleia na B3, ela aparece aqui.', iconName: 'calendar' })}`;
   } else {
     corpo = `<h2 class="h2" style="margin-bottom:12px">Histórico</h2><div class="card"><div class="table-wrap"><table><caption class="sr-only">Histórico de assembleias</caption>
       <thead><tr><th scope="col">Assembleia</th><th scope="col">Tipo</th><th scope="col">Data</th><th scope="col">Seu voto</th><th scope="col" class="col-sec">Resultado</th></tr></thead>
       <tbody>${HIST_ASSEMBLEIAS.map((h) => `<tr><td>${esc(h.empresa)}</td><td>${h.tipo}</td><td>${h.data}</td><td><span class="rel-tag ${h.voto.startsWith('Votou') ? 'rel-direta' : 'rel-sem'}">${h.voto}</span></td><td class="col-sec">${esc(h.resultado)}</td></tr>`).join('')}</tbody></table></div>
-      <p class="meta" style="margin-top:8px">AGO: assembleia geral ordinária · AGE: assembleia geral extraordinária. Dados simulados.</p></div>`;
+      <p class="meta" style="margin-top:8px">AGO: assembleia geral ordinária · AGE: assembleia geral extraordinária.</p></div>`;
   }
   return svTabs([['inicio', 'Início'], ['aberto', 'Assembleias em aberto'], ['historico', 'Histórico']], aba, '/servicos/voto') + corpo;
 }
@@ -140,7 +138,7 @@ function cardAssembleia(a, i) {
   const k = 'ass-' + i, voto = ui.votos[i], pode = temAtivo(a.code) && a.aberta;
   return `<section class="card">
     <div class="card-head" style="margin:0"><div><h3 class="h3">${esc(a.empresa)}</h3><p class="meta">${a.tipoAtivo} · ${a.tipo || 'AGE'} · Assembleia em ${a.data} · Prazo para voto a distância: ${a.prazo}${a.mudou ? ` <span class="rel-tag rel-insuf sm">${icon('refresh', 12)}Atualizado em ${a.mudou.em} · antes: ${a.mudou.antes}</span>` : ''}</p></div>
-      <span class="rel-tag ${voto ? 'rel-direta' : a.aberta ? 'rel-indireta' : 'rel-sem'}">${voto ? 'Voto registrado (demo)' : a.aberta ? 'Aberta para voto' : esc(a.estado)}</span></div>
+      <span class="rel-tag ${voto ? 'rel-direta' : a.aberta ? 'rel-indireta' : 'rel-sem'}">${voto ? 'Voto registrado' : a.aberta ? 'Aberta para voto' : esc(a.estado)}</span></div>
     ${voto
       ? `<ul class="calc-list" style="margin-top:8px">${a.pauta.map((p, j) => `<li><span>${esc(p)}</span><strong>${voto[j]}</strong></li>`).join('')}</ul><div class="btn-row"><button type="button" class="btn btn-link btn-sm" data-action="voto-refazer" data-i="${i}">Editar voto</button></div>`
       : pode
@@ -196,13 +194,13 @@ function servicoCalc() {
       <div class="field"><label for="cd-pct">Percentual do DI</label><input id="cd-pct" name="pct" type="number" class="input" min="1" max="300" step="0.01" value="${C.di.pct}" required></div>
       <div class="field"><label for="cd-val">Valor (R$)</label><input id="cd-val" name="valor" type="number" class="input" min="0.01" step="0.01" value="${C.di.valor}" required></div>
       <button class="btn btn-yellow" type="submit">Calcular</button></form>
-      <p class="meta" style="margin-top:6px">${icon('info', 14)} Período disponível na demonstração: ${isoParaBr(CALC_MIN)} até ${isoParaBr(CALC_MAX)}.</p>`;
+      <p class="meta" style="margin-top:6px">${icon('info', 14)} Período disponível: ${isoParaBr(CALC_MIN)} até ${isoParaBr(CALC_MAX)}.</p>`;
     if (C.di.res) {
       const r = C.di.res;
       res = `<section class="calc-res" aria-live="polite"><h3 class="h3">Resultado</h3><dl class="dl">
         <div><dt>Dias úteis</dt><dd>${r.du}</dd></div><div><dt>Fator DI acumulado</dt><dd>${nf8.format(r.fator)}</dd></div>
         <div><dt>Taxa no período</dt><dd>${nf4.format(r.taxa)}%</dd></div><div><dt>Valor corrigido</dt><dd>${fmt.brl(r.final)}</dd></div></dl>
-        <p class="meta" style="margin-top:8px">${nf2.format(r.pct)}% do DI de ${isoParaBr(r.ini)} a ${isoParaBr(r.fim)} (data final não entra na conta). Cálculo de demonstração com taxas DI aproximadas; para valores oficiais, use a CALC da B3.</p></section>`;
+        <p class="meta" style="margin-top:8px">${nf2.format(r.pct)}% do DI de ${isoParaBr(r.ini)} a ${isoParaBr(r.fim)} (data final não entra na conta). Taxas DI aproximadas.</p></section>`;
     }
   } else if (C.aba === 'titulos') {
     form = `<form class="calc-form" data-form="calc-tit">
@@ -214,11 +212,11 @@ function servicoCalc() {
       res = `<section class="calc-res" aria-live="polite"><h3 class="h3">${esc(r.nome)} · ${isoParaBr(r.data)}</h3><dl class="dl">
         <div><dt>Preço unitário (PU)</dt><dd>${fmt.brl(r.pu)}</dd></div><div><dt>Taxa</dt><dd>${esc(r.taxa)}</dd></div>
         <div><dt>Valor nominal atualizado (VNA)</dt><dd>${fmt.brl(r.vna)}</dd></div><div><dt>Duration</dt><dd>${nf2.format(r.duration)} anos</dd></div></dl>
-        <p class="meta" style="margin-top:8px">Valores de demonstração.</p></section>`;
+        </section>`;
     }
   } else {
     const base = CREDITO[C.aba];
-    form = `<p class="note neutral" style="margin-bottom:12px">${icon('info', 18)}<span>No portal, a calculadora de debêntures, CRA e CRI é um serviço segregado, contratado à parte. Na demo, teste os códigos ${Object.keys(base).join(', ')}.</span></p>
+    form = `<p class="note neutral" style="margin-bottom:12px">${icon('info', 18)}<span>No portal, a calculadora de debêntures, CRA e CRI é um serviço segregado, contratado à parte. Códigos disponíveis: ${Object.keys(base).join(', ')}.</span></p>
       <form class="calc-form" data-form="calc-cred">
       <div class="field"><label for="cc-cod">Código do ativo</label><input id="cc-cod" name="cod" class="input" value="${esc(C.cred.cod || Object.keys(base)[0])}" required></div>
       <div class="field"><label for="cc-data">Data de referência</label><input id="cc-data" name="data" type="date" class="input" min="2026-01-02" max="${CALC_MAX}" value="${C.cred.data}" required></div>
@@ -228,7 +226,7 @@ function servicoCalc() {
       res = r.erro ? `<p class="note warn calc-res">${icon('alert', 18)}<span>Código “${esc(r.cod)}” não encontrado. Confira o código ou tente ${Object.keys(base).join(', ')}.</span></p>`
         : `<section class="calc-res" aria-live="polite"><h3 class="h3">${esc(r.nome)} · ${esc(r.cod)}</h3><dl class="dl">
           <div><dt>PU par</dt><dd>${fmt.brl(r.pu)}</dd></div><div><dt>Remuneração</dt><dd>${esc(r.taxa)}</dd></div><div><dt>Data</dt><dd>${isoParaBr(r.data)}</dd></div></dl>
-          <p class="meta" style="margin-top:8px">Valores de demonstração.</p></section>`;
+          </section>`;
     }
   }
   return `<section class="calc-hero"><h2 class="h1">CALC – Calculadora de Renda Fixa <span class="beta">BETA</span></h2>
@@ -305,8 +303,8 @@ function viewPerfil(route) {
     corpo = `<h2 class="h2">E-mail principal</h2><p class="muted" style="margin-top:4px">É para onde a Área do Investidor manda avisos e códigos. Escolha entre os e-mails cadastrados nas suas instituições.</p>
       <fieldset class="metodos" style="margin-top:12px"><legend class="sr-only">E-mail principal</legend>${contas.map((x, i) => `<label class="metodo ${i === principalIdx ? 'is-on' : ''}"><input type="radio" name="emailp" value="${esc(x.email)}" data-change="email-principal" ${i === principalIdx ? 'checked' : ''}><span><strong>${esc(x.email)}</strong><br><span class="meta">Cadastrado na ${esc(x.inst)}</span></span></label>`).join('')}</fieldset>${importante}`;
   } else if (sec === 'senha') {
-    corpo = `<h2 class="h2">Alterar senha</h2><p class="note demo-note" style="margin-top:8px">${icon('info', 18)}<span>Protótipo: os campos são fictícios e não aceitam digitação.</span></p>
-      <div class="stack-sm" style="margin-top:12px;max-width:420px">${campoDemo('as-atual', 'Senha atual', LOGIN_DEMO.senha, { tipo: 'password', dica: 'Senha de demonstração.' })}${campoDemo('as-nova', 'Nova senha', 'novasenha', { tipo: 'password', dica: 'Senha de demonstração.' })}
+    corpo = `<h2 class="h2">Alterar senha</h2>
+      <div class="stack-sm" style="margin-top:12px;max-width:420px">${campoDemo('as-atual', 'Senha atual', LOGIN_DEMO.senha, { tipo: 'password', dica: 'Preenchida automaticamente.' })}${campoDemo('as-nova', 'Nova senha', 'novasenha', { tipo: 'password', dica: 'Preenchida automaticamente.' })}
       <div class="btn-row"><button type="button" class="btn btn-primary" data-action="senha-alterar">Alterar senha</button></div></div>`;
   } else if (sec === 'apps') {
     const apps = [['App B3 (celular)', 'Acesso à carteira pelo aplicativo', 'Autorizado em 10 jan 2026'], ...(ui.revar.vinculado ? [['Calculadora Revar · Receita Federal', 'Compartilhamento de operações para cálculo de IR', 'Autorizado hoje']] : [])];
@@ -323,7 +321,7 @@ function viewPerfil(route) {
   } else if (sec === 'desativar') {
     corpo = `<h2 class="h2">Desativar meu acesso</h2><p style="margin-top:8px">Ao desativar, você deixa de entrar na Área do Investidor com este CPF até criar um novo acesso. Seus investimentos não mudam: eles continuam nas corretoras.</p>
       <div class="btn-row"><button type="button" class="btn btn-outline" data-action="disclose" aria-expanded="false" aria-controls="desat-conf">Desativar meu acesso</button></div>
-      <div id="desat-conf" hidden class="note warn" style="margin-top:8px">${icon('alert', 18)}<span>Na demonstração, nada é desativado. No portal real, você confirmaria com a senha e o código da verificação em duas etapas.</span></div>`;
+      <div id="desat-conf" hidden class="note warn" style="margin-top:8px">${icon('alert', 18)}<span>Para confirmar, use a senha e o código da verificação em duas etapas.</span></div>`;
   } else if (sec === 'notificacoes') {
     corpo = notificacoesListaHtml();
   } else {
@@ -331,12 +329,12 @@ function viewPerfil(route) {
   }
   return {
     title: 'Meu acesso', nav: null, crumbs: [['Meu acesso']],
-    html: `<div class="page-head"><div><h1 class="h1">Meu acesso</h1><p class="meta lead">${esc(c.nome)} · conta fictícia de demonstração</p></div></div>
+    html: `<div class="page-head"><div><h1 class="h1">Meu acesso</h1><p class="meta lead">${esc(c.nome)}</p></div></div>
       <div class="acesso-layout">${nav}<section class="card acesso-corpo">${corpo}</section></div>`,
   };
 }
-CHANGES['email-principal'] = (el) => { const k = state.session.conta; state.prefs[k] = { ...(state.prefs[k] || {}), emailPrincipal: el.value }; save(); toast('E-mail principal atualizado (simulação).'); rerender('[data-change="email-principal"]:checked'); };
-ACTIONS['senha-alterar'] = () => toast('Senha alterada (simulação). No portal real, você confirmaria com o código da verificação em duas etapas.');
-ACTIONS['app-revogar'] = (el) => { ui.appsRevogados.push(el.dataset.n); if (el.dataset.n.startsWith('Calculadora Revar')) ui.revar = { vinculado: false, tela: 'inicio' }; toast('Acesso revogado (simulação).'); rerender('#conteudo h2'); };
-ACTIONS['validacao-reenviar'] = () => toast('E-mail de validação reenviado (simulação). Nenhuma mensagem foi enviada.');
+CHANGES['email-principal'] = (el) => { const k = state.session.conta; state.prefs[k] = { ...(state.prefs[k] || {}), emailPrincipal: el.value }; save(); toast('E-mail principal atualizado.'); rerender('[data-change="email-principal"]:checked'); };
+ACTIONS['senha-alterar'] = () => toast('Senha alterada.');
+ACTIONS['app-revogar'] = (el) => { ui.appsRevogados.push(el.dataset.n); if (el.dataset.n.startsWith('Calculadora Revar')) ui.revar = { vinculado: false, tela: 'inicio' }; toast('Acesso revogado.'); rerender('#conteudo h2'); };
+ACTIONS['validacao-reenviar'] = () => toast('E-mail de validação reenviado.');
 

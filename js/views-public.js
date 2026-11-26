@@ -107,7 +107,7 @@ function marketBody(key) {
         ? `<td class="num">R$ ${fmt.int(NEGOCIACAO_DIA[a.code][0])} mi</td><td class="num col-sec">${fmt.int(NEGOCIACAO_DIA[a.code][1])}</td>`
         : `<td class="num">${trend(varPct(a))}</td>`}</tr>`).join('')}</tbody>
   </table></div>
-  ${s.lista === 'negociados' ? '<p class="meta" style="margin-top:8px">Volume financeiro e número de negócios no pregão de 24 nov. Dados simulados.</p>' : ''}`;
+  ${s.lista === 'negociados' ? '<p class="meta" style="margin-top:8px">Volume financeiro e número de negócios no pregão de 24 nov.</p>' : ''}`;
 }
 
 function marketCard(key, { title = 'Principais ações', headingId } = {}) {
@@ -171,7 +171,7 @@ function viewInicio(route) {
     html: `
     <div class="page-head">
       <div><h1 class="h1">Acompanhe o mercado</h1>
-      <p class="meta lead">Dados de demonstração · ${REF.atual} · ${REF.pregao}</p></div>
+      <p class="meta lead">${REF.atual} · ${REF.pregao}</p></div>
       ${searchBox('inicio', 'busca-inicio')}
     </div>
     <div class="grid-12">
@@ -268,12 +268,12 @@ function viewMercado(route) {
   } else {
     body = `<section class="card" aria-labelledby="heat"><div class="card-head"><h2 class="h2" id="heat">Mapa de calor</h2><span class="meta">Variação no dia · ${REF.atualCurta}</span></div>
       <div class="heat">${acoesMercado().sort((a, b) => varPct(b) - varPct(a)).map((a) => `<a href="#/ativos/${a.code}" class="${varPct(a) >= 0 ? 'h-up' : 'h-down'}"><strong>${a.code}</strong><br><span class="meta" style="color:var(--text)">${esc(a.name)}</span><br>${trend(varPct(a))}</a>`).join('')}</div></section>
-      <p class="note neutral" style="margin-top:16px">${icon('info', 18)}<span>Gráfico avançado e indicadores técnicos entram na próxima rodada do protótipo.</span></p>`;
+      `;
   }
   return {
     title: 'Acompanhar mercado', nav: 'mercado', pageKey: 'mercado',
     crumbs: state.session ? [['Minha carteira', '/carteira'], ['Acompanhar mercado']] : [['Acompanhar mercado']],
-    html: `<div class="page-head"><div><h1 class="h1">Acompanhar mercado</h1><p class="meta lead">Dados de demonstração · ${REF.atual} · ${REF.pregao}</p></div></div>
+    html: `<div class="page-head"><div><h1 class="h1">Acompanhar mercado</h1><p class="meta lead">${REF.atual} · ${REF.pregao}</p></div></div>
       ${tabs([['visao', 'Visão geral'], ['favoritos', 'Favoritos'], ['avancada', 'Análise avançada']], aba, { label: 'Seções de mercado', id: 'mercado', hrefFor: (k) => (k === 'visao' ? '/mercado' : '/mercado/' + k) })}
       ${body}`,
   };
@@ -328,7 +328,7 @@ function viewFicha(route) {
     <div class="page-head">
       <div>
         <h1 class="h1">${esc(a.name)} <span class="asset-code" style="font-size:18px">${a.code}</span></h1>
-        <p class="meta lead">${a.classe === 'Ações' ? `${esc(a.setor)} · ${esc(a.tipo)} · ${a.real ? 'Empresa real · preço simulado' : 'Empresa fictícia'}` : `${esc(a.classe)} · ${esc(a.produto)} · ${esc(a.tipo)} · Produto fictício`}</p>
+        <p class="meta lead">${a.classe === 'Ações' ? `${esc(a.setor)} · ${esc(a.tipo)} · Ações` : `${esc(a.classe)} · ${esc(a.produto)} · ${esc(a.tipo)} `}</p>
       </div>
       <div class="btn-row" style="margin:0">
         <button type="button" class="btn btn-yellow" data-action="open-panel" data-kind="corretora" data-id="${a.code}">${icon('cart', 18)}Comprar</button>
@@ -501,7 +501,7 @@ const LOGIN_DEMO = { cpf: '***.456.789-**', senha: 'senhademo', codigo: '246810'
 function campoDemo(id, rotulo, valor, { tipo = 'text', dica = '' } = {}) {
   return `<div class="field"><label for="${id}">${rotulo}</label>
     <input id="${id}" class="input input-demo" type="${tipo}" value="${esc(valor)}" readonly aria-readonly="true" aria-describedby="${id}-d" autocomplete="off" tabindex="-1">
-    <span id="${id}-d" class="meta">${dica || 'Preenchido com dado fictício da demonstração.'}</span></div>`;
+    <span id="${id}-d" class="meta">${dica || 'Preenchido automaticamente.'}</span></div>`;
 }
 function passosLogin(lista, atual) {
   return `<ol class="login-steps" aria-label="Etapas">${lista.map((t, i) => `<li class="${i + 1 === atual ? 'is-current' : i + 1 < atual ? 'is-done' : ''}" ${i + 1 === atual ? 'aria-current="step"' : ''}><span>${i + 1 < atual ? '✓' : i + 1}</span>${t}</li>`).join('')}</ol>`;
@@ -512,7 +512,7 @@ function viewAcesso(route) {
   const c = conta();
   const L = ui.login;
   const dest = esc(destino || '');
-  const aviso = `<p class="note demo-note login-aviso">${icon('info', 18)}<span><strong>Protótipo:</strong> os campos já vêm com dados fictícios e não aceitam digitação. Nunca digite seu CPF ou senha reais aqui.</span></p>`;
+  const aviso = '';
   const voltaPara = label ? `<p class="note" style="margin-top:12px">${icon('arrowRight', 18)}<span>Depois de entrar, você volta para ${esc(label)}.</span></p>` : '';
   let corpo;
   if (c) {
@@ -525,17 +525,17 @@ function viewAcesso(route) {
     if (p === 1) conteudo = `<h2 class="h2">Vamos criar seu acesso</h2><p class="muted">Use o CPF que está cadastrado na sua corretora.</p>
       ${campoDemo('pa-cpf', 'CPF', LOGIN_DEMO.cpf)}${campoDemo('pa-nasc', 'Data de nascimento', LOGIN_DEMO.nascimento)}`;
     else if (p === 2) conteudo = `<h2 class="h2">Confirme seu e-mail</h2><p class="muted">Enviamos um código para o e-mail cadastrado na sua corretora: <strong>i*****@exemplo.test</strong>.</p>
-      ${campoDemo('pa-cod', 'Código recebido por e-mail', LOGIN_DEMO.codigo, { dica: 'Código de demonstração. Nenhum e-mail foi enviado.' })}
+      ${campoDemo('pa-cod', 'Código recebido por e-mail', LOGIN_DEMO.codigo, { dica: 'Preenchido automaticamente.' })}
       <p class="meta">O e-mail está errado? Ele vem do cadastro na corretora. Atualize lá e tente de novo depois.</p>`;
     else if (p === 3) conteudo = `<h2 class="h2">Crie sua senha</h2>
-      ${campoDemo('pa-s1', 'Nova senha', LOGIN_DEMO.senha, { tipo: 'password', dica: 'Senha de demonstração.' })}${campoDemo('pa-s2', 'Repita a senha', LOGIN_DEMO.senha, { tipo: 'password', dica: 'Senha de demonstração.' })}
+      ${campoDemo('pa-s1', 'Nova senha', LOGIN_DEMO.senha, { tipo: 'password', dica: 'Preenchida automaticamente.' })}${campoDemo('pa-s2', 'Repita a senha', LOGIN_DEMO.senha, { tipo: 'password', dica: 'Preenchida automaticamente.' })}
       <ul class="req-list">${['Pelo menos 8 caracteres', 'Uma letra maiúscula e uma minúscula', 'Um número', 'Um caractere especial'].map((r) => `<li>${icon('check', 16)}${r}</li>`).join('')}</ul>
-      <label class="check"><input type="checkbox" checked disabled> Li e aceito os Termos de Uso e a Política de Privacidade (demonstração)</label>`;
+      <label class="check"><input type="checkbox" checked disabled> Li e aceito os Termos de Uso e a Política de Privacidade</label>`;
     else if (p === 4) conteudo = `<h2 class="h2">Ative a verificação em duas etapas</h2><p class="muted">Além da senha, você vai confirmar cada acesso com um código. Escolha como receber:</p>
       <fieldset class="metodos"><legend class="sr-only">Como receber o código</legend>${[['app', 'Aplicativo autenticador', 'Recomendado: funciona sem internet no celular'], ['sms', 'SMS', 'Para o celular cadastrado na corretora'], ['email', 'E-mail', 'Para i*****@exemplo.test']].map(([k, t, d]) => `<label class="metodo ${L.metodo === k ? 'is-on' : ''}"><input type="radio" name="metodo" value="${k}" data-change="login-metodo" ${L.metodo === k ? 'checked' : ''}><span><strong>${t}</strong><br><span class="meta">${d}</span></span></label>`).join('')}</fieldset>
       ${L.metodo === 'app' ? `<div class="qr-demo" aria-hidden="true">${Array.from({ length: 49 }, (_, i) => `<span class="${(i * 7 + i % 5) % 3 ? '' : 'on'}"></span>`).join('')}</div><p class="meta">QR code ilustrativo: no portal real, você o lê com o aplicativo autenticador.</p>` : ''}
-      ${campoDemo('pa-2fa', 'Código de confirmação', LOGIN_DEMO.codigo, { dica: 'Código de demonstração.' })}`;
-    else conteudo = `<div class="ok-box"><p class="imp-level-text">${icon('check', 22)} Acesso criado</p><p class="meta">Senha criada e verificação em duas etapas ativada (simulação).</p></div>
+      ${campoDemo('pa-2fa', 'Código de confirmação', LOGIN_DEMO.codigo, { dica: 'Preenchido automaticamente.' })}`;
+    else conteudo = `<div class="ok-box"><p class="imp-level-text">${icon('check', 22)} Acesso criado</p><p class="meta">Senha criada e verificação em duas etapas ativada.</p></div>
       <p style="margin-top:12px">Pronto! A partir de agora, entre com CPF, senha e o código da verificação em duas etapas.</p>`;
     corpo = `<h1 class="h1" id="acc">Primeiro acesso</h1>${passosLogin(etapas, p)}${aviso}
       <div class="stack-sm" style="margin-top:12px">${conteudo}</div>
@@ -548,7 +548,7 @@ function viewAcesso(route) {
   } else if (L.modo === 'esqueci') {
     corpo = `<h1 class="h1" id="acc">Esqueci minha senha</h1>${aviso}
       <div class="stack-sm" style="margin-top:12px">${campoDemo('es-cpf', 'CPF', LOGIN_DEMO.cpf)}
-        ${L.enviado ? `<div class="ok-box"><p class="imp-level-text">${icon('check', 22)} Link enviado (simulação)</p><p class="meta">No portal real, chega um link no e-mail cadastrado na corretora para criar uma nova senha.</p></div>` : '<p class="muted">Vamos enviar um link para o e-mail cadastrado na sua corretora.</p>'}</div>
+        ${L.enviado ? `<div class="ok-box"><p class="imp-level-text">${icon('check', 22)} Link enviado</p><p class="meta">Abra o e-mail cadastrado na corretora e siga o link para criar uma nova senha.</p></div>` : '<p class="muted">Vamos enviar um link para o e-mail cadastrado na sua corretora.</p>'}</div>
       <div class="btn-row" style="margin-top:20px">${L.enviado ? '' : '<button type="button" class="btn btn-yellow" data-action="login-esqueci-enviar">Enviar link</button>'}
         <button type="button" class="btn btn-outline" data-action="login-modo" data-modo="entrar">Voltar para o acesso</button></div>`;
   } else {
@@ -556,11 +556,11 @@ function viewAcesso(route) {
     let conteudo;
     if (p === 1) conteudo = `${campoDemo('lg-cpf', 'CPF', LOGIN_DEMO.cpf)}`;
     else if (p === 2) conteudo = `<p class="muted">CPF <strong>${LOGIN_DEMO.cpf}</strong> · <button type="button" class="btn btn-link btn-sm" style="padding:0;min-height:auto" data-action="login-back">Trocar</button></p>
-      ${campoDemo('lg-senha', 'Senha', LOGIN_DEMO.senha, { tipo: 'password', dica: 'Senha de demonstração.' })}
+      ${campoDemo('lg-senha', 'Senha', LOGIN_DEMO.senha, { tipo: 'password', dica: 'Preenchida automaticamente.' })}
       <button type="button" class="btn btn-link btn-sm" style="padding-left:0;align-self:flex-start" data-action="login-modo" data-modo="esqueci">Esqueci minha senha</button>`;
     else conteudo = `<h2 class="h2">Verificação em duas etapas</h2><p class="muted">Digite o código de 6 dígitos do seu aplicativo autenticador.</p>
       <div class="code-boxes" aria-hidden="true">${LOGIN_DEMO.codigo.split('').map((d) => `<span>${d}</span>`).join('')}</div>
-      ${campoDemo('lg-2fa', 'Código de verificação', LOGIN_DEMO.codigo, { dica: 'Código de demonstração.' })}
+      ${campoDemo('lg-2fa', 'Código de verificação', LOGIN_DEMO.codigo, { dica: 'Preenchido automaticamente.' })}
       <button type="button" class="btn btn-link btn-sm" style="padding-left:0;align-self:flex-start" data-action="login-reenviar">Não recebi o código</button>`;
     corpo = `<h1 class="h1" id="acc">${p === 3 ? 'Confirme que é você' : 'Acesse a Área do Investidor'}</h1>
       ${passosLogin(['CPF', 'Senha', 'Verificação'], p)}${aviso}${voltaPara}
@@ -571,7 +571,7 @@ function viewAcesso(route) {
         ${p > 1 ? '<button type="button" class="btn btn-outline" data-action="login-back">Voltar</button>' : '<button type="button" class="btn btn-outline" data-action="back">Voltar</button>'}
       </div>
       ${p === 1 ? `<div class="login-links"><span class="meta">Ainda não tem acesso?</span> <button type="button" class="btn btn-link btn-sm" data-action="login-modo" data-modo="primeiro">Primeiro acesso</button></div>` : ''}
-      <div class="card-foot login-atalhos"><span class="meta">Atalhos da demo:</span>
+      <div class="card-foot login-atalhos"><span class="meta">Acesso rápido:</span>
         <button type="button" class="btn btn-link btn-sm" data-action="demo-login" data-conta="principal" data-destino="${dest}">Entrar direto (pular etapas)</button>
         <button type="button" class="btn btn-link btn-sm" data-action="demo-login" data-conta="vazia" data-destino="${dest}">Conta vazia (primeiro investimento)</button></div>`;
   }
@@ -579,9 +579,8 @@ function viewAcesso(route) {
     title: 'Entre para ver sua carteira', crumbs: [['Acesso']], nav: null, noCta: true,
     html: `<div class="access"><section class="card access-card" aria-labelledby="acc">
       ${logo('profundo', 96)}
-      <p class="proto-tag" style="display:inline-block;margin:20px 0 12px">Protótipo acadêmico · Dados simulados</p>
+      <div style="height:16px"></div>
       ${corpo}
-      <p class="meta" style="margin-top:16px">Conta fictícia: ${esc(CONTAS.principal.nome)} · CPF ${CONTAS.principal.cpf} · ${esc(CONTAS.principal.email)}.</p>
     </section></div>`,
   };
 }
@@ -589,7 +588,7 @@ const focoLogin = '#acc';
 ACTIONS['login-next'] = () => { ui.login.passo += 1; rerender(focoLogin); };
 ACTIONS['login-back'] = () => { ui.login.passo = Math.max(1, ui.login.passo - 1); rerender(focoLogin); };
 ACTIONS['login-modo'] = (el) => { Object.assign(ui.login, { modo: el.dataset.modo, passo: 1, enviado: false }); rerender(focoLogin); };
-ACTIONS['login-reenviar'] = () => toast('Código reenviado (simulação). Use o código de demonstração 246810.');
+ACTIONS['login-reenviar'] = () => toast('Código reenviado.');
 ACTIONS['login-esqueci-enviar'] = () => { ui.login.enviado = true; rerender(focoLogin); };
 CHANGES['login-metodo'] = (el) => { ui.login.metodo = el.value; rerender('[data-change="login-metodo"]:checked'); };
 ACTIONS['demo-login'] = (el) => {
@@ -597,7 +596,7 @@ ACTIONS['demo-login'] = (el) => {
   state.session = { conta: el.dataset.conta };
   state.lidas = [];
   save();
-  announce('Você entrou com a conta demo. Dados fictícios.');
+  announce('Você entrou na Área do Investidor.');
   go(safeDest(el.dataset.destino) || '/carteira');
 };
 ACTIONS.back = () => { if (history.length > 1) history.back(); else go('/'); };
@@ -607,10 +606,10 @@ function viewAviso() {
   return {
     title: 'Prévia de aviso por e-mail', crumbs: [['Prévia de aviso']], nav: null,
     html: `<div class="page-head"><div><h1 class="h1">Prévia de aviso por e-mail</h1>
-      <p class="meta lead">Demonstração de um convite externo. Nenhum e-mail é enviado.</p></div></div>
+      <p class="meta lead">Exemplo do e-mail enviado quando há uma novidade na sua carteira.</p></div></div>
       <article class="card mail" aria-label="Exemplo de e-mail">
         <div class="mail-head">
-          <p><strong>De:</strong> Área do Investidor B3 (demonstração)</p>
+          <p><strong>De:</strong> Área do Investidor B3</p>
           <p><strong>Assunto:</strong> Uma novidade sobre seus investimentos</p>
         </div>
         ${logo('profundo', 72)}
@@ -630,9 +629,8 @@ const INFO = {
     ['O que não dá para fazer', 'Comprar ou vender. Ordens de compra e venda são enviadas pela sua corretora.'],
   ]],
   boletim: ['Boletim de mercado', [
-    ['Resumo do pregão de 24 nov (demo)', 'O Ibovespa fechou em 130.000 pontos na demonstração, alta de 0,80%. Entre as ações da lista, a Vale caiu com o minério de ferro em baixa.'],
+    ['Resumo do pregão de 24 nov', 'O Ibovespa fechou em 130.000 pontos, alta de 0,80%. Entre as ações da lista, a Vale caiu com o minério de ferro em baixa.'],
     ['Destaques da semana', 'Petrobras e Banco do Brasil seguem pressionadas depois dos balanços. Veja as reportagens em Notícias.'],
-    ['Aviso', 'Boletim de exemplo, escrito para o protótipo. Índices e preços são simulados.'],
   ]],
   faq: ['Perguntas frequentes', [
     ['Comprei uma ação. Quando ela aparece aqui?', 'Depois da liquidação, que em ações à vista costuma ser em D+2 (dois dias úteis), e da atualização seguinte.'],
@@ -641,8 +639,7 @@ const INFO = {
     ['A Área do Investidor recomenda investimentos?', 'Não. Ela mostra informações. Decisões de investimento são suas, com apoio de profissionais se quiser.'],
   ]],
   atendimento: ['Atendimento', [
-    ['Canais', 'Na versão real, esta página traz os canais oficiais de atendimento ao investidor.'],
-    ['No protótipo', 'Nenhuma mensagem é enviada. Para comentar o protótipo, use a página Feedback depois de entrar.'],
+    ['Canais', 'Central de ajuda, chat e telefone de atendimento ao investidor, em dias úteis.'],
   ]],
   condicoes: ['Condições de uso', [
     ['Protótipo acadêmico', 'Este site é um protótipo feito por estudantes. Ele não é o site oficial da B3 e não tem relação com contas reais.'],
@@ -660,7 +657,7 @@ function viewInfo(route) {
   return {
     title: it[0], crumbs: [[it[0]]], nav: null,
     html: `<a class="back-link" href="#/">${icon('arrowLeft', 16)}Voltar ao Início</a>
-      <div class="page-head"><div><h1 class="h1">${esc(it[0])}</h1><p class="meta lead">Conteúdo de exemplo do protótipo</p></div></div>
+      <div class="page-head"><div><h1 class="h1">${esc(it[0])}</h1></div></div>
       <article class="card article" style="max-width:760px">${it[1].map(([t, p]) => `<h2 class="h3" style="margin-top:16px">${esc(t)}</h2><p style="margin-top:4px">${esc(p)}</p>`).join('')}</article>`,
   };
 }
@@ -674,8 +671,7 @@ function viewSaida(route) {
     html: `<div class="access"><section class="card access-card" aria-labelledby="saida">
       ${icon('external', 32)}
       <h1 class="h1" id="saida" style="margin-top:12px">Você está saindo da Área do Investidor</h1>
-      <p style="margin-top:8px">Na versão real, este botão abre o site de <strong>${esc(para)}</strong> em uma nova aba. Os dados que você compartilhar lá seguem as regras desse parceiro.</p>
-      <p class="meta" style="margin-top:8px">No protótipo, o parceiro é fictício, então a navegação para aqui.</p>
+      <p style="margin-top:8px">Você vai para o site de <strong>${esc(para)}</strong>. Os dados que você compartilhar lá seguem as regras desse parceiro.</p>
       <div class="btn-row" style="margin-top:20px"><a class="btn btn-primary" href="#${volta}">Voltar</a></div>
     </section></div>`,
   };
@@ -685,6 +681,6 @@ function viewNotFound() {
   return {
     title: 'Página não encontrada', crumbs: [['Página não encontrada']], nav: null,
     html: `<h1 class="h1" style="margin-bottom:16px">Página não encontrada</h1>
-      ${emptyState({ title: 'Este endereço não existe no protótipo.', actions: '<a class="btn btn-primary" href="#/">Ir para o Início</a>' })}`,
+      ${emptyState({ title: 'Este endereço não existe.', actions: '<a class="btn btn-primary" href="#/">Ir para o Início</a>' })}`,
   };
 }
