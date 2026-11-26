@@ -221,7 +221,7 @@ function ibovSeries(per) {
   return series(IBOV.inicio[per], IBOV.pontos, PERIODOS[per].n, seedOf('IBOV' + per), IBOV.pontos * 0.004);
 }
 function ativoSeries(a, per) {
-  const start = per === '1D' ? a.anterior : per === '1M' ? a.preco * (1 - varPct(a) / 100 * 2.6) : a.preco * (0.82 + (seedOf(a.code) % 30) / 100);
+  const start = per === '1D' ? a.anterior : per === '1M' ? (a.p30 || a.preco * (1 - varPct(a) / 100 * 2.6)) : a.preco * (0.82 + (seedOf(a.code) % 30) / 100);
   return series(start, a.preco, PERIODOS[per].n, seedOf(a.code + per), a.preco * 0.012);
 }
 const PERIODOS = { '1D': { n: 33, label: 'no dia', from: 'abertura (10h)' }, '1M': { n: 22, label: 'em 1 mês', from: '24 out' }, '1A': { n: 52, label: 'em 1 ano', from: 'nov 2025' } };

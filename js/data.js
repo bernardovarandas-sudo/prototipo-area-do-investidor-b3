@@ -490,3 +490,57 @@ const NOTICIAS_EXPLICA = {
     possivel: ['baixa', 'Se o mercado reagir ao lucro menor, ela pode cair um pouco.'] },
 };
 NOTICIAS.forEach((n) => Object.assign(n, NOTICIAS_EXPLICA[n.id] || {}));
+
+/* Preço de fechamento de 24 out 2026 (30 dias antes da referência). Coerente com o resumo semanal e com as notícias. */
+const PRECO_30D = {
+  PETR4: 47.90, VALE3: 63.80, ITUB4: 37.40, BBAS3: 22.90, MGLU3: 5.95, WEGE3: 46.10,
+  DEMO1: 21.80, DEMO2: 30.60, DEMO3: 43.50, DEMO4: 13.10, DEMO5: 17.60, DEMO6: 32.20, DEMO7: 9.40, DEMO8: 66.30,
+};
+ATIVOS.forEach((a) => (a.p30 = PRECO_30D[a.code]));
+/* Conta principal em 24 out: antes das entradas de 6 nov (50 Lumina) e 18 nov (200 Aurora). */
+const QTD_30D_PRINCIPAL = { DEMO1: 800, DEMO2: 400, DEMO3: 150 };
+const ENTRADAS_30D = [
+  { data: '6 nov', code: 'DEMO3', qtd: 50 },
+  { data: '18 nov', code: 'DEMO1', qtd: 200 },
+];
+
+/* Possíveis motivos da mudança de preço, olhando a empresa e o mercado.
+   dia = desde a última visita (23 → 24 nov) · mes = últimos 30 dias (24 out → 24 nov). */
+const MOTIVOS = {
+  DEMO1: {
+    dia: ['A Aurora divulgou lucro 12% maior no 3º trimestre, acima do que se esperava.', 'Investidores reagiram bem ao resultado e compraram a ação. A bolsa também subiu 0,8% no dia, o que ajudou.'],
+    mes: ['A expectativa de um bom resultado e a ampliação de contratos de serviços animaram investidores ao longo do mês. O lucro 12% maior, divulgado em 24 nov, confirmou essa expectativa.', 'Ações de tecnologia foram bem no período, e o Ibovespa subiu cerca de 2,8% em 30 dias.'],
+  },
+  DEMO2: {
+    dia: ['A Nova Azul marcou para 2 dez a votação de uma proposta de dividendos. A chance de receber dinheiro costuma atrair compradores.', 'O dia foi de alta na bolsa (Ibovespa +0,8%), e empresas de saneamento acompanharam.'],
+    mes: ['A ação caiu no começo de novembro. Parte da queda veio do pagamento de juros sobre capital próprio em 5 nov: quando a empresa paga proventos, o preço costuma cair perto do valor pago. Nas últimas semanas, ela recuperou parte da queda com a proposta de dividendos.', 'O setor de saneamento ficou de lado no período, sem notícias fortes que mexessem com as empresas.'],
+  },
+  DEMO3: {
+    dia: ['Não houve notícia da Lumina no dia.', 'O órgão regulador abriu consulta sobre mudar as regras de remuneração das distribuidoras de energia. A incerteza pode ter feito investidores venderem ações do setor, mesmo sem decisão.'],
+    mes: ['A Lumina segue com resultados estáveis e pagou dividendos em setembro, o que atrai quem busca renda.', 'Ações de energia subiram no começo de novembro. Nos últimos dias, a consulta sobre novas regras do setor tirou parte dessa alta.'],
+  },
+  PETR4: {
+    dia: ['Não houve notícia nova da Petrobras no dia. A ação segue pressionada desde o balanço, que trouxe dividendos menores e mais gastos com investimentos.', 'O petróleo em baixa no mercado internacional pesa sobre petroleiras no mundo todo.'],
+    mes: ['Em 11 nov, a Petrobras mostrou lucro maior, mas anunciou dividendos menores e investimentos maiores do que o mercado esperava, e a ação caiu.', 'O petróleo em baixa derrubou petroleiras no mundo todo, e a Petrobras foi uma das que mais perderam valor em novembro.'],
+  },
+  VALE3: {
+    dia: ['A Vale vem de um 3º trimestre com lucro bem menor, e a ação caiu pelo décimo pregão seguido.', 'O minério de ferro, principal produto da empresa, está no menor preço em mais de um ano, com a China comprando menos.'],
+    mes: ['O lucro do 3º trimestre caiu 53%. Desde 9 nov, a ação teve dez quedas seguidas, a maior sequência em mais de 15 anos.', 'O minério de ferro caiu para o menor nível desde 2024 com a demanda chinesa fraca, o que pesa sobre todas as mineradoras.'],
+  },
+  ITUB4: {
+    dia: ['Não houve notícia nova do Itaú no dia. O resultado de 3 nov, em linha com o esperado, mantém a confiança de investidores.', 'A bolsa subiu 0,8% no dia, e os grandes bancos acompanharam a alta.'],
+    mes: ['O Itaú lucrou R$ 12,6 bilhões no 3º trimestre, cerca de 6% a mais, com inadimplência estável. Sem surpresas, a ação subiu aos poucos.', 'Com a Selic mantida em 13,75%, juros altos por mais tempo tendem a manter a margem dos bancos, o que ajudou o setor.'],
+  },
+  BBAS3: {
+    dia: ['A ação segue pressionada depois do lucro 66% menor e do corte de dividendos.', 'Investidores podem estar preferindo bancos com resultado mais estável.'],
+    mes: ['Em 11 nov, o banco mostrou lucro 66% menor por causa da inadimplência no agronegócio e reduziu os dividendos. A ação caiu forte no dia seguinte.', 'Com juros altos, o crédito fica mais arriscado, e o mercado ficou mais cauteloso com bancos expostos ao agro.'],
+  },
+  MGLU3: {
+    dia: ['Não houve notícia nova do Magazine Luiza no dia. A ação segue animada com a melhora nas vendas das lojas físicas.', 'A alta da bolsa no dia ajudou ações de varejo.'],
+    mes: ['O lucro do 3º trimestre caiu, mas as lojas físicas venderam cerca de 10% a mais, e as vendas de outubro melhoraram. A ação subiu mais de 11% em 10 nov.', 'Mesmo com juros altos, parte do mercado apostou na recuperação do consumo no fim do ano.'],
+  },
+  WEGE3: {
+    dia: ['Não houve notícia nova da WEG no dia.', 'A ação ficou parada mesmo com a alta da bolsa, sem compradores ou vendedores dominando.'],
+    mes: ['Em 21 out, a WEG mostrou lucro um pouco abaixo do esperado, com margem menor.', 'O dólar mais baixo reduz o valor das vendas no exterior, que são 62,5% da receita, e isso pesou na ação.'],
+  },
+};

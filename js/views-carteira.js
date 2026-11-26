@@ -25,7 +25,11 @@ function viewCarteira(route) {
   }
 
   const comparavel = ui.periodo === 'visita';
-  const ordenados = w.itens.slice().sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta));
+  const per = comparavel ? 'visita' : '30d';
+  const vp = variacaoPeriodo(per);
+  const rotulo = PERIODO_TXT[per].faixa;
+  const ordenados = w.itens.slice().sort((a, b) => Math.abs(vp.por[b.a.code].delta) - Math.abs(vp.por[a.a.code].delta));
+  const valor30 = ehPrincipal() ? Object.entries(QTD_30D_PRINCIPAL).reduce((t, [c, q]) => t + q * ativo(c).p30, 0) : 0;
   return {
     title: 'Visão geral da carteira', crumbs, nav: 'carteira',
     panel: porque && ativo(porque) && w.itens.some((i) => i.a.code === porque.toUpperCase()) ? { kind: 'mudanca', id: porque.toUpperCase() } : null,
@@ -42,32 +46,32 @@ function viewCarteira(route) {
         </div>
         <div class="kpis">
           <div class="kpi"><div class="label">Valor atual</div><div class="value big">${pBrl(w.atual)}</div><div class="sub meta">Em ${REF.atual}</div></div>
-          <div class="kpi"><div class="label">Mudança no período</div>
-            ${comparavel
-              ? `<div class="value big">${trendValue(w.delta, pSbrl(w.delta))}</div><div class="sub">${trend(w.pct)} <span class="meta">de ${REF.anteriorCurta} a ${REF.atualCurta}</span></div>`
-              : `<div class="value big" style="color:var(--neutral-text)">Indisponível</div><div class="sub meta">Não há posição de 30 dias atrás nesta demonstração.</div>`}
+          <div class="kpi"><div class="label">${comparavel ? 'Mudança no período' : 'Mudança de preço em 30 dias'}</div>
+            <div class="value big">${trendValue(vp.delta, pSbrl(vp.delta))}</div><div class="sub">${trend(vp.pct)} <span class="meta">${rotulo}</span></div>
           </div>
-          <div class="kpi"><div class="label">Valor anterior</div>
+          <div class="kpi"><div class="label">${comparavel ? 'Valor anterior' : 'Valor em 24 out'}</div>
             ${comparavel ? `<div class="value big" style="color:var(--text)">${pBrl(w.anterior)}</div><div class="sub meta">Em ${REF.anterior}, sua última visita</div>`
-              : `<div class="value big" style="color:var(--neutral-text)">Indisponível</div><div class="sub meta">Sem referência para o recorte</div>`}
+              : valor30 ? `<div class="value big" style="color:var(--text)">${pBrl(valor30)}</div><div class="sub meta">Com as quantidades daquela data</div>`
+              : `<div class="value big" style="color:var(--neutral-text)">Sem posição</div><div class="sub meta">A carteira ainda não tinha ações em 24 out</div>`}
           </div>
         </div>
         <p class="note resumo-note" style="margin-top:16px">${icon('calendar', 18)}<span>O resumo da ${SEMANAS[0].titulo.toLowerCase()} está pronto. <a href="#/carteira/resumo?semana=${SEMANAS[0].id}">Ver resumo semanal</a> · Por e-mail: ${prefResumo() ? 'ativado' : '<a href="#/perfil">ativar em Preferências</a>'}</span></p>
         ${comparavel ? (comprasDemo().length
           ? `<p class="note demo-note" style="margin-top:16px">${icon('cart', 18)}<span>Inclui ${comprasDemo().length} ${comprasDemo().length === 1 ? 'compra feita' : 'compras feitas'} na demo. Para mostrar o efeito das notícias, a demo considera que essas ações já estavam na carteira no fechamento de ${REF.anteriorCurta}. <button type="button" class="btn btn-link btn-sm" data-action="desfazer-compras">Desfazer compras da demo</button></span></p>`
-          : `<p class="note" style="margin-top:16px">${icon('info', 18)}<span>Não houve aportes, resgates ou eventos no período. Toda a mudança veio da variação de preço dos ativos.</span></p>`) : ''}
+          : `<p class="note" style="margin-top:16px">${icon('info', 18)}<span>Não houve aportes, resgates ou eventos no período. Toda a mudança veio da variação de preço dos ativos.</span></p>`)
+        : `<p class="note" style="margin-top:16px">${icon('info', 18)}<span>A mudança considera só o preço, com a quantidade de hoje.${ehPrincipal() ? ` No período entraram ${ENTRADAS_30D.map((e) => `${pQtd(e.qtd)} ações de ${esc(ativo(e.code).name)} (${e.data})`).join(' e ')}, por isso o valor de 24 out somado à mudança não dá o valor atual.` : ''}${comprasDemo().length ? ' Compras feitas na demo contam desde 23 nov.' : ''}</span></p>`}
       </section>
 
-      ${comparavel ? `<section class="card" aria-labelledby="mudou">
-        <div class="card-head"><h2 class="h2" id="mudou">O que mudou</h2><span class="meta">Ordenado pela maior mudança em reais</span></div>
-        <ul class="change-list">${ordenados.slice(0, 3).map((g) => `<li>
+      <section class="card" aria-labelledby="mudou">
+        <div class="card-head"><h2 class="h2" id="mudou">O que mudou</h2><span class="meta">${comparavel ? 'Desde a última visita' : 'Últimos 30 dias'} · maior mudança em reais primeiro</span></div>
+        <ul class="change-list">${ordenados.slice(0, 3).map((g) => { const v = vp.por[g.a.code]; return `<li>
           <div><span class="asset-name">${esc(g.a.name)}</span> <span class="asset-code">${g.a.code}</span>
-            <p class="meta">Preço foi de ${fmt.brl(g.a.anterior)} para ${fmt.brl(g.a.preco)} · ${pQtd(g.qtd)} ações</p></div>
-          <div class="num">${trendValue(g.delta, pSbrl(g.delta))}<br>${trend(g.pct)}</div>
+            <p class="meta">Preço foi de ${fmt.brl(comparavel || g.demo && !v.temBase ? g.a.anterior : g.a.p30)} para ${fmt.brl(g.a.preco)} · ${pQtd(g.qtd)} ações</p></div>
+          <div class="num">${trendValue(v.delta, pSbrl(v.delta))}<br>${trend(v.pct)}</div>
           <button type="button" class="btn btn-outline btn-sm" data-action="open-panel" data-kind="mudanca" data-id="${g.a.code}">Por que mudou?<span class="sr-only"> ${esc(g.a.name)}</span></button>
-        </li>`).join('')}</ul>
-        <p class="meta" style="margin-top:8px">Soma: ${pSbrl(w.delta)} = ${ordenados.map((g) => pSbrl(g.delta)).join(' ')}</p>
-      </section>` : ''}
+        </li>`; }).join('')}</ul>
+        <p class="meta" style="margin-top:8px">Soma: ${pSbrl(vp.delta)} = ${ordenados.map((g) => pSbrl(vp.por[g.a.code].delta)).join(' ')}</p>
+      </section>
 
       <div class="grid-12">
         <section class="card span-5" aria-labelledby="compo">
@@ -80,10 +84,10 @@ function viewCarteira(route) {
         </section>
 
         <section class="card span-7" aria-labelledby="ativos">
-          <div class="card-head"><h2 class="h2" id="ativos">Ativos da carteira</h2><span class="meta">${REF.anteriorCurta} → ${REF.atualCurta}</span></div>
+          <div class="card-head"><h2 class="h2" id="ativos">Ativos da carteira</h2><span class="meta">Mudança ${comparavel ? `${REF.anteriorCurta} → ${REF.atualCurta}` : 'em 30 dias'}</span></div>
           <div class="table-wrap"><table><caption class="sr-only">Ativos da carteira</caption>
             <thead><tr><th scope="col">Ativo</th><th scope="col" class="num">Quantidade</th><th scope="col" class="num">Valor atual</th><th scope="col" class="num">Mudança</th></tr></thead>
-            <tbody>${w.itens.map((g) => ativoRow(g)).join('')}</tbody>
+            <tbody>${w.itens.map((g) => ativoRow(g, vp)).join('')}</tbody>
           </table></div>
           <div class="card-foot"><a href="#/carteira/investimentos">Ir para posição</a><a href="#/extratos/movimentacao">Ver movimentações</a></div>
         </section>
@@ -109,15 +113,35 @@ ACTIONS['desfazer-compras'] = () => {
   rerender('#resumo');
 };
 
-function ativoRow(g) {
+/* Variação por período: desde a última visita (23 → 24 nov) ou 30 dias (24 out → 24 nov, quantidade de hoje).
+   Compras feitas na demo contam desde 23 nov nos dois recortes. */
+const PERIODO_TXT = {
+  visita: { faixa: `de ${REF.anteriorCurta} a ${REF.atualCurta}`, quando: 'desde a sua última visita', de: 20261123, ibov: () => ibovPct() },
+  '30d': { faixa: 'de 24 out, 18h a 24 nov, 18h', quando: 'nos últimos 30 dias', de: 20261024, ibov: () => (IBOV.pontos / IBOV.inicio['1M'] - 1) * 100 },
+};
+function variacaoPeriodo(per) {
+  const por = {};
+  posicoes().forEach((p) => {
+    const a = ativo(p.code), ini = per === '30d' && !p.demo ? a.p30 : a.anterior;
+    const x = por[p.code] || (por[p.code] = { delta: 0, base: 0, insts: {}, temBase: false });
+    const d = p.qtd * (a.preco - ini);
+    x.delta += d; x.base += p.qtd * ini; x.insts[p.inst] = (x.insts[p.inst] || 0) + d; x.temBase = x.temBase || !p.demo;
+  });
+  Object.values(por).forEach((x) => (x.pct = x.base ? (x.delta / x.base) * 100 : 0));
+  const delta = Object.values(por).reduce((t, x) => t + x.delta, 0), base = Object.values(por).reduce((t, x) => t + x.base, 0);
+  return { por, delta, pct: base ? (delta / base) * 100 : 0 };
+}
+
+function ativoRow(g, vp) {
+  const v = vp.por[g.a.code];
   const multi = g.insts.length > 1, key = 'inst-' + g.a.code, open = !!ui.expand[key];
   return `<tr>
     <td><div class="asset-cell"><a href="#/ativos/${g.a.code}?de=carteira">${esc(g.a.name)}</a><span class="asset-code">${g.a.code} · ${multi
       ? `<button type="button" class="expand-btn" data-action="expand" data-key="${key}" aria-expanded="${open}" aria-controls="${key}">${g.insts.length} instituições ${icon('chevronDown', 14)}</button>`
       : g.insts[0].inst}${g.demo ? ' · <span class="demo-badge sm">Compra na demo</span>' : ''}</span></div></td>
     <td class="num">${pQtd(g.qtd)}</td><td class="num">${pBrl(g.atual)}</td>
-    <td class="num">${trendValue(g.delta, pSbrl(g.delta))}</td></tr>
-    ${multi ? g.insts.map((i) => `<tr class="sub-row" data-group="${key}" ${open ? '' : 'hidden'}><td>${i.inst}</td><td class="num">${pQtd(i.qtd)}</td><td class="num">${pBrl(i.atual)}</td><td class="num">${trendValue(i.delta, pSbrl(i.delta))}</td></tr>`).join('') : ''}`;
+    <td class="num">${trendValue(v.delta, pSbrl(v.delta))}</td></tr>
+    ${multi ? g.insts.map((i) => `<tr class="sub-row" data-group="${key}" ${open ? '' : 'hidden'}><td>${i.inst}</td><td class="num">${pQtd(i.qtd)}</td><td class="num">${pBrl(i.atual)}</td><td class="num">${trendValue(v.insts[i.inst], pSbrl(v.insts[i.inst]))}</td></tr>`).join('') : ''}`;
 }
 
 function compoDetalhe(w) {
@@ -150,34 +174,46 @@ ACTIONS.disclose = (el) => {
   document.getElementById(el.getAttribute('aria-controls')).hidden = !open;
 };
 
-/* Painel “Por que mudou?” */
+/* Painel “Por que mudou?”: texto direto com possíveis motivos (empresa e mercado) para o período escolhido. */
+function noticiaDoPeriodo(a, per) {
+  const de = PERIODO_TXT[per].de;
+  const ok = (n) => n.tipo === 'evento' || dataNoticia(n) >= de;
+  return NOTICIAS.find((n) => n.ativos.includes(a.code) && n.tipo !== 'evento' && ok(n))
+    || NOTICIAS.find((n) => n.ativos.includes(a.code) && ok(n))
+    || NOTICIAS.find((n) => (n.setoresAfetados || []).includes(a.setor) && dataNoticia(n) >= de);
+}
 function panelMudanca(code) {
   const w = carteira();
   const g = w && w.itens.find((i) => i.a.code === code);
   if (!g) return null;
-  const n = NOTICIAS.find((x) => x.ativos.includes(code) && x.tipo !== 'evento')
-    || NOTICIAS.find((x) => (x.setoresAfetados || []).includes(g.a.setor));
-  const dp = g.a.preco - g.a.anterior;
+  const per = ui.periodo === '30d' ? '30d' : 'visita', P = PERIODO_TXT[per];
+  const v = variacaoPeriodo(per).por[code], a = g.a;
+  const ini = per === '30d' ? a.p30 : a.anterior, pctAcao = (a.preco / ini - 1) * 100;
+  const verbo = pctAcao > 0.005 ? `subiu ${nf2.format(pctAcao)}%` : pctAcao < -0.005 ? `caiu ${nf2.format(-pctAcao)}%` : 'ficou estável';
+  const ib = P.ibov(), ibTxt = `${ib >= 0 ? 'subiu' : 'caiu'} ${nf2.format(Math.abs(ib))}%`;
+  const m = (MOTIVOS[code] || {})[per === '30d' ? 'mes' : 'dia']
+    || [`Não encontramos notícia da ${a.name} ${P.quando}.`, `A ação acompanhou o movimento do setor de ${a.setor.toLowerCase()} e da bolsa, que ${ibTxt} no período.`];
+  const n = noticiaDoPeriodo(a, per);
+  const params = `aba=carteira&painel=${n ? n.id : ''}`;
   return {
-    title: `Por que ${g.a.name} mudou?`,
+    title: `Por que ${a.name} mudou?`,
     body: `
       <div class="pblock observed" aria-labelledby="pm-obs">
-        <h3 id="pm-obs">Variação observada</h3>
-        <p class="value">${trendValue(g.delta, pSbrl(g.delta))}</p>
-        <p class="meta">${trend(g.pct)} de ${REF.anteriorCurta} a ${REF.atualCurta}</p>
+        <h3 id="pm-obs">Variação na sua carteira · ${per === '30d' ? 'últimos 30 dias' : 'desde a última visita'}</h3>
+        <p class="value">${trendValue(v.delta, pSbrl(v.delta))}</p>
+        <p class="meta">${trend(v.pct)} ${P.faixa}</p>
       </div>
-      <div class="pblock"><h3>Como a conta foi feita</h3>
-        <p>${pQtd(g.qtd)} ações × (${fmt.brl(g.a.preco)} − ${fmt.brl(g.a.anterior)}) = ${pSbrl(g.delta)}</p>
-        <ul class="calc-list" style="margin-top:8px">${g.insts.map((i) => `<li><span>${i.inst}: ${pQtd(i.qtd)} × ${fmt.sbrl(dp)}</span><strong>${pSbrl(i.delta)}</strong></li>`).join('')}</ul>
+      <div class="pblock motivos"><h3>Possíveis motivos</h3>
+        <p class="motivo-lead">${esc(a.name)} ${verbo} ${P.quando}, de ${fmt.brl(ini)} para ${fmt.brl(a.preco)}.</p>
+        <p><strong>Na empresa:</strong> ${esc(m[0])}</p>
+        <p><strong>No mercado:</strong> ${esc(m[1])}</p>
+        ${g.demo && per === '30d' && !v.temBase ? `<p class="meta">Na sua carteira, a compra feita na demo conta desde ${REF.anteriorCurta}, por isso o valor acima é menor que a variação da ação.</p>` : ''}
       </div>
-      <div class="pblock"><h3>O que não entrou na conta</h3>
-        <p>${g.demo ? 'Compras feitas na demo entram como se já estivessem na carteira em ' + REF.anteriorCurta + ', para mostrar a variação do preço.' : 'Não houve compras, vendas, aportes, resgates ou eventos neste ativo no período.'} Toda a mudança veio do preço.</p></div>
       ${n ? `<div class="pblock context-block"><h3>Notícia relacionada</h3>
         <p>${tipoTag(n.tipo)} <span class="meta">${n.data}</span></p>
-        <p style="margin-top:4px"><a href="#/noticias?aba=carteira&painel=${n.id}">${esc(n.titulo)}</a></p>
-        <p class="meta" style="margin-top:4px">A notícia ajuda a entender o contexto, mas não comprova a causa da variação.</p></div>` : ''}
-      <p class="meta">Posição de ${REF.atual} · Cotações de ${REF.atual} · Dados simulados</p>`,
-    foot: `<a class="btn btn-primary" href="#/ativos/${code}?de=carteira">Ver ativo</a>${n ? `<a class="btn btn-outline" href="#/noticias?aba=carteira&painel=${n.id}">Ver notícia</a>` : ''}`,
+        <p style="margin-top:4px"><a href="#/noticias?${params}">${esc(n.titulo)}</a></p></div>` : ''}
+      <p class="meta">São possíveis motivos, não uma certeza: o preço também depende de muitos outros fatores. Preços simulados.</p>`,
+    foot: `<a class="btn btn-primary" href="#/ativos/${code}?de=carteira">Ver ativo</a>${n ? `<a class="btn btn-outline" href="#/noticias?${params}">Ver impacto da notícia</a>` : ''}`,
   };
 }
 

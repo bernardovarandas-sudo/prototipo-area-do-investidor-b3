@@ -416,6 +416,10 @@ th.num, td.num { text-align: right; }
 .logo-profundo .logo-text { color: var(--brand-deep); }
 
 /* ---------- Tablet: barra compacta ---------- */
+/* ---------- Painel “Por que mudou?” ---------- */
+.pblock.motivos p + p { margin-top: 8px; }
+.motivo-lead { font-size: 18px; line-height: 26px; font-weight: 600; color: var(--ink); }
+
 /* ---------- Painel de impacto: possível mudança ---------- */
 .possivel-tag { font-size: 14px; }
 
