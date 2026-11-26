@@ -619,7 +619,7 @@ ACTIONS['login-esqueci-enviar'] = () => { ui.login.enviado = true; rerender(foco
 CHANGES['login-metodo'] = (el) => { ui.login.metodo = el.value; rerender('[data-change="login-metodo"]:checked'); };
 ACTIONS['demo-login'] = (el) => {
   ui.login = { modo: 'entrar', passo: 1, metodo: 'app', enviado: false };
-  state.session = { conta: el.dataset.conta };
+  state.session = { conta: el.dataset.conta, inicio: Date.now() };
   state.lidas = [];
   save();
   announce('Você entrou na Área do Investidor.');

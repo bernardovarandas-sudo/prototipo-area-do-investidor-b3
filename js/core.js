@@ -165,6 +165,7 @@ const ICONS = {
   filter: '<path d="M4 5h16l-6 7.5V19l-4 1.5v-8Z"/>',
   download: '<path d="M12 4v11M7 10.5l5 5 5-5"/><path d="M4 19.5h16"/>',
   link: '<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>',
+  clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
   help: '<circle cx="12" cy="12" r="9"/><path d="M9.6 9.3a2.5 2.5 0 0 1 4.8.9c0 1.7-2.4 2.2-2.4 3.8"/><path d="M12 17.2v.1"/>',
   alert: '<path d="M12 3.5 2.5 20h19Z"/><path d="M12 10v4.5M12 17.3v.1"/>',
   check: '<path d="m5 12.5 4.5 4.5L19 7.5"/>',

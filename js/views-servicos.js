@@ -314,7 +314,8 @@ function viewPerfil(route) {
     corpo = `<h2 class="h2">Histórico e solicitações</h2><div class="table-wrap" style="margin-top:12px"><table><caption class="sr-only">Últimos acessos</caption>
       <thead><tr><th scope="col">Data</th><th scope="col">Evento</th><th scope="col" class="col-sec">Dispositivo</th><th scope="col">Resultado</th></tr></thead>
       <tbody>${[['24/11/2026 18:02', 'Acesso com verificação em duas etapas', 'Navegador · computador', 'Sucesso'], ['22/11/2026 09:15', 'Acesso pelo App B3', 'Celular', 'Sucesso'], ['18/11/2026 21:40', 'Tentativa de acesso com senha incorreta', 'Navegador · computador', 'Bloqueado'], ['03/11/2026 14:10', 'Alteração do e-mail principal', 'Navegador · computador', 'Concluída']].map((r) => `<tr><td class="nowrap">${r[0]}</td><td>${r[1]}</td><td class="col-sec">${r[2]}</td><td><span class="rel-tag ${r[3] === 'Bloqueado' ? 'rel-insuf' : 'rel-direta'}">${r[3]}</span></td></tr>`).join('')}</tbody></table></div>
-      <p class="meta" style="margin-top:8px">Não reconhece um acesso? Altere sua senha e fale com o atendimento.</p>`;
+      <p class="meta" style="margin-top:8px">Não reconhece um acesso? Altere sua senha e fale com o atendimento.</p>
+      <p class="note" style="margin-top:16px">${icon('clock', 18)}<span>Por segurança, cada acesso dura no máximo 1 hora.${horaFimSessao() ? ` Este acesso termina às ${horaFimSessao()}; depois disso, é só entrar novamente.` : ''}</span></p>`;
   } else if (sec === 'validacao') {
     corpo = `<h2 class="h2">Validação de e-mail</h2><div class="ok-box" style="margin-top:12px"><p class="imp-level-text">${icon('check', 22)} E-mail validado</p><p class="meta">${esc(contas[principalIdx]?.email || c.email)} · validado em 12/03/2025</p></div>
       <div class="btn-row"><button type="button" class="btn btn-outline" data-action="validacao-reenviar">Reenviar e-mail de validação</button></div>`;

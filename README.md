@@ -7,7 +7,7 @@ Protótipo acadêmico do Squad Capital, feito no ciclo prático com a B3. **Todo
 ## O que dá para clicar
 
 - **Início** (sem login): Ibovespa, busca de ações, "Mais negociados" e ficha do ativo.
-- **Acesso:** CPF → senha → verificação em duas etapas, "Primeiro acesso" em 5 etapas e "Esqueci minha senha". Os campos já vêm com dados fictícios e não aceitam digitação (o site nunca recebe CPF ou senha reais). Há atalho para entrar direto.
+- **Acesso:** CPF → senha → verificação em duas etapas, "Primeiro acesso" em 5 etapas e "Esqueci minha senha". Os campos já vêm com dados fictícios e não aceitam digitação (o site nunca recebe CPF ou senha reais). Há atalho para entrar direto. Como no portal, cada acesso dura no máximo 1 hora: 5 minutos antes aparece um aviso e, no fim, a tela "Sua sessão expirou" (página inteira) leva de volta ao login e, depois, à página em que a pessoa estava. Para ver a tela sem esperar, abra `#/sessao-expirada`.
 - **Carteira com todos os tipos de investimento:** ações, FIIs, ETFs, renda fixa (Tesouro, CDB, LCI) e fundos, com filtro por classe. Visão geral com destaques, alocação por classe/produto/instituição e evolução do patrimônio.
 - **Investimentos:** Posição com filtro por classe e Garantias preenchidas.
 - **Downloads no modelo padrão:** todo "Baixar" gera PDF (cabeçalho da Área do Investidor, dados da conta, tabela, totais, marca d'água de demonstração) ou Excel com a mesma estrutura.

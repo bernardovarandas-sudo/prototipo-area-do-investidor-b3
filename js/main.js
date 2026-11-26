@@ -59,6 +59,7 @@ function rerender(focusSelector) { state.focusAfter = focusSelector || null; ren
 /* ---------- Renderização ---------- */
 let firstRender = true;
 function render(opts = {}) {
+  if (state.session && fimSessao() && Date.now() >= fimSessao()) { expirarSessao(); if (location.hash !== '#/sessao-expirada') { location.replace('#/sessao-expirada'); return; } }
   const route = parseHash();
   const hit = matchRoute(route.path);
   if (hit && hit.def.private && !state.session) {
@@ -80,7 +81,8 @@ function render(opts = {}) {
   renderSidebar(v.nav);
   renderTopbar(v, route);
   renderFooter();
-  $content.innerHTML = (route.path !== '/acesso' ? bannerHtml() : '') + v.html;
+  document.body.classList.toggle('tela-cheia', !!v.telaCheia);
+  $content.innerHTML = (route.path !== '/acesso' && !v.telaCheia ? bannerHtml() : '') + v.html;
   registrarVisitaCheckin(route);
   ajustarMercado();
   document.title = `${v.title} · Área do Investidor B3`;
@@ -186,6 +188,14 @@ function renderTopbar(v, route) {
         </div>`
       : v.noCta ? '' : `<a class="btn btn-yellow" href="#/acesso?destino=${encodeURIComponent('/carteira')}"><span class="hide-sm">Entrar para ver minha carteira</span><span class="show-sm">Entrar</span></a>`}
     </div>`;
+}
+
+/* Tira a sessão e os dados pessoais da tela (usado por Sair e pelo fim do tempo de acesso). */
+function limparSessao() {
+  state.session = null; state.hide = false; save();
+  Object.assign(ui, { solicitacoes: [], votos: {}, compraOk: null, appsRevogados: [], revar: { vinculado: false, tela: 'inicio' } }); ui.porta = { passo: 1, origem: '', destino: '', itens: {} };
+  Object.assign(ui, { periodo: 'visita', feedbackEnviado: false }); ui.expand = {};
+  if (panel.open) closePanel({ silent: true });
 }
 
 function renderFooter() {
@@ -304,9 +314,7 @@ Object.assign(ACTIONS, {
   notif: (el) => { if (!state.lidas.includes(el.dataset.id)) { state.lidas.push(el.dataset.id); save(); } },
   logout: () => {
     if (state.session) state.compras[state.session.conta] = [];
-    state.session = null; state.hide = false; save();
-    Object.assign(ui, { solicitacoes: [], votos: {}, compraOk: null, appsRevogados: [], revar: { vinculado: false, tela: 'inicio' } }); ui.porta = { passo: 1, origem: '', destino: '', itens: {} };
-    Object.assign(ui, { periodo: 'visita', feedbackEnviado: false }); ui.expand = {};
+    limparSessao();
     announce('Você saiu. Dados pessoais removidos da tela.');
     go('/');
   },
