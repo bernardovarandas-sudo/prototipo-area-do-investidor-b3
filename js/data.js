@@ -454,7 +454,7 @@ const SEMANAS = [
    o que aconteceu, por que isso mexe com o preço e a possível mudança se a ação ainda não reagiu. */
 const ARTIGO = { ITUB4: 'do', BBAS3: 'do', MGLU3: 'do' }; // “ações do Itaú”; o padrão é “da”
 const NOTICIAS_EXPLICA = {
-  n1: { aconteceu: 'A Aurora lucrou 12% a mais que no mesmo trimestre do ano passado e manteve os planos de investimento.',
+  n1: { aconteceu: 'A Aurora teve lucro 12% maior no 3º trimestre do que um ano antes, com receita 8% maior puxada por contratos de tecnologia para empresas.',
     mexe: 'Lucro maior costuma atrair compradores para a ação, o que tende a puxar o preço para cima.',
     possivel: ['alta', 'Se o mercado ainda não reagiu, o preço pode subir com o lucro maior.'] },
   n2: { aconteceu: 'O órgão que regula o setor elétrico está estudando mudar a forma como as distribuidoras de energia ganham dinheiro. Nada foi decidido ainda.',

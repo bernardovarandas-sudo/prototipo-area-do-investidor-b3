@@ -254,19 +254,20 @@ const setorTxt = (lista) => { const t = [...new Set(lista)].map((x) => SETOR_TXT
 /* Primeiro parágrafo do painel: só a ligação básica entre você e a notícia. */
 const artDe = (code) => `${ARTIGO[code] || 'da'} ${ativo(code).name}`;
 const listaAcoes = (codes) => { const t = codes.map(artDe); return t.length > 1 ? t.slice(0, -1).join(', ') + ' e ' + t[t.length - 1] : t[0]; };
-function porqueImpacto(n, rel, peso) {
-  if (rel.vazia) return 'Sua carteira ainda não tem ações.';
-  if (rel.estado === 'insuf') return 'A notícia não diz quais empresas estão envolvidas.';
+/* “Por que pode ter impacto”: sempre parte da notícia (o que ela diz e por que mexe com a ação) e termina na sua ligação com ela. */
+function ligacaoCarteira(n, rel, peso) {
+  if (rel.vazia) return 'Sua carteira ainda não tem ações, então ela não muda por isso.';
+  if (rel.estado === 'insuf') return 'Como a notícia não diz quais empresas estão envolvidas, não dá para medir o impacto na sua carteira.';
   if (rel.estado === 'direta') {
     const um = rel.codes.length === 1;
-    return `Você tem ações ${listaAcoes(rel.codes)}. ${um ? 'Essa ação é' : 'Juntas, elas são'} ${pctPeso(peso)} da sua carteira.`;
+    return `Você tem ações ${listaAcoes(rel.codes)}: ${um ? 'elas são' : 'juntas, são'} ${pctPeso(peso)} da sua carteira${peso >= 40 ? ', então isso pesa bastante no seu total' : ''}.`;
   }
-  if (rel.estado === 'indireta') {
-    const setores = setorTxt(rel.codes.map((c) => ativo(c).setor));
-    return `Você tem ações ${listaAcoes(rel.codes)}, que ${rel.codes.length > 1 ? 'são' : 'é'} do ${setores}. A notícia mexe com esse setor.`;
-  }
-  if (n.ativos.length) return `Você não tem ações ${listaAcoes(n.ativos)}.`;
-  return `Você não tem ações do ${setorTxt(n.setoresAfetados || [])}.`;
+  if (rel.estado === 'indireta') return `Você tem ações ${listaAcoes(rel.codes)}, do ${setorTxt(rel.codes.map((c) => ativo(c).setor))}, que a notícia pode afetar (${pctPeso(peso)} da sua carteira).`;
+  if (n.ativos.length) return `Você não tem ações ${listaAcoes(n.ativos)}, então sua carteira não muda por isso.`;
+  return `Você não tem ações do ${setorTxt(n.setoresAfetados || [])}, então sua carteira não muda por isso.`;
+}
+function porqueImpacto(n, rel, peso) {
+  return [n.aconteceu, n.mexe, ligacaoCarteira(n, rel, peso)].filter(Boolean).join(' ');
 }
 
 /* Possível mudança: aparece quando a ação ainda não mudou de preço ou quando o evento ainda vai acontecer. */
@@ -327,8 +328,9 @@ function panelNoticia(id) {
     <div class="imp-tagline">${relTag(rel.estado)}</div>
     <p class="meta">O nível considera a ligação com a notícia e o peso do ativo na sua carteira. Não é uma previsão.</p>`;
 
-  const explica = (n.aconteceu ? impBlock('O que aconteceu', esc(n.aconteceu)) : '')
-    + (n.mexe ? impBlock(rel.estado === 'direta' ? 'Por que isso mexe com a ação' : 'Por que isso pode mexer com o preço', esc(n.mexe)) : '');
+  // Mais detalhe da própria notícia (primeira seção do texto), para quem quer entender melhor.
+  const det = n.detalhe && n.detalhe[0];
+  const explica = det ? impBlock('O que a notícia diz', `<p>${esc(det[1])}</p><p class="meta" style="margin-top:6px">Fonte: ${esc(n.fonte.replace(/^Fonte demo · /, ''))} · ${n.data}</p>`) : '';
 
   if (!grupos.length) {
     const quem = rel.estado === 'sem' && n.ativos.length ? `Para quem tem ações ${listaAcoes(n.ativos)}. Sua carteira não muda por isso, porque você não tem essa ação.` : '';
