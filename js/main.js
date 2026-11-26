@@ -71,6 +71,7 @@ function render(opts = {}) {
 
   const pageKey = v.pageKey || route.path;
   const pageChanged = state.lastPage !== pageKey;
+  if (pageChanged && route.path !== '/' && state.navOpen._fechado) delete state.navOpen._fechado;
   state.lastPage = pageKey;
   closeDrawer(false);
   closePops();
@@ -137,7 +138,7 @@ function renderSidebar(current) {
   const items = navModel().map((it) => {
     if (!it.group) return link(it);
     const hasCurrent = it.children.some((c) => c.key === current);
-    const open = state.navOpen[it.group] ?? (hasCurrent && !isCompact());
+    const open = state.navOpen[it.group] ?? (hasCurrent && !isCompact() && !state.navOpen._fechado);
     return `<div class="nav-group"><button type="button" class="nav-group-btn ${hasCurrent ? 'has-current' : ''}" data-action="toggle-group" data-group="${it.group}" aria-expanded="${open}" aria-controls="sub-${it.group}" title="${esc(it.label)}">
         ${icon(it.icon, 22)}<span class="nav-label">${esc(it.label)}</span>${icon('chevronDown', 16, 'chev')}${hasCurrent ? '<span class="sr-only">(seção atual)</span>' : ''}</button>
       <div class="subnav" id="sub-${it.group}" ${open ? '' : 'hidden'}>${it.children.map((c) => link(c, true)).join('')}</div></div>`;
@@ -321,6 +322,15 @@ Object.assign(ACTIONS, {
 
 /* ---------- Delegação de eventos ---------- */
 document.addEventListener('click', (ev) => {
+  // Início ou logo da B3 na barra lateral: fecha todos os grupos abertos (Minha carteira, Serviços)
+  const home = ev.target.closest('#sidebar a[href="#/"]');
+  if (home) {
+    state.navOpen = { _fechado: true };
+    document.querySelectorAll('#sidebar .subnav').forEach((sub) => (sub.hidden = true));
+    document.querySelectorAll('#sidebar .nav-group-btn').forEach((b) => b.setAttribute('aria-expanded', 'false'));
+    if (parseHash().path === '/') { ev.preventDefault(); closeDrawer(false); render({ keepScroll: true }); }
+    return;
+  }
   const el = ev.target.closest('[data-action]');
   if (el && ACTIONS[el.dataset.action]) {
     if (el.tagName === 'BUTTON' || el.dataset.action === 'skip') ev.preventDefault();
