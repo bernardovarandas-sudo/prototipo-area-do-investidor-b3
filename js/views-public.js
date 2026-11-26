@@ -14,6 +14,11 @@ const ui = {
   cal: { y: 2026, m: 10, filtro: 'todos' },
   rel: { aba: 'consolidado', tipo: 'Mensal', periodo: 'Outubro de 2026', formato: 'PDF' },
   feedbackEnviado: false,
+  compraOk: null,
+  compraQtd: 100,
+  porta: { passo: 1, origem: '', destino: '', itens: {} },
+  solicitacoes: [],
+  votos: {},
 };
 
 /* Registro de ações delegadas (preenchido por cada arquivo de telas) */
@@ -77,7 +82,7 @@ function marketBody(key) {
       (s.lista !== 'destaques' ? `<button type="button" class="btn btn-link btn-sm" data-action="market-tab" data-key="destaques" data-market="${key}">Ver Destaques</button>` : '');
     return emptyState({
       title: s.busca ? 'Nenhum ativo encontrado' : 'Nenhum ativo nesta lista',
-      text: s.busca ? `Não há ativo com “${esc(s.busca)}” ${s.lista === 'destaques' ? 'na lista' : 'em ' + (s.lista === 'altas' ? 'Altas' : 'Baixas')}. Busque pelo nome ou pelo código, como DEMO1.` : 'Não há ativos neste recorte na referência atual.',
+      text: s.busca ? `Não há ativo com “${esc(s.busca)}” ${s.lista === 'destaques' ? 'na lista' : 'em ' + (s.lista === 'altas' ? 'Altas' : 'Baixas')}. Busque pelo nome ou pelo código, como PETR4 ou DEMO1.` : 'Não há ativos neste recorte na referência atual.',
       actions, iconName: 'search',
     });
   }
@@ -163,10 +168,10 @@ function viewInicio() {
     <section class="card" style="margin-top:24px" aria-labelledby="mais">
       <h2 class="h3" id="mais">Mais da Área do Investidor</h2>
       <ul class="legend" style="margin-top:8px">
-        <li><button type="button" class="btn btn-link btn-sm" data-action="ext" data-name="Sobre a Área do Investidor">Sobre a Área do Investidor</button></li>
-        <li><button type="button" class="btn btn-link btn-sm" data-action="ext" data-name="Boletim de mercado">Boletim de mercado</button></li>
-        <li><button type="button" class="btn btn-link btn-sm" data-action="ext" data-name="Perguntas frequentes">Perguntas frequentes</button></li>
-        <li><button type="button" class="btn btn-link btn-sm" data-action="ext" data-name="Cursos e Bora Investir">Cursos e Bora Investir ${icon('external', 14)}<span class="sr-only">(site externo)</span></button></li>
+        <li><a class="btn btn-link btn-sm" href="#/info/sobre">Sobre a Área do Investidor</a></li>
+        <li><a class="btn btn-link btn-sm" href="#/info/boletim">Boletim de mercado</a></li>
+        <li><a class="btn btn-link btn-sm" href="#/info/faq">Perguntas frequentes</a></li>
+        <li><a class="btn btn-link btn-sm" href="https://borainvestir.b3.com.br/" target="_blank" rel="noopener">Cursos e Bora Investir ${icon('external', 14)}<span class="sr-only">(abre site da B3 em nova aba)</span></a></li>
       </ul>
     </section>`,
   };
@@ -180,7 +185,9 @@ function homeCarteira() {
       <p class="muted">Seus investimentos vão aparecer aqui quando estiverem disponíveis.</p></div>
       <a class="btn btn-primary" href="#/carteira">Ver carteira</a></div></section>`;
   }
-  const rec = PROVENTOS_RECEBIDOS.filter((p) => p.mes === '2026-11').reduce((s, p) => s + p.valor, 0);
+  const rec = provRecebidos().filter((p) => p.mes === '2026-11').reduce((s, p) => s + p.valor, 0);
+  const prox = provAReceber().filter((p) => p.valor != null && p.dia).sort((a, b) => a.dia.localeCompare(b.dia))[0];
+  const notaNoticia = NOTICIAS.find((n) => relacaoNoticia(n).estado === 'direta' && n.tipo !== 'evento');
   return `
   <section class="card" style="margin-top:24px" aria-labelledby="hc">
     <div class="strip">
@@ -193,11 +200,11 @@ function homeCarteira() {
         <div style="margin-top:4px">${trendValue(w.delta, pSbrl(w.delta))} ${trend(w.pct)}</div></div>
       <a class="btn btn-primary" href="#/carteira">Ver carteira</a>
     </div>
-    <p class="note" style="margin-top:16px">${icon('bell', 18)}<span>Aurora divulgou o resultado do trimestre. <a href="#/noticias?aba=carteira&painel=n1">Entender o que mudou</a></span></p>
+    ${notaNoticia ? `<p class="note" style="margin-top:16px">${icon('bell', 18)}<span>${esc(notaNoticia.titulo)}. <a href="#/noticias?aba=carteira&painel=${notaNoticia.id}">Entender o impacto na carteira</a></span></p>` : ''}
   </section>
   <div class="grid-12" style="margin-top:24px">
     <section class="card span-4" aria-labelledby="hp"><h2 class="h3" id="hp">Proventos recebidos</h2>
-      <p class="big" style="font-size:24px;line-height:30px;margin-top:8px">${pBrl(rec)}</p><p class="meta">Em novembro de 2026 · Próximo: ${pBrl(40)} em 15 dez</p>
+      <p class="big" style="font-size:24px;line-height:30px;margin-top:8px">${pBrl(rec)}</p><p class="meta">Em novembro de 2026${prox ? ` · Próximo: ${pBrl(prox.valor)} em ${prox.data}` : ''}</p>
       <div class="card-foot"><a href="#/proventos">Ver proventos</a></div></section>
     <section class="card span-4" aria-labelledby="he"><h2 class="h3" id="he">Evolução patrimonial</h2>
       <p style="margin-top:8px">${pBrl(w.anterior)} <span class="meta">em 23 nov</span></p>
@@ -205,7 +212,7 @@ function homeCarteira() {
       <p class="meta">Mais datas aparecem quando houver posições anteriores.</p>
       <div class="card-foot"><a href="#/carteira">Ver carteira</a></div></section>
     <section class="card span-4" aria-labelledby="hm"><h2 class="h3" id="hm">Últimas movimentações</h2>
-      <ul class="stack-sm" style="margin-top:8px;gap:6px">${EXTRATOS.movimentacao.slice(0, 2).map((m) => `<li><strong>${ativo(m.code).name}</strong> · ${esc(m.mov)}<br><span class="meta">${m.data} · ${m.inst}</span></li>`).join('')}</ul>
+      <ul class="stack-sm" style="margin-top:8px;gap:6px">${extratoBase('movimentacao').slice(0, 2).map((m) => `<li><strong>${ativo(m.code).name}</strong> · ${esc(m.mov)}<br><span class="meta">${m.data} · ${m.inst}</span></li>`).join('')}</ul>
       <div class="card-foot"><a href="#/extratos/movimentacao">Ver extrato</a></div></section>
   </div>`;
 }
@@ -299,14 +306,19 @@ function viewFicha(route) {
 
   return {
     title: `${a.name} (${a.code})`, nav: 'mercado',
+    panel: route.q.get('comprar') === 'demo' && state.session ? { kind: 'compra', id: a.code } : route.q.get('comprar') === 'corretora' ? { kind: 'corretora', id: a.code } : null,
     crumbs: [['Acompanhar mercado', '/mercado'], [`${a.name} · ${a.code}`]],
     html: `${back}
     <div class="page-head">
       <div>
         <h1 class="h1">${esc(a.name)} <span class="asset-code" style="font-size:18px">${a.code}</span></h1>
-        <p class="meta lead">${esc(a.setor)} · ${esc(a.tipo)} · Empresa fictícia</p>
+        <p class="meta lead">${esc(a.setor)} · ${esc(a.tipo)} · ${a.real ? 'Empresa real · preço simulado' : 'Empresa fictícia'}</p>
       </div>
       <div class="btn-row" style="margin:0">
+        <button type="button" class="btn btn-yellow" data-action="open-panel" data-kind="corretora" data-id="${a.code}">${icon('cart', 18)}Comprar</button>
+        ${state.session
+          ? `<button type="button" class="btn btn-outline btn-demo" data-action="open-panel" data-kind="compra" data-id="${a.code}">${icon('plus', 18)}Comprar na demo</button>`
+          : `<a class="btn btn-outline btn-demo" href="#/acesso?destino=${encodeURIComponent('/ativos/' + a.code + '?comprar=demo')}">${icon('plus', 18)}Comprar na demo</a>`}
         ${state.session
           ? `<button type="button" class="btn btn-outline" data-action="fav-toggle" data-code="${a.code}" aria-pressed="${fav}">${icon('star', 18)}${fav ? 'Nos favoritos' : 'Favoritar'}</button>`
           : `<a class="btn btn-outline" href="#/acesso?destino=${encodeURIComponent('/ativos/' + a.code)}">${icon('star', 18)}Favoritar</a>`}
@@ -357,7 +369,7 @@ function naMinhaCarteira(g) {
       <thead><tr><th scope="col">Instituição</th><th scope="col" class="num">Quantidade</th><th scope="col" class="num col-sec">Conta</th><th scope="col" class="num">Contribuição</th></tr></thead>
       <tbody>${g.insts.map((i) => `<tr><td>${i.inst}</td><td class="num">${pQtd(i.qtd)}</td><td class="num col-sec meta">${pQtd(i.qtd)} × ${fmt.sbrl(g.a.preco - g.a.anterior)}</td><td class="num">${trendValue(i.delta, pSbrl(i.delta))}</td></tr>`).join('')}</tbody>
     </table></div>
-    <p class="meta" style="margin-top:8px">Contribuição de preço = quantidade × (preço de 24 nov − preço de 23 nov). Não houve compras, vendas ou eventos no período.</p>
+    <p class="meta" style="margin-top:8px">Contribuição de preço = quantidade × (preço de 24 nov − preço de 23 nov). ${g.demo ? 'Inclui compra feita na demo, considerada desde o fechamento de 23 nov.' : 'Não houve compras, vendas ou eventos no período.'}</p>
   </section>`;
 }
 ACTIONS['fav-toggle'] = (el) => {
@@ -368,6 +380,85 @@ ACTIONS['fav-toggle'] = (el) => {
   el.setAttribute('aria-pressed', !on);
   el.innerHTML = icon('star', 18) + (on ? 'Favoritar' : 'Nos favoritos');
   announce(on ? 'Removido dos favoritos' : 'Adicionado aos favoritos');
+};
+
+/* ---------- Comprar: na corretora (como no site real) e só na demo ---------- */
+function panelCorretora(code) {
+  const a = ativo(code);
+  if (!a) return null;
+  return {
+    title: `Comprar ${a.name}`,
+    body: `<p class="imp-about">${esc(a.name)} · ${a.code} · ${fmt.brl(a.preco)}</p>
+      <p class="note">${icon('info', 18)}<span>A B3 não vende ações. A compra é feita pela sua corretora: você escolhe a corretora, envia a ordem e, depois da liquidação, a ação aparece aqui na Área do Investidor.</span></p>
+      <section class="imp-block"><h3 class="imp-label">Continuar na sua corretora</h3>
+        <ul class="broker-list">${CORRETORAS.map(([nome, url]) => `<li><a href="${url}" target="_blank" rel="noopener"><span>${esc(nome)}</span>${icon('external', 16)}<span class="sr-only">(abre o site da corretora em nova aba)</span></a></li>`).join('')}</ul>
+        <p class="meta" style="margin-top:6px">Lista ilustrativa, em ordem alfabética. Não é recomendação. Na versão real, a lista viria das corretoras em que você tem conta.</p></section>
+      <section class="imp-block demo-block"><h3 class="imp-label"><span class="demo-badge">Só no protótipo</span></h3>
+        <p>Para testar, você pode simular a compra aqui mesmo e ver a ação na carteira, nas notícias e nos proventos.</p></section>`,
+    foot: state.session
+      ? `<button type="button" class="btn btn-outline btn-demo" data-action="open-panel" data-kind="compra" data-id="${a.code}">${icon('plus', 18)}Comprar na demo</button>`
+      : `<a class="btn btn-outline btn-demo" href="#/acesso?destino=${encodeURIComponent('/ativos/' + a.code + '?comprar=demo')}">${icon('plus', 18)}Comprar na demo</a>`,
+  };
+}
+
+function panelCompra(code) {
+  const a = ativo(code);
+  if (!a || !state.session) return null;
+  const r = parseHash();
+  const de = r.q.get('de'), aba = r.q.get('aba') || 'carteira';
+  const nDe = de && NOTICIAS.find((x) => x.id === de);
+  if (ui.compraOk && ui.compraOk.code === a.code) {
+    const ok = ui.compraOk;
+    const noticia = nDe || NOTICIAS.find((n) => n.ativos.includes(a.code));
+    const prov = PROV_POR_ACAO[a.code];
+    return {
+      title: 'Compra adicionada',
+      body: `<div class="imp-level ok-box"><p class="imp-level-text">${icon('check', 22)} ${pQtd(ok.qtd)} ações de ${esc(a.name)}</p>
+          <p class="meta">${esc(ok.inst)} · ${fmt.brl(a.preco)} por ação · Total ${pBrl(ok.qtd * a.preco)}</p></div>
+        <p>A ação já aparece na sua carteira demo. Veja onde ela muda as coisas:</p>
+        <ul class="broker-list">
+          <li><a href="#/carteira"><span>Visão geral da carteira</span>${icon('arrowRight', 16)}</a></li>
+          ${noticia ? `<li><a href="#/noticias?aba=carteira&painel=${noticia.id}"><span>Impacto da notícia: ${esc(noticia.titulo)}</span>${icon('arrowRight', 16)}</a></li>` : ''}
+          <li><a href="#/proventos/a-receber"><span>${prov ? 'Proventos a receber' : 'Proventos (sem pagamento previsto para esta ação)'}</span>${icon('arrowRight', 16)}</a></li>
+          <li><a href="#/extratos/negociacao"><span>Extrato de negociação</span>${icon('arrowRight', 16)}</a></li>
+        </ul>
+        <p class="meta">Compra simulada: nenhuma ordem foi enviada e nenhum valor foi cobrado.</p>`,
+      foot: nDe ? `<a class="btn btn-primary" href="#/noticias?aba=${esc(aba)}&painel=${nDe.id}">Voltar à notícia</a><button type="button" class="btn btn-outline" data-action="close-panel">Continuar no ativo</button>`
+        : `<a class="btn btn-primary" href="#/carteira">Ver carteira</a><button type="button" class="btn btn-outline" data-action="close-panel">Continuar no ativo</button>`,
+    };
+  }
+  const qtd = ui.compraQtd || 100;
+  return {
+    title: `Comprar ${a.name} na demo`,
+    body: `<p class="note demo-note">${icon('info', 18)}<span><strong>Só no protótipo.</strong> No site real este botão não existe: a compra é feita na corretora. Aqui ela serve para testar a carteira, as notícias e os proventos.</span></p>
+      <form class="stack-sm" id="form-compra" data-form="compra-demo" data-code="${a.code}">
+        <div class="field"><label for="compra-qtd">Quantidade de ações</label>
+          <input id="compra-qtd" class="input" name="qtd" type="number" inputmode="numeric" min="1" max="100000" step="1" value="${qtd}" required data-input="compra-qtd" data-preco="${a.preco}"></div>
+        <div class="field"><label for="compra-inst">Corretora</label>
+          <select id="compra-inst" class="select" name="inst">${INSTITUICOES_DEMO.map((i) => `<option>${i}</option>`).join('')}</select></div>
+        <dl class="dl buy-sum">
+          <div><dt>Preço por ação</dt><dd>${fmt.brl(a.preco)}</dd></div>
+          <div><dt>Total</dt><dd id="compra-total">${fmt.brl(qtd * a.preco)}</dd></div>
+        </dl>
+        <p class="meta">Preço simulado de ${REF.atual}. A demo considera a ação na carteira desde ${REF.anteriorCurta}, para mostrar a variação e o impacto das notícias.</p>
+      </form>`,
+    foot: `<button type="submit" form="form-compra" class="btn btn-primary">${icon('plus', 18)}Adicionar à carteira</button><button type="button" class="btn btn-outline" data-action="close-panel">Cancelar</button>`,
+  };
+}
+INPUTS['compra-qtd'] = (el) => {
+  const q = Math.max(0, Math.floor(+el.value || 0));
+  ui.compraQtd = q || 100;
+  const t = document.getElementById('compra-total');
+  if (t) t.textContent = fmt.brl(q * +el.dataset.preco);
+};
+SUBMITS['compra-demo'] = (form) => {
+  const qtd = Math.floor(+form.qtd.value);
+  if (!(qtd >= 1 && qtd <= 100000)) { form.qtd.focus(); toast('Informe uma quantidade entre 1 e 100.000.'); return; }
+  const code = form.dataset.code, inst = form.inst.value;
+  registrarCompra(code, qtd, inst);
+  ui.compraOk = { code, qtd, inst };
+  announce(`${qtd} ações de ${ativo(code).name} adicionadas à carteira demo`);
+  rerender('#panel-title');
 };
 
 /* ---------- Acesso de demonstração ---------- */
@@ -384,7 +475,7 @@ function destinoLabel(dest) {
   const key = Object.keys(map).sort((a, b) => b.length - a.length).find((k) => p.startsWith(k));
   if (key) return map[key];
   const am = p.match(/^\/ativos\/(\w+)/);
-  if (am && ativo(am[1])) return `a ficha de ${ativo(am[1]).name}`;
+  if (am && ativo(am[1])) return q.get('comprar') === 'demo' ? `a compra de ${ativo(am[1]).name} na demo` : `a ficha de ${ativo(am[1]).name}`;
   return null;
 }
 
@@ -441,6 +532,65 @@ function viewAviso() {
         <div class="btn-row" style="margin-top:20px"><a class="btn btn-yellow" href="#/noticias?aba=carteira&painel=n1">Ver na Área do Investidor</a></div>
         <p class="meta" style="margin-top:20px">O aviso não mostra posições, quantidades ou valores. Você vê os detalhes depois de entrar.</p>
       </article>`,
+  };
+}
+
+/* ---------- Páginas institucionais (conteúdo de exemplo) ---------- */
+const INFO = {
+  sobre: ['Sobre a Área do Investidor', [
+    ['O que é', 'A Área do Investidor reúne, num só lugar, os investimentos que estão registrados no seu CPF na B3: ações, fundos, títulos e outros produtos, de todas as corretoras e bancos.'],
+    ['O que dá para fazer', 'Consultar posição, extratos, proventos e relatórios, transferir investimentos entre instituições (portabilidade) e votar a distância em assembleias.'],
+    ['O que não dá para fazer', 'Comprar ou vender. Ordens de compra e venda são enviadas pela sua corretora.'],
+  ]],
+  boletim: ['Boletim de mercado', [
+    ['Resumo do pregão de 24 nov (demo)', 'O Ibovespa fechou em 130.000 pontos na demonstração, alta de 0,80%. Entre as ações da lista, a Vale caiu com o minério de ferro em baixa.'],
+    ['Destaques da semana', 'Petrobras e Banco do Brasil seguem pressionadas depois dos balanços. Veja as reportagens em Notícias.'],
+    ['Aviso', 'Boletim de exemplo, escrito para o protótipo. Índices e preços são simulados.'],
+  ]],
+  faq: ['Perguntas frequentes', [
+    ['Comprei uma ação. Quando ela aparece aqui?', 'Depois da liquidação, que em ações à vista costuma ser em D+2 (dois dias úteis), e da atualização seguinte.'],
+    ['Por que o valor da carteira é estimado?', 'Ele usa o preço de fechamento de cada ativo na data. O valor de venda real pode ser diferente.'],
+    ['O que é provento?', 'É um valor que a empresa paga a quem tem a ação, como dividendos e juros sobre capital próprio.'],
+    ['A Área do Investidor recomenda investimentos?', 'Não. Ela mostra informações. Decisões de investimento são suas, com apoio de profissionais se quiser.'],
+  ]],
+  atendimento: ['Atendimento', [
+    ['Canais', 'Na versão real, esta página traz os canais oficiais de atendimento ao investidor.'],
+    ['No protótipo', 'Nenhuma mensagem é enviada. Para comentar o protótipo, use a página Feedback depois de entrar.'],
+  ]],
+  condicoes: ['Condições de uso', [
+    ['Protótipo acadêmico', 'Este site é um protótipo feito por estudantes. Ele não é o site oficial da B3 e não tem relação com contas reais.'],
+    ['Dados', 'Todos os valores de carteira, preços e proventos são simulados. As notícias marcadas como reais foram resumidas a partir de reportagens, com link para a fonte.'],
+    ['Privacidade', 'O protótipo não coleta dados pessoais. O que você faz aqui fica guardado só nesta aba do navegador.'],
+  ]],
+  acessibilidade: ['Acessibilidade', [
+    ['Como navegar', 'Todas as telas funcionam pelo teclado. Use Tab para avançar, Shift+Tab para voltar e Esc para fechar painéis.'],
+    ['Leitores de tela', 'Variações trazem palavra e sinal, além da cor. Valores ocultos são anunciados como "Valor oculto".'],
+  ]],
+};
+function viewInfo(route) {
+  const it = INFO[route.m[1]];
+  if (!it) return viewNotFound();
+  return {
+    title: it[0], crumbs: [[it[0]]], nav: null,
+    html: `<a class="back-link" href="#/">${icon('arrowLeft', 16)}Voltar ao Início</a>
+      <div class="page-head"><div><h1 class="h1">${esc(it[0])}</h1><p class="meta lead">Conteúdo de exemplo do protótipo</p></div></div>
+      <article class="card article" style="max-width:760px">${it[1].map(([t, p]) => `<h2 class="h3" style="margin-top:16px">${esc(t)}</h2><p style="margin-top:4px">${esc(p)}</p>`).join('')}</article>`,
+  };
+}
+
+/* Saída para parceiro fictício: na versão real, o botão abriria o site do parceiro. */
+function viewSaida(route) {
+  const para = route.q.get('para') || 'site parceiro';
+  const volta = safeDest(route.q.get('volta')) || '/';
+  return {
+    title: 'Saindo da Área do Investidor', crumbs: [['Site externo']], nav: null,
+    html: `<div class="access"><section class="card access-card" aria-labelledby="saida">
+      ${icon('external', 32)}
+      <h1 class="h1" id="saida" style="margin-top:12px">Você está saindo da Área do Investidor</h1>
+      <p style="margin-top:8px">Na versão real, este botão abre o site de <strong>${esc(para)}</strong> em uma nova aba. Os dados que você compartilhar lá seguem as regras desse parceiro.</p>
+      <p class="meta" style="margin-top:8px">No protótipo, o parceiro é fictício, então a navegação para aqui.</p>
+      <div class="btn-row" style="margin-top:20px"><a class="btn btn-primary" href="#${volta}">Voltar</a></div>
+    </section></div>`,
   };
 }
 

@@ -23,6 +23,8 @@ const ROUTES = [
   { re: /^\/portabilidade(?:\/(transferir|solicitacoes))?$/, view: viewPortabilidade, private: true },
   { re: /^\/servicos(?:\/(ir|voto|calc|relatorios))?$/, view: viewServicos, private: true },
   { re: /^\/feedback$/, view: viewFeedback, private: true },
+  { re: /^\/info\/([a-z]+)$/, view: viewInfo },
+  { re: /^\/saida$/, view: viewSaida },
 ];
 
 function parseHash() {
@@ -179,10 +181,10 @@ function renderTopbar(v, route) {
 
 function renderFooter() {
   $footer.innerHTML = `<ul>
-    <li><button type="button" class="btn-link btn btn-sm" style="padding:0;min-height:auto;color:var(--muted)" data-action="ext" data-name="Atendimento">Atendimento</button></li>
-    <li><button type="button" class="btn-link btn btn-sm" style="padding:0;min-height:auto;color:var(--muted)" data-action="ext" data-name="Condições de uso">Condições de uso</button></li>
-    <li><button type="button" class="btn-link btn btn-sm" style="padding:0;min-height:auto;color:var(--muted)" data-action="ext" data-name="Educação">Educação ${icon('external', 12)}<span class="sr-only">(site externo)</span></button></li>
-    <li><button type="button" class="btn-link btn btn-sm" style="padding:0;min-height:auto;color:var(--muted)" data-action="ext" data-name="Acessibilidade">Acessibilidade</button></li>
+    <li><a href="#/info/atendimento">Atendimento</a></li>
+    <li><a href="#/info/condicoes">Condições de uso</a></li>
+    <li><a href="https://borainvestir.b3.com.br/" target="_blank" rel="noopener">Educação ${icon('external', 12)}<span class="sr-only">(abre site da B3 em nova aba)</span></a></li>
+    <li><a href="#/info/acessibilidade">Acessibilidade</a></li>
     <li><a href="#/demo/aviso">Prévia de aviso por e-mail (demo)</a></li>
     <li>Protótipo acadêmico · Squad Capital · Dados simulados, sem relação com contas reais</li>
   </ul>`;
@@ -190,8 +192,8 @@ function renderFooter() {
 
 /* ---------- Painel lateral ---------- */
 const panel = { open: false, kind: null, id: null, modal: false };
-const PANEL_PARAM = { noticia: 'painel', mudanca: 'porque' };
-const PANEL_BUILD = { noticia: panelNoticia, mudanca: panelMudanca };
+const PANEL_PARAM = { noticia: 'painel', mudanca: 'porque', compra: 'comprar', corretora: 'comprar' };
+const PANEL_BUILD = { noticia: panelNoticia, mudanca: panelMudanca, compra: panelCompra, corretora: panelCorretora };
 
 function setParam(key, value) {
   const r = parseHash();
@@ -205,7 +207,8 @@ function openPanel(kind, id, { fromRoute = false, focus = true, trigger = null }
   if (!data) return;
   const r = parseHash();
   // matéria usa painel=1; lista usa o ID da notícia
-  if (!fromRoute) setParam(PANEL_PARAM[kind], /^\/noticias\/\w+/.test(r.path) ? '1' : id);
+  const valor = kind === 'compra' ? 'demo' : kind === 'corretora' ? 'corretora' : /^\/noticias\/\w+/.test(r.path) ? '1' : id;
+  if (!fromRoute) setParam(PANEL_PARAM[kind], valor);
   const docked = kind === 'noticia' && matchMedia('(min-width: 1200px)').matches;
   Object.assign(panel, { open: true, kind, id, modal: !docked });
   panel.trigger = `[data-action="open-panel"][data-kind="${kind}"][data-id="${id}"]`;
@@ -228,6 +231,7 @@ function closePanel({ silent = false } = {}) {
   if (!panel.open) return;
   const kind = panel.kind;
   panel.open = false;
+  if (kind === 'compra') ui.compraOk = null;
   $panelRoot.innerHTML = '';
   document.body.classList.remove('with-panel');
   document.body.style.overflow = '';
@@ -287,12 +291,14 @@ Object.assign(ACTIONS, {
   },
   notif: (el) => { if (!state.lidas.includes(el.dataset.id)) { state.lidas.push(el.dataset.id); save(); } },
   logout: () => {
+    if (state.session) state.compras[state.session.conta] = [];
     state.session = null; state.hide = false; save();
+    Object.assign(ui, { solicitacoes: [], votos: {}, compraOk: null }); ui.porta = { passo: 1, origem: '', destino: '', itens: {} };
     Object.assign(ui, { periodo: 'visita', feedbackEnviado: false }); ui.expand = {};
     announce('Você saiu. Dados pessoais removidos da tela.');
     go('/');
   },
-  'open-panel': (el) => openPanel(el.dataset.kind, el.dataset.id, { trigger: el }),
+  'open-panel': (el) => { if (el.dataset.kind === 'compra') ui.compraOk = null; openPanel(el.dataset.kind, el.dataset.id, { trigger: el }); },
   'close-panel': () => closePanel(),
   term: (el) => {
     const open = el.getAttribute('aria-expanded') !== 'true';

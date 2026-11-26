@@ -1,11 +1,18 @@
 /* Notícias: lista, matéria e painel “Impacto na carteira”. */
 
+/* Relação calculada com a carteira atual, inclusive compras feitas na demo. */
 function relacaoNoticia(n) {
   const c = conta();
   if (!c) return { estado: 'insuf', semSessao: true };
-  if (n.relacao.estado === 'insuf') return { estado: 'insuf' };
-  if (!c.posicoes.length) return { estado: 'sem', vazia: true };
-  return { estado: n.relacao.estado };
+  if (n.insuf || (!n.ativos.length && !(n.setoresAfetados || []).length)) return { estado: 'insuf', codes: [] };
+  const pos = posicoes();
+  if (!pos.length) return { estado: 'sem', vazia: true, codes: [] };
+  const meus = [...new Set(pos.map((p) => p.code))];
+  const diretos = n.ativos.filter((x) => meus.includes(x));
+  if (diretos.length) return { estado: 'direta', codes: diretos };
+  const ligados = meus.filter((x) => (n.setoresAfetados || []).includes(ativo(x).setor));
+  if (ligados.length) return { estado: 'indireta', codes: ligados };
+  return { estado: 'sem', codes: [] };
 }
 const naCarteira = (n) => ['direta', 'indireta'].includes(relacaoNoticia(n).estado);
 
@@ -58,9 +65,52 @@ const NEWS_ART = {
     <rect x="70" y="140" width="230" height="100" rx="6" fill="#FFCD00"/><path d="M300 170 h60 l40 40 v30 h-100 Z" fill="#fff"/><rect x="318" y="182" width="36" height="26" rx="3" fill="#36ADB9"/>
     <g fill="#0A0349" stroke="#fff" stroke-width="4"><circle cx="120" cy="250" r="20"/><circle cx="250" cy="250" r="20"/><circle cx="360" cy="250" r="20"/></g>
     <g stroke="#0A0349" stroke-width="3"><rect x="440" y="180" width="150" height="60" fill="#36ADB9"/><rect x="440" y="120" width="150" height="60" fill="#1818B7"/><rect x="460" y="60" width="120" height="60" fill="#FFCD00"/></g>`,
+  mineracao: (g) => `<defs><linearGradient id="${g}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F3E3D3"/><stop offset="1" stop-color="#E7C9A9"/></linearGradient></defs>
+    <rect width="640" height="320" fill="url(#${g})"/>
+    <path d="M0 260 L120 120 L200 190 L300 80 L420 230 L470 180 L640 260 V320 H0Z" fill="#8A5A3B"/><path d="M0 285 H640 V320 H0Z" fill="#6B4430"/>
+    <g fill="#5B3A29"><circle cx="230" cy="250" r="9"/><circle cx="252" cy="262" r="7"/><circle cx="210" cy="266" r="6"/></g>
+    <rect x="360" y="205" width="150" height="55" rx="6" fill="#FFCD00"/><path d="M360 205 l-40 -30 h150 l40 30 Z" fill="#E6B800"/><rect x="510" y="220" width="55" height="40" rx="5" fill="#0A0349"/>
+    <g fill="#0A0349" stroke="#fff" stroke-width="4"><circle cx="395" cy="268" r="17"/><circle cx="480" cy="268" r="17"/><circle cx="545" cy="268" r="14"/></g>
+    <path d="M560 50 v90 M530 112 l30 30 30 -30" fill="none" stroke="#B42318" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>`,
+  evento: (g) => `<defs><linearGradient id="${g}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0A0349"/><stop offset="1" stop-color="#1818B7"/></linearGradient></defs>
+    <rect width="640" height="320" fill="url(#${g})"/><rect y="250" width="640" height="70" fill="#14108D"/>
+    <rect x="90" y="50" width="300" height="170" rx="8" fill="#fff"/><polyline points="120,180 180,150 240,165 300,110 360,90" fill="none" stroke="#36ADB9" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+    <rect x="200" y="220" width="80" height="34" fill="#DDE9F6"/>
+    <g fill="#FFCD00">${[120, 200, 280, 360].map((x) => `<circle cx="${x}" cy="285" r="16"/>`).join('')}</g>
+    <rect x="450" y="70" width="130" height="140" rx="10" fill="#fff"/><rect x="450" y="70" width="130" height="38" rx="10" fill="#FFCD00"/>
+    <text x="515" y="178" text-anchor="middle" font-family="Source Sans 3, Arial, sans-serif" font-size="64" font-weight="700" fill="#0A0349">1</text>
+    <text x="515" y="98" text-anchor="middle" font-family="Source Sans 3, Arial, sans-serif" font-size="20" font-weight="700" fill="#0A0349">DEZ</text>`,
+  petroleo: (g) => `<defs><linearGradient id="${g}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFE7A8"/><stop offset=".55" stop-color="#FFC861"/><stop offset=".56" stop-color="#067684"/><stop offset="1" stop-color="#0A0349"/></linearGradient></defs>
+    <rect width="640" height="320" fill="url(#${g})"/><circle cx="520" cy="120" r="40" fill="#FFF6D6"/>
+    <g fill="#0A0349"><rect x="120" y="150" width="220" height="26"/><rect x="140" y="176" width="16" height="120"/><rect x="300" y="176" width="16" height="120"/><rect x="220" y="176" width="16" height="120"/>
+      <path d="M250 150 L275 40 L300 150 Z" fill="none" stroke="#0A0349" stroke-width="8"/><rect x="140" y="110" width="80" height="40"/></g>
+    <path d="M330 120 h60" stroke="#0A0349" stroke-width="6"/><path d="M392 108 q16 12 0 24" fill="#FFCD00"/>
+    <path d="M470 200 C470 200 430 250 430 272 a40 40 0 0 0 80 0 C510 250 470 200 470 200Z" fill="#14108D" stroke="#fff" stroke-width="4"/>`,
+  banco: (g, alta) => `<defs><linearGradient id="${g}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#EEF0F4"/><stop offset="1" stop-color="#DDE9F6"/></linearGradient></defs>
+    <rect width="640" height="320" fill="url(#${g})"/>
+    <path d="M90 120 L240 50 L390 120 Z" fill="#0A0349"/><rect x="100" y="120" width="280" height="16" fill="#0A0349"/>
+    <g fill="#1818B7">${[120, 180, 240, 300, 350].map((x) => `<rect x="${x}" y="140" width="22" height="110"/>`).join('')}</g>
+    <rect x="90" y="250" width="300" height="22" fill="#0A0349"/><circle cx="240" cy="95" r="14" fill="#FFCD00"/>
+    ${alta
+      ? '<path d="M520 260 V90 M480 130 l40 -40 40 40" fill="none" stroke="#12613A" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>'
+      : '<path d="M520 90 V260 M480 220 l40 40 40 -40" fill="none" stroke="#B42318" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>'}`,
+  'banco-alta': (g) => NEWS_ART.banco(g, true),
+  varejo: (g) => NEWS_ART.n3(g),
+  juros: (g) => `<defs><linearGradient id="${g}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0A0349"/><stop offset="1" stop-color="#067684"/></linearGradient></defs>
+    <rect width="640" height="320" fill="url(#${g})"/>
+    <g fill="none" stroke="#fff" stroke-width="2" opacity=".25"><path d="M60 250 H600 M60 190 H600 M60 130 H600 M60 70 H600"/></g>
+    <polyline points="60,90 140,110 220,140 300,170 380,190 460,190 600,190" fill="none" stroke="#FFCD00" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="460" cy="190" r="12" fill="#FFCD00"/>
+    <g fill="#fff"><circle cx="160" cy="235" r="22"/><circle cx="250" cy="285" r="22"/></g><path d="M265 215 L145 305" stroke="#fff" stroke-width="12" stroke-linecap="round"/>`,
+  industria: (g) => `<defs><linearGradient id="${g}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#DDE9F6"/><stop offset="1" stop-color="#9FD3D9"/></linearGradient></defs>
+    <rect width="640" height="320" fill="url(#${g})"/>
+    <rect x="90" y="110" width="240" height="140" rx="20" fill="#14108D"/><g stroke="#36ADB9" stroke-width="6">${[130, 160, 190, 220, 250, 280].map((x) => `<path d="M${x} 120 V240"/>`).join('')}</g>
+    <rect x="330" y="160" width="70" height="40" fill="#0A0349"/><rect x="110" y="250" width="200" height="22" fill="#0A0349"/>
+    <g transform="translate(500 140)"><circle r="62" fill="#FFCD00"/><circle r="24" fill="#DDE9F6"/>${[0, 45, 90, 135, 180, 225, 270, 315].map((a) => `<rect x="-12" y="-82" width="24" height="26" fill="#FFCD00" transform="rotate(${a})"/>`).join('')}</g>
+    <g transform="translate(430 250)"><circle r="34" fill="#067684"/><circle r="12" fill="#DDE9F6"/>${[0, 60, 120, 180, 240, 300].map((a) => `<rect x="-8" y="-46" width="16" height="16" fill="#067684" transform="rotate(${a})"/>`).join('')}</g>`,
 };
 function newsImage(n, sufixo = '') {
-  const art = NEWS_ART[n.id];
+  const art = NEWS_ART[n.arte || n.id];
   return `<svg class="news-img" viewBox="0 0 640 320" preserveAspectRatio="xMidYMid slice" role="img" aria-label="${esc(n.imagem || 'Ilustração da notícia')}">${art ? art('g-' + n.id + sufixo) : ''}</svg>`;
 }
 
@@ -73,7 +123,7 @@ function newsItem(n, aba, ctx) {
     <h2 class="h2 news-title" id="t-${n.id}">${esc(n.titulo)}</h2>
     <figure class="news-figure">
       ${newsImage(n)}
-      <figcaption class="meta">Fonte: ${esc(n.fonte.replace(/^Fonte demo · /, ''))} · Imagem ilustrativa</figcaption>
+      <figcaption class="meta">Fonte: ${esc(n.fonte.replace(/^Fonte demo · /, ''))} · ${n.real ? 'Notícia real, resumida para o protótipo' : 'Notícia fictícia'} · Imagem ilustrativa</figcaption>
     </figure>
     <p class="news-summary">${esc(n.resumo)}</p>
     <div class="news-actions">
@@ -85,10 +135,16 @@ function newsItem(n, aba, ctx) {
     </div>
     <div class="news-more" id="mais-${n.id}" ${aberto ? '' : 'hidden'}>
       ${n.detalhe.map(([t, p]) => `<h3 class="h3">${esc(t)}</h3><p>${esc(p)}</p>`).join('')}
-      <p class="meta">Texto fictício, escrito para a demonstração do protótipo.</p>
-      <button type="button" class="btn btn-link news-site" data-action="ext" data-name="Site da notícia">Ir para o site da notícia ${icon('external', 16)}<span class="sr-only">(site externo)</span></button>
+      <p class="meta">${n.real ? `Resumo escrito para o protótipo a partir de reportagem de ${esc(n.fonte)}. Os preços mostrados no app são simulados.` : 'Texto fictício, escrito para a demonstração do protótipo.'}</p>
+      ${fonteLink(n, 'btn btn-link news-site')}
     </div>
   </article>`;
+}
+/* Notícia real abre o site da reportagem; notícia fictícia abre a matéria completa dentro do protótipo. */
+function fonteLink(n, cls, label = 'Ir para o site da notícia') {
+  return n.real
+    ? `<a class="${cls}" href="${esc(n.url)}" target="_blank" rel="noopener">${label} ${icon('external', 16)}<span class="sr-only">(abre ${esc(n.fonte)} em nova aba)</span></a>`
+    : `<a class="${cls}" href="#/noticias/${n.id}">Ler a matéria completa ${icon('arrowRight', 16)}</a>`;
 }
 ACTIONS['news-more'] = (el) => {
   const id = el.dataset.id, open = el.getAttribute('aria-expanded') !== 'true';
@@ -125,7 +181,7 @@ function viewNoticias(route) {
   } else if (!lista.length) {
     corpo = filtrando
       ? emptyState({ title: 'Nenhuma notícia para esses filtros', actions: `<a class="btn btn-outline btn-sm" href="#${newsHref({ aba })}">Limpar filtros</a>`, iconName: 'filter' })
-      : emptyState({ title: 'Não encontramos notícias ligadas à sua carteira', text: conta() && !conta().posicoes.length ? 'Sua carteira ainda não tem posições.' : 'Quando houver notícias sobre seus ativos, elas aparecem aqui.',
+      : emptyState({ title: 'Não encontramos notícias ligadas à sua carteira', text: conta() && !posicoes().length ? 'Sua carteira ainda não tem posições. Compre uma ação na demo para testar.' : 'Quando houver notícias sobre seus ativos, elas aparecem aqui.',
           actions: `<a class="btn btn-outline btn-sm" href="#${newsHref({ aba: 'todo' })}">Ver todo o mercado</a>`, iconName: 'news' });
   } else {
     corpo = `<div class="news-list">${lista.map((n) => newsItem(n, aba, ctx)).join('')}</div>`;
@@ -178,12 +234,12 @@ function viewMateria(route) {
         ${state.session
           ? `<button type="button" class="btn btn-primary" data-action="open-panel" data-kind="noticia" data-id="${n.id}">${icon('wallet', 18)}Impacto na carteira</button>`
           : `<a class="btn btn-primary" href="#/acesso?destino=${encodeURIComponent('/noticias/' + n.id + '?painel=1')}">${icon('wallet', 18)}Impacto na carteira</a>`}
-        <button type="button" class="btn btn-outline" data-action="ext" data-name="Fonte original">Abrir fonte original ${icon('external', 16)}<span class="sr-only">(site externo)</span></button>
+        ${n.real ? fonteLink(n, 'btn btn-outline', 'Abrir reportagem original') : ''}
       </div>
-      <figure class="news-figure">${newsImage(n, '-m')}<figcaption class="meta">Fonte: ${esc(n.fonte.replace(/^Fonte demo · /, ''))} · Imagem ilustrativa</figcaption></figure>
+      <figure class="news-figure">${newsImage(n, '-m')}<figcaption class="meta">Fonte: ${esc(n.fonte.replace(/^Fonte demo · /, ''))} · ${n.real ? 'Notícia real, resumida para o protótipo' : 'Notícia fictícia'} · Imagem ilustrativa</figcaption></figure>
       <p class="news-summary">${esc(n.resumo)}</p>
       ${n.detalhe.map(([t, p]) => `<h2 class="h3" style="margin-top:20px">${esc(t)}</h2><p style="margin-top:4px">${esc(p)}</p>`).join('')}
-      <p class="meta" style="margin-top:16px">Texto fictício, escrito para a demonstração do protótipo.</p>
+      <p class="meta" style="margin-top:16px">${n.real ? `Resumo escrito para o protótipo a partir de reportagem de ${esc(n.fonte)}. Os preços mostrados no app são simulados.` : 'Texto fictício, escrito para a demonstração do protótipo.'}</p>
       ${n.ativos.length ? `<p style="margin-top:24px" class="meta">Ativos citados: ${n.ativos.map((c) => `<a href="#/ativos/${c}?de=${n.id}">${esc(ativo(c).name)} · ${c}</a>`).join(', ')}</p>` : ''}
     </article>`,
   };
@@ -192,16 +248,27 @@ function viewMateria(route) {
 /* Painel “Impacto na carteira”: nível (Alto/Médio/Baixo) · por que pode ter impacto · variação no período.
    O nível é uma regra simples e explícita: ligação com a notícia + peso do ativo na carteira. Não é previsão. */
 const pctPeso = (p) => nf0.format(p) + '%';
-const PORQUE_IMPACTO = {
-  n1: (p) => `O comunicado é da Aurora, e você tem ações dela. Ela é o maior investimento da sua carteira (${pctPeso(p)}), então mudanças no preço dela pesam mais no seu total. Resultados acima do esperado costumam influenciar o preço, mas outros fatores também contam.`,
-  n2: (p) => `A notícia é sobre regras do setor de energia, e a Lumina, que você tem, atua nesse setor. A mudança ainda está em estudo e a Lumina é ${pctPeso(p)} da sua carteira. Por isso o efeito esperado é pequeno e ainda incerto.`,
-  n3: () => 'A Horizonte Varejo não está entre os seus ativos. Efeitos indiretos no mercado continuam possíveis.',
-  n4: () => 'A notícia não diz quais empresas ou fundos estão envolvidos. Sem isso, não dá para medir o impacto na sua carteira.',
-  n5: (p) => `A assembleia é da Nova Azul, e você tem ações dela (${pctPeso(p)} da sua carteira). Se os dividendos forem aprovados, você pode receber um pagamento. A assembleia, por si só, não muda o valor das suas ações.`,
-  n6: () => 'A Pátria Logística não está entre os seus ativos. Efeitos indiretos no mercado continuam possíveis.',
-};
+const nomes = (codes) => { const ns = codes.map((c) => ativo(c).name); return ns.length > 1 ? ns.slice(0, -1).join(', ') + ' e ' + ns[ns.length - 1] : ns[0]; };
+const SETOR_TXT = { Financeiro: 'setor financeiro', 'Bens industriais': 'setor de bens industriais' };
+const setorTxt = (lista) => { const t = [...new Set(lista)].map((x) => SETOR_TXT[x] || 'setor de ' + x.toLowerCase()); return t.length > 1 ? t.slice(0, -1).join(', ') + ' e ' + t[t.length - 1] : t[0]; };
+function porqueImpacto(n, rel, peso) {
+  if (rel.vazia) return 'Sua carteira ainda não tem ativos, então esta notícia não a afeta.';
+  if (rel.estado === 'insuf') return 'A notícia não diz quais empresas ou fundos estão envolvidos. Sem isso, não dá para medir o impacto na sua carteira.';
+  if (rel.estado === 'direta') {
+    const um = rel.codes.length === 1;
+    const pesoTxt = peso >= 40 ? `${um ? 'Ela é' : 'Juntas, são'} ${pctPeso(peso)} da sua carteira, então mudanças no preço pesam bastante no seu total.`
+      : `${um ? 'Ela representa' : 'Juntas, representam'} ${pctPeso(peso)} da sua carteira.`;
+    return `A notícia é sobre ${nomes(rel.codes)}, e você tem ações ${um ? 'dela' : 'delas'}. ${pesoTxt} ${n.efeito || ''}`.trim();
+  }
+  if (rel.estado === 'indireta') {
+    const setores = setorTxt(rel.codes.map((c) => ativo(c).setor));
+    return `A notícia afeta o ${setores}, e ${nomes(rel.codes)}, que você tem, ${rel.codes.length > 1 ? 'atuam' : 'atua'} nesse setor (${pctPeso(peso)} da sua carteira). ${n.efeitoSetor || 'O efeito sobre cada empresa ainda é incerto.'}`;
+  }
+  if (n.ativos.length) return `${nomes(n.ativos)} não ${n.ativos.length > 1 ? 'estão' : 'está'} entre os seus ativos. Efeitos indiretos no mercado continuam possíveis.`;
+  return `A notícia afeta o ${setorTxt(n.setoresAfetados || [])}, e nenhum ativo da sua carteira atua ${(n.setoresAfetados || []).length > 1 ? 'nesses setores' : 'nesse setor'}.`;
+}
 function nivelImpacto(estado, peso) {
-  if (estado === 'direta') return peso >= 40 ? { n: 3, label: 'Impacto alto' } : { n: 2, label: 'Impacto médio' };
+  if (estado === 'direta') return peso >= 40 ? { n: 3, label: 'Impacto alto' } : peso >= 10 ? { n: 2, label: 'Impacto médio' } : { n: 1, label: 'Impacto baixo' };
   if (estado === 'indireta') return { n: 1, label: 'Impacto baixo' };
   if (estado === 'sem') return { n: 0, label: 'Sem impacto identificado' };
   return { n: null, label: 'Não dá para medir' };
@@ -229,11 +296,13 @@ function panelNoticia(id) {
   }
 
   const w = carteira();
-  const codes = rel.estado === 'direta' ? n.ativos : rel.estado === 'indireta' ? n.relacao.ativosLigados : [];
-  const grupos = codes.map((c) => w.itens.find((i) => i.a.code === c)).filter(Boolean);
+  const grupos = (rel.codes || []).map((c) => w.itens.find((i) => i.a.code === c)).filter(Boolean);
   const peso = grupos.reduce((s, g) => s + g.peso, 0);
   const nivel = nivelImpacto(rel.estado, peso);
-  const porque = rel.vazia ? 'Sua carteira ainda não tem ativos, então esta notícia não a afeta.' : PORQUE_IMPACTO[n.id](peso);
+  const porque = porqueImpacto(n, rel, peso);
+  // Para testar: se a carteira não tem a empresa da notícia, oferece comprar na demo e voltar aqui.
+  const simular = n.ativos.length && rel.estado !== 'direta'
+    ? `<p class="note demo-note">${icon('cart', 18)}<span>Quer testar? <a href="#/ativos/${n.ativos[0]}?comprar=demo&de=${n.id}&aba=${aba}">Compre ${esc(ativo(n.ativos[0]).name)} na demo</a> e volte aqui para ver o impacto.</span></p>` : '';
 
   const topo = `<p class="imp-about">Sobre: ${esc(n.titulo)}</p>
     ${impactoMedidor(nivel)}
@@ -241,14 +310,14 @@ function panelNoticia(id) {
     <p class="meta">O nível considera a ligação com a notícia e o peso do ativo na sua carteira. Não é uma previsão.</p>`;
 
   if (!grupos.length) {
-    return { title: 'Impacto na carteira', body: topo + impBlock('Por que', esc(porque)),
+    return { title: 'Impacto na carteira', body: topo + impBlock('Por que', esc(porque)) + simular,
       foot: rel.estado === 'sem' ? `<button type="button" class="btn btn-primary" data-action="close-panel">Voltar às notícias</button>${fonteBtn}` : fonteBtn };
   }
 
   const delta = grupos.reduce((s, g) => s + g.delta, 0), anterior = grupos.reduce((s, g) => s + g.anterior, 0);
   const pct = anterior ? (delta / anterior) * 100 : 0;
   const g = grupos[0];
-  const variacao = `<p class="meta" style="margin-bottom:2px">${esc(g.a.name)} · ${g.a.code} na sua carteira</p>
+  const variacao = `<p class="meta" style="margin-bottom:2px">${grupos.map((x) => `${esc(x.a.name)} · ${x.a.code}`).join(', ')} na sua carteira</p>
       <p class="imp-number">${trendValue(delta, pSbrl(delta))} ${trend(pct)}</p>
       <p class="meta">De ${REF.anteriorCurta} a ${REF.atualCurta}</p>
       <p class="imp-note">${icon('info', 16)}<span>${rel.estado === 'direta'
@@ -256,8 +325,8 @@ function panelNoticia(id) {
         : 'Não dá para separar o efeito desta notícia nessa variação.'}</span></p>`;
   return {
     title: 'Impacto na carteira',
-    body: topo + impBlock('Por que pode ter impacto', esc(porque)) + impBlock('Variação no período', variacao)
-      + `<p class="meta">Posição de ${REF.atual} · Dados simulados</p>`,
+    body: topo + impBlock('Por que pode ter impacto', esc(porque)) + impBlock('Variação no período', variacao) + simular
+      + `<p class="meta">Posição de ${REF.atual} · Preços simulados</p>`,
     foot: `<a class="btn btn-primary" href="#/ativos/${g.a.code}?de=${n.id}&aba=${aba}">${rel.estado === 'direta' ? 'Ver ativo' : 'Ver ' + esc(g.a.name)}</a>${fonteBtn}`,
   };
 }

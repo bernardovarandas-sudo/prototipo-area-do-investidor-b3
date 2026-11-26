@@ -16,6 +16,7 @@ const state = {
   hide: store.get('hide', false),             // ocultar valores pessoais
   favoritos: store.get('favoritos', ['DEMO1', 'DEMO5']),
   lidas: store.get('lidas', []),
+  compras: store.get('compras', {}),         // compras feitas na demo, por conta: { principal: [...], vazia: [...] }
   navOpen: {},                                // grupos abertos pelo usuário
   focusAfter: null,
   lastPath: null,
@@ -26,9 +27,26 @@ function save() {
   store.set('hide', state.hide);
   store.set('favoritos', state.favoritos);
   store.set('lidas', state.lidas);
+  store.set('compras', state.compras);
 }
 
 const conta = () => (state.session ? CONTAS[state.session.conta] : null);
+
+/* Compras feitas só na demo (o site real não tem este botão). Elas entram na carteira como se já estivessem lá
+   no fechamento anterior, para a variação do período e o impacto das notícias aparecerem. */
+const comprasDemo = () => (state.session ? state.compras[state.session.conta] || [] : []);
+function posicoes() {
+  const c = conta();
+  if (!c) return [];
+  return [...c.posicoes, ...comprasDemo().map((x) => ({ code: x.code, inst: x.inst, qtd: x.qtd, demo: true }))];
+}
+const temAtivo = (code) => posicoes().some((p) => p.code === code);
+function registrarCompra(code, qtd, inst) {
+  const a = ativo(code);
+  const lista = state.compras[state.session.conta] || (state.compras[state.session.conta] = []);
+  lista.push({ id: Date.now().toString(36), code: a.code, qtd, inst, preco: a.preco });
+  save();
+}
 
 /* ---------- Formatação pt-BR ---------- */
 const MINUS = '−';
@@ -76,12 +94,15 @@ function carteira() {
   const c = conta();
   if (!c) return null;
   const grupos = {};
-  c.posicoes.forEach((p) => {
+  posicoes().forEach((p) => {
     const a = ativo(p.code);
     const g = grupos[p.code] || (grupos[p.code] = { a, qtd: 0, atual: 0, anterior: 0, insts: [] });
     const atual = p.qtd * a.preco, anterior = p.qtd * a.anterior;
     g.qtd += p.qtd; g.atual += atual; g.anterior += anterior;
-    g.insts.push({ inst: p.inst, qtd: p.qtd, atual, anterior, delta: atual - anterior });
+    const ja = g.insts.find((i) => i.inst === p.inst);
+    if (ja) { ja.qtd += p.qtd; ja.atual += atual; ja.anterior += anterior; ja.delta = ja.atual - ja.anterior; ja.demo = ja.demo || !!p.demo; }
+    else g.insts.push({ inst: p.inst, qtd: p.qtd, atual, anterior, delta: atual - anterior, demo: !!p.demo });
+    g.demo = g.demo || !!p.demo;
   });
   const itens = Object.values(grupos).map((g) => ({ ...g, delta: g.atual - g.anterior, pct: (g.atual / g.anterior - 1) * 100 }));
   const atual = itens.reduce((s, g) => s + g.atual, 0);
@@ -130,6 +151,8 @@ const ICONS = {
   refresh: '<path d="M20 12a8 8 0 1 1-2.3-5.6"/><path d="M20 4v5h-5"/>',
   approx: '<path d="M5 10c2-2 4-2 7 0s5 2 7 0M5 15c2-2 4-2 7 0s5 2 7 0"/>',
   logout: '<path d="M15 4h4v16h-4"/><path d="M10 8l-4 4 4 4M6 12h10"/>',
+  cart: '<path d="M3 4h2.5l2.2 11h10.6L20.5 7H7"/><circle cx="9.5" cy="19" r="1.4"/><circle cx="17" cy="19" r="1.4"/>',
+  plus: '<path d="M12 5v14M5 12h14"/>',
   mail: '<rect x="3" y="5.5" width="18" height="13" rx="2"/><path d="m3.5 7 8.5 6 8.5-6"/>',
 };
 function icon(name, size = 20, cls = '') {

@@ -8,9 +8,29 @@ Protótipo acadêmico do Squad Capital, feito no ciclo prático com a B3. **Todo
 
 - **Início** (sem login): Ibovespa, busca de ações e ficha do ativo.
 - **Acesso demo:** um clique entra na conta fictícia.
-- **Minha carteira:** resumo, "O que mudou", composição e ativos.
-- **Notícias:** abas "Todo o mercado" e "Minha carteira", "Ver mais" e o painel "Impacto na carteira".
-- **Extratos, Proventos, Portabilidade, Serviços e Feedback:** telas de consulta.
+- **Comprar:** na ficha de cada ação, "Comprar" mostra que a compra é feita na corretora e leva ao site dela. Ao lado, "Comprar na demo" (só no protótipo) adiciona a ação à carteira fictícia.
+- **Minha carteira:** resumo, "O que mudou", composição e ativos, já com as compras da demo.
+- **Notícias:** notícias reais de novembro de 2026, resumidas com link para a reportagem, e notícias fictícias. O painel "Impacto na carteira" calcula a relação com a sua carteira na hora.
+- **Proventos e Extratos:** mostram os pagamentos e as negociações das compras feitas na demo.
+- **Portabilidade:** simulação em 4 etapas, com a solicitação em "Minhas solicitações".
+- **Voto a distância:** votação simulada na assembleia da Nova Azul.
+- **Serviços, Feedback e páginas institucionais:** consulta e exemplos.
+
+## Roteiro para testar o impacto das notícias
+
+Entre com a conta demo e compre na demo uma destas ações. Depois abra Notícias › Minha carteira:
+
+| Comprar | Notícia real ligada | O que aparece |
+|---|---|---|
+| PETR4 | Petrobras cai mesmo com lucro maior | Relação direta |
+| VALE3 | Vale cai com minério em baixa · Vale Day | Relação direta |
+| ITUB4 | Itaú lucra R$ 12,6 bi · Copom mantém a Selic | Direta · indireta (setor financeiro) |
+| BBAS3 | Lucro do Banco do Brasil cai 66% · Copom | Direta · indireta |
+| MGLU3 | Magazine Luiza tem lucro menor, mas ações sobem · Copom | Direta · indireta (varejo) |
+| WEGE3 | WEG lucra abaixo do esperado | Relação direta |
+| DEMO8 | Vale cai com minério em baixa | Indireta (mineração) |
+
+As empresas reais aparecem com **preço simulado**. Os proventos das compras da demo têm valor e data fictícios. "Desfazer compras da demo", na carteira, volta tudo ao início.
 
 ## Abrir no computador
 

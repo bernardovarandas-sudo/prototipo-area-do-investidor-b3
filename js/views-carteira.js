@@ -1,6 +1,7 @@
 /* Minha carteira: visão geral, investimentos (posição e garantias) e Análises com IA. */
 
-const CORES = ['c1', 'c2', 'c3', 'c4'];
+const CORES = ['c1', 'c2', 'c3', 'c4', 'c5', 'c6', 'c7', 'c8'];
+const cor = (i) => CORES[i % CORES.length];
 
 function viewCarteira(route) {
   const w = carteira();
@@ -18,6 +19,7 @@ function viewCarteira(route) {
       })}
       <div class="note" id="como-comecar" hidden style="margin-top:12px">${icon('info', 18)}<span>A compra de ações acontece pela sua corretora, não pela Área do Investidor. Depois da compra e da liquidação, a posição passa a aparecer aqui. ${termHelp('liquidacao', 'liquidação')}</span></div>
       <div class="note" id="nao-apareceu" hidden style="margin-top:12px">${icon('info', 18)}<span>Em ações à vista, a liquidação costuma ocorrer em D+2 (dois dias úteis) e a posição aparece depois da atualização seguinte. Não dá para saber daqui o estado da sua ordem: se o prazo passou, confirme com a corretora.</span></div>
+      ${demoBuyCta()}
       <p style="margin-top:24px">Enquanto isso, <a href="#/">acompanhe o mercado</a> ou veja <a href="#/noticias?aba=todo">as notícias</a>.</p>`,
     };
   }
@@ -50,7 +52,9 @@ function viewCarteira(route) {
               : `<div class="value big" style="color:var(--neutral-text)">Indisponível</div><div class="sub meta">Sem referência para o recorte</div>`}
           </div>
         </div>
-        ${comparavel ? `<p class="note" style="margin-top:16px">${icon('info', 18)}<span>Não houve aportes, resgates ou eventos no período. Toda a mudança veio da variação de preço dos ativos.</span></p>` : ''}
+        ${comparavel ? (comprasDemo().length
+          ? `<p class="note demo-note" style="margin-top:16px">${icon('cart', 18)}<span>Inclui ${comprasDemo().length} ${comprasDemo().length === 1 ? 'compra feita' : 'compras feitas'} na demo. Para mostrar o efeito das notícias, a demo considera que essas ações já estavam na carteira no fechamento de ${REF.anteriorCurta}. <button type="button" class="btn btn-link btn-sm" data-action="desfazer-compras">Desfazer compras da demo</button></span></p>`
+          : `<p class="note" style="margin-top:16px">${icon('info', 18)}<span>Não houve aportes, resgates ou eventos no período. Toda a mudança veio da variação de preço dos ativos.</span></p>`) : ''}
       </section>
 
       ${comparavel ? `<section class="card" aria-labelledby="mudou">
@@ -68,8 +72,8 @@ function viewCarteira(route) {
         <section class="card span-5" aria-labelledby="compo">
           <div class="card-head"><h2 class="h2" id="compo">Composição da carteira</h2><span class="meta">Por ativo</span></div>
           <div class="compo-bar" role="img" aria-label="${w.itens.map((g) => `${g.a.name} ${nf1.format(g.peso)}%`).join(', ')}">
-            ${w.itens.map((g, i) => `<span class="${CORES[i]}" style="width:${g.peso}%"></span>`).join('')}</div>
-          <ul class="legend">${w.itens.map((g, i) => `<li><span class="swatch ${CORES[i]}"></span>${esc(g.a.name)} <strong>${nf1.format(g.peso)}%</strong></li>`).join('')}</ul>
+            ${w.itens.map((g, i) => `<span class="${cor(i)}" style="width:${g.peso}%"></span>`).join('')}</div>
+          <ul class="legend">${w.itens.map((g, i) => `<li><span class="swatch ${cor(i)}"></span>${esc(g.a.name)} <strong>${nf1.format(g.peso)}%</strong></li>`).join('')}</ul>
           <div class="card-foot"><button type="button" class="btn btn-link btn-sm" data-action="compo-toggle" aria-expanded="${ui.compo.aberto}" aria-controls="compo-det">${ui.compo.aberto ? 'Ocultar composição' : 'Ver composição'}</button></div>
           <div id="compo-det" ${ui.compo.aberto ? '' : 'hidden'}>${compoDetalhe(w)}</div>
         </section>
@@ -83,16 +87,33 @@ function viewCarteira(route) {
           <div class="card-foot"><a href="#/carteira/investimentos">Ir para posição</a><a href="#/extratos/movimentacao">Ver movimentações</a></div>
         </section>
       </div>
+      ${demoBuyCta()}
     </div>`,
   };
 }
+
+/* Atalho só da demo para adicionar ações à carteira e testar notícias, proventos e extratos. */
+function demoBuyCta() {
+  return `<section class="card demo-card" aria-labelledby="demo-buy">
+    <div class="strip"><div><span class="demo-badge">Só no protótipo</span><h2 class="h3" id="demo-buy" style="margin-top:6px">Adicione ações à carteira para testar</h2>
+      <p class="meta">Na Área do Investidor real a compra é feita na corretora. Aqui você simula e vê o efeito em Notícias, Proventos e Extratos.</p></div>
+      <a class="btn btn-outline" href="#/mercado">${icon('plus', 18)}Escolher ação</a></div>
+    <p class="meta" style="margin-top:12px">Sugestões com notícia real: ${SUGESTOES_DEMO.map((c) => `<a href="#/ativos/${c}?comprar=demo">${ativo(c).name} (${c})</a>`).join(' · ')}</p>
+  </section>`;
+}
+const SUGESTOES_DEMO = ['PETR4', 'VALE3', 'ITUB4', 'BBAS3', 'MGLU3', 'WEGE3'];
+ACTIONS['desfazer-compras'] = () => {
+  state.compras[state.session.conta] = []; save();
+  toast('Compras da demo desfeitas. A carteira voltou ao início.');
+  rerender('#resumo');
+};
 
 function ativoRow(g) {
   const multi = g.insts.length > 1, key = 'inst-' + g.a.code, open = !!ui.expand[key];
   return `<tr>
     <td><div class="asset-cell"><a href="#/ativos/${g.a.code}?de=carteira">${esc(g.a.name)}</a><span class="asset-code">${g.a.code} · ${multi
       ? `<button type="button" class="expand-btn" data-action="expand" data-key="${key}" aria-expanded="${open}" aria-controls="${key}">${g.insts.length} instituições ${icon('chevronDown', 14)}</button>`
-      : g.insts[0].inst}</span></div></td>
+      : g.insts[0].inst}${g.demo ? ' · <span class="demo-badge sm">Compra na demo</span>' : ''}</span></div></td>
     <td class="num">${pQtd(g.qtd)}</td><td class="num">${pBrl(g.atual)}</td>
     <td class="num">${trendValue(g.delta, pSbrl(g.delta))}</td></tr>
     ${multi ? g.insts.map((i) => `<tr class="sub-row" data-group="${key}" ${open ? '' : 'hidden'}><td>${i.inst}</td><td class="num">${pQtd(i.qtd)}</td><td class="num">${pBrl(i.atual)}</td><td class="num">${trendValue(i.delta, pSbrl(i.delta))}</td></tr>`).join('') : ''}`;
@@ -133,8 +154,8 @@ function panelMudanca(code) {
   const w = carteira();
   const g = w && w.itens.find((i) => i.a.code === code);
   if (!g) return null;
-  const n = NOTICIAS.find((x) => x.ativos.includes(code) && x.relacao.estado === 'direta' && x.tipo !== 'evento')
-    || NOTICIAS.find((x) => x.relacao.ativosLigados && x.relacao.ativosLigados.includes(code));
+  const n = NOTICIAS.find((x) => x.ativos.includes(code) && x.tipo !== 'evento')
+    || NOTICIAS.find((x) => (x.setoresAfetados || []).includes(g.a.setor));
   const dp = g.a.preco - g.a.anterior;
   return {
     title: `Por que ${g.a.name} mudou?`,
@@ -149,7 +170,7 @@ function panelMudanca(code) {
         <ul class="calc-list" style="margin-top:8px">${g.insts.map((i) => `<li><span>${i.inst}: ${pQtd(i.qtd)} × ${fmt.sbrl(dp)}</span><strong>${pSbrl(i.delta)}</strong></li>`).join('')}</ul>
       </div>
       <div class="pblock"><h3>O que não entrou na conta</h3>
-        <p>Não houve compras, vendas, aportes, resgates ou eventos neste ativo no período. Toda a mudança veio do preço.</p></div>
+        <p>${g.demo ? 'Compras feitas na demo entram como se já estivessem na carteira em ' + REF.anteriorCurta + ', para mostrar a variação do preço.' : 'Não houve compras, vendas, aportes, resgates ou eventos neste ativo no período.'} Toda a mudança veio do preço.</p></div>
       ${n ? `<div class="pblock context-block"><h3>Notícia relacionada</h3>
         <p>${tipoTag(n.tipo)} <span class="meta">${n.data}</span></p>
         <p style="margin-top:4px"><a href="#/noticias?aba=carteira&painel=${n.id}">${esc(n.titulo)}</a></p>
@@ -167,7 +188,7 @@ function viewInvestimentos(route) {
   const dataLabel = s.data === '24' ? REF.atual : REF.anterior;
   let body;
   if (aba === 'posicao') {
-    const linhas = c.posicoes.filter((p) => !s.aplicado || p.inst === s.aplicado)
+    const linhas = posicoes().filter((p) => !s.aplicado || p.inst === s.aplicado)
       .map((p) => { const a = ativo(p.code); const preco = s.data === '24' ? a.preco : a.anterior; return { ...p, a, preco, valor: preco * p.qtd }; });
     body = `
       <div class="query-bar">
@@ -187,17 +208,17 @@ function viewInvestimentos(route) {
       ${s.aplicado ? `<div class="chips"><span class="chip">Instituição: ${s.aplicado}<button type="button" data-action="pos-limpar" aria-label="Remover filtro ${s.aplicado}">${icon('x', 16)}</button></span></div>` : ''}
       ${linhas.length ? `<div class="card"><div class="table-wrap"><table><caption class="sr-only">Posição em ${dataLabel}</caption>
         <thead><tr><th scope="col">Ativo</th><th scope="col">Instituição</th><th scope="col" class="num">Quantidade</th><th scope="col" class="num col-sec">Preço de fechamento</th><th scope="col" class="num">Valor</th><th scope="col"><span class="sr-only">Detalhes</span></th></tr></thead>
-        <tbody>${linhas.map((l) => { const k = `pos-${l.code}-${l.inst.slice(-1)}`; const open = !!ui.expand[k]; return `<tr>
-          <td><div class="asset-cell"><a href="#/ativos/${l.code}?de=carteira">${esc(l.a.name)}</a><span class="asset-code">${l.code}</span></div></td>
+        <tbody>${linhas.map((l, li) => { const k = `pos-${l.code}-${l.inst.slice(-1)}-${li}`; const open = !!ui.expand[k]; return `<tr>
+          <td><div class="asset-cell"><a href="#/ativos/${l.code}?de=carteira">${esc(l.a.name)}</a><span class="asset-code">${l.code}${l.demo ? ' · <span class="demo-badge sm">Compra na demo</span>' : ''}</span></div></td>
           <td>${l.inst}</td><td class="num">${pQtd(l.qtd)}</td><td class="num col-sec">${fmt.brl(l.preco)}</td><td class="num">${pBrl(l.valor)}</td>
           <td class="num"><button type="button" class="expand-btn" data-action="expand" data-key="${k}" aria-expanded="${open}" aria-controls="${k}">Detalhes<span class="sr-only"> de ${esc(l.a.name)} na ${l.inst}</span>${icon('chevronDown', 14)}</button></td></tr>
           <tr class="detail-row" data-group="${k}" id="${k}" ${open ? '' : 'hidden'}><td colspan="6"><dl class="dl">
             <div><dt>Classe</dt><dd>Renda variável · Ações</dd></div><div><dt>Produto</dt><dd>${esc(l.a.tipo)}</dd></div>
             <div><dt>Tipo de preço</dt><dd>Fechamento do pregão</dd></div><div><dt>Data do preço</dt><dd>${dataLabel}</dd></div>
-            <div><dt>Código ISIN (fictício)</dt><dd>BR${l.code}ACNOR0</dd></div><div><dt>Situação</dt><dd>Disponível</dd></div>
+            <div><dt>Código ISIN</dt><dd>${l.a.real ? 'Não exibido na demo' : `BR${l.code}ACNOR0 (fictício)`}</dd></div><div><dt>Situação</dt><dd>Disponível</dd></div>
             <div><dt>Escriturador</dt><dd>Banco Escriturador Demo</dd></div></dl></td></tr>`; }).join('')}</tbody></table></div>
         <p class="meta" style="margin-top:8px">Valor estimado pelo preço de fechamento de cada data. Dados simulados.</p></div>`
-      : emptyState({ title: c.posicoes.length ? 'Nenhum resultado para esse filtro' : 'Não há posições para esta data', actions: s.aplicado ? '<button type="button" class="btn btn-outline btn-sm" data-action="pos-limpar">Limpar filtros</button>' : '' })}`;
+      : emptyState({ title: posicoes().length ? 'Nenhum resultado para esse filtro' : 'Não há posições para esta data', actions: s.aplicado ? '<button type="button" class="btn btn-outline btn-sm" data-action="pos-limpar">Limpar filtros</button>' : '' })}`;
   } else {
     body = `<p class="muted" style="margin-bottom:12px">Ativos dados em garantia de operações aparecem aqui, por instituição. ${termHelp('garantias', 'garantia')}</p>
       <div class="query-bar"><div class="field"><label for="gar-data">Data</label><select id="gar-data" class="select"><option>24 nov 2026</option><option>23 nov 2026</option></select></div></div>
@@ -218,7 +239,7 @@ ACTIONS['pos-limpar'] = () => { ui.posicao.aplicado = ''; rerender('[data-action
 ACTIONS['pos-baixar'] = () => {
   const c = conta(), d = ui.posicao.data;
   downloadDemo(`posicao-demo-${d}nov2026.csv`, ['Ativo;Código;Instituição;Quantidade;Preço;Valor',
-    ...c.posicoes.filter((p) => !ui.posicao.aplicado || p.inst === ui.posicao.aplicado).map((p) => { const a = ativo(p.code); const pr = d === '24' ? a.preco : a.anterior; return `${a.name};${a.code};${p.inst};${p.qtd};${nf2.format(pr)};${nf2.format(pr * p.qtd)}`; })]);
+    ...posicoes().filter((p) => !ui.posicao.aplicado || p.inst === ui.posicao.aplicado).map((p) => { const a = ativo(p.code); const pr = d === '24' ? a.preco : a.anterior; return `${a.name};${a.code};${p.inst};${p.qtd};${nf2.format(pr)};${nf2.format(pr * p.qtd)}`; })]);
 };
 
 /* ---------- Análises com IA ---------- */
@@ -230,7 +251,7 @@ function viewIA() {
         <p class="note warn">${icon('info', 18)}<span>Acesso demonstrativo. Na Área do Investidor real, este item abre a ferramenta parceira de análise de ações, quando disponível para a conta.</span></p>
         <p style="margin-top:16px">A ferramenta avalia empresas nacionais e internacionais com modelos de inteligência artificial. Ela não substitui recomendação de um profissional.</p>
         <p style="margin-top:12px">Quer saber se uma notícia tem relação com os seus investimentos? Isso fica em <a href="#/noticias">Notícias</a>, no botão “Impacto na carteira”.</p>
-        <div class="btn-row"><button type="button" class="btn btn-primary" data-action="ext" data-name="Ferramenta parceira de análise">Abrir ferramenta parceira ${icon('external', 16)}<span class="sr-only">(site externo)</span></button></div>
+        <div class="btn-row"><a class="btn btn-primary" href="#/saida?para=${encodeURIComponent('Ferramenta parceira de análise')}&volta=${encodeURIComponent('/carteira/ia')}">Abrir ferramenta parceira ${icon('external', 16)}</a></div>
       </section>`,
   };
 }
